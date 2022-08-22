@@ -5,7 +5,6 @@
 #include "GuestBookEditor.h"
 #include "mmsystem.h"
 
-#include <string>
 #include <vector>
 
 #pragma comment(lib, "winmm.lib");
@@ -174,6 +173,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 timeKillEvent(progress_timer);
                 progress_timer = 0;
                 break;
+            case VK_UP:
+                current_time = (DWORD)GetTickCount64() - create_time;
+                max_progress = (float)current_time / 1000;
+
+                RECT r = {0, windows_size_height - 150, windows_size_width, windows_size_height - 140};
+                InvalidateRect(hWnd, NULL, FALSE);
+                break;
             }
         }
         break;
@@ -184,18 +190,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_LBUTTONDOWN:
         {
-            is_click = true;
+            POINT point;
+            RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height - 170};
+            point.x = LOWORD(lParam);
+            point.y = HIWORD(lParam);
+            if (PtInRect(&r, point))
+            {
+                progress = min(max((point.x * max_progress) / windows_size_width, 0), max_progress);
+                InvalidateRect(hWnd, NULL, FALSE);
+                is_click = true;
+            }
         }
         break;
     case WM_MOUSEMOVE:
         {
             if (is_click)
             {
-                current_time = (DWORD)GetTickCount64() - create_time;
-                max_progress = (float)current_time / 1000;
-
-                RECT r = {0, windows_size_height - 150, windows_size_width, windows_size_height - 140};
-                InvalidateRect(hWnd, &r, TRUE);
+                int x = LOWORD(lParam);
+                progress = min(max((x * max_progress) / windows_size_width, 0), max_progress);
+                InvalidateRect(hWnd, NULL, FALSE);
             }
         }
         break;
@@ -219,21 +232,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
+            HDC hdc, memDC;
+            HBITMAP newBitmap, oldBitmap;
+            RECT buffer;
+            memDC = BeginPaint(hWnd, &ps);
+
+            GetClientRect(hWnd, &buffer);
+            hdc = CreateCompatibleDC(memDC);
+            newBitmap = CreateCompatibleBitmap(memDC, buffer.right, buffer.bottom);
+            oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
+            PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+            
             WCHAR progress_word[1024];
             SetBkMode(hdc, TRANSPARENT);
             _stprintf_s(progress_word, L"%.2fs / %.2fs", progress, max_progress);
             TextOut(hdc, 0, windows_size_height - 220, progress_word, lstrlen(progress_word));
-
-            HBRUSH n = (HBRUSH)CreateSolidBrush(RGB(255, 0, 0));
+            Rectangle(hdc, 0, windows_size_height - 200, windows_size_width, windows_size_height - 190);
+            HBRUSH n = CreateSolidBrush(RGB(33, 35, 39));
             HBRUSH o = (HBRUSH)SelectObject(hdc, n);
-
             Rectangle(hdc, 0, windows_size_height - 200, (progress / max_progress) * windows_size_width, windows_size_height - 190);
-
             SelectObject(hdc, o);
             DeleteObject(n);
 
+            GetClientRect(hWnd, &buffer);
+            BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
+            SelectObject(hdc, oldBitmap);
+            DeleteObject(newBitmap);
+            DeleteDC(hdc);
             EndPaint(hWnd, &ps);
         }
         break;
@@ -282,8 +308,8 @@ void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw
         RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height - 170};
     
         progress += 0.001;
-        InvalidateRect((HWND)dwUser, &r, TRUE);
-                
+        InvalidateRect((HWND)dwUser, &r, FALSE);
+        
         if (progress >= max_progress)
         {
             progress = 0;
