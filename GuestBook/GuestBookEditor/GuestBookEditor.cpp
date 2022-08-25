@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "GuestBookEditor.h"
+
 #include "mmsystem.h"
 
 #include <vector>
@@ -31,7 +32,22 @@ UINT progress_timer;
 ULONGLONG create_time;
 ULONGLONG current_time;
 
+bool is_progress_click = false;
+
 bool is_click = false;
+int current_x;
+int current_y;
+
+struct Point
+{
+    int current_x;
+    int current_y;
+    int x;
+    int y;
+    float time;
+};
+
+vector<Point> a;
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -151,7 +167,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         {
-            create_time = (DWORD)GetTickCount64();
         }
         break;
     case WM_KEYDOWN:
@@ -162,6 +177,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             switch (wParam)
             {
             case VK_LEFT:
+                InvalidateRect(hWnd, NULL, FALSE);
                 if (progress_timer != 0)
                 {
                     timeKillEvent(progress_timer);
@@ -176,39 +192,81 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case VK_UP:
                 current_time = (DWORD)GetTickCount64() - create_time;
                 max_progress = (float)current_time / 1000;
-
-                RECT r = {0, windows_size_height - 150, windows_size_width, windows_size_height - 140};
-                InvalidateRect(hWnd, NULL, FALSE);
+                
+                RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
+                InvalidateRect(hWnd, &r, FALSE);
                 break;
             }
         }
         break;
     case WM_LBUTTONUP:
         {
+            ReleaseCapture();
+            is_progress_click = false;
             is_click = false;
         }
         break;
     case WM_LBUTTONDOWN:
         {
+            SetCapture(hWnd);
+            if (create_time == 0)
+            {
+                create_time = (DWORD)GetTickCount64();
+            }
+            
             POINT point;
-            RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height - 170};
+            RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
             point.x = LOWORD(lParam);
             point.y = HIWORD(lParam);
             if (PtInRect(&r, point))
             {
-                progress = min(max((point.x * max_progress) / windows_size_width, 0), max_progress);
-                InvalidateRect(hWnd, NULL, FALSE);
-                is_click = true;
+                progress = min(max((point.x * max_progress) / 500, 0), max_progress);
+                InvalidateRect(hWnd, &r, FALSE);
+                is_progress_click = true;
             }
+
+            is_click = true;
+            current_x = LOWORD(lParam);
+            current_y = HIWORD(lParam);
         }
         break;
     case WM_MOUSEMOVE:
         {
-            if (is_click)
+            RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
+            RECT ar = {0, 0, windows_size_width, windows_size_height - 220};
+            if (is_progress_click)
             {
                 int x = LOWORD(lParam);
-                progress = min(max((x * max_progress) / windows_size_width, 0), max_progress);
-                InvalidateRect(hWnd, NULL, FALSE);
+                progress = min(max((x * max_progress) / 500, 0), max_progress);
+                InvalidateRect(hWnd, &r, FALSE);
+                InvalidateRect(hWnd, &ar, FALSE);
+            }
+            
+            POINT point;
+            point.x = LOWORD(lParam);
+            point.y = HIWORD(lParam);
+            if (is_click && PtInRect(&ar, point))
+            {
+                int x, y;
+                Point p;
+                HDC hdc;
+                hdc = GetDC(hWnd);
+                x = LOWORD(lParam);
+                y = HIWORD(lParam);
+                MoveToEx(hdc, current_x, current_y, NULL);
+                LineTo(hdc, x, y);
+                current_time = (DWORD)GetTickCount64() - create_time;
+                max_progress = (float)current_time / 1000;
+                p.current_x = current_x;
+                p.current_y = current_y;
+                p.x = x;
+                p.y = y;
+                p.time = (float)current_time / 1000;
+                a.push_back(p);
+                InvalidateRect(hWnd, &r, FALSE);
+                ReleaseDC(hWnd, hdc);
+                current_x = x;
+                current_y = y;
             }
         }
         break;
@@ -243,18 +301,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
             PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            
+
+            WCHAR word[1024];
             WCHAR progress_word[1024];
             SetBkMode(hdc, TRANSPARENT);
-            _stprintf_s(progress_word, L"%.2fs / %.2fs", progress, max_progress);
+            _stprintf_s(progress_word, L"%.3fs / %.3fs", progress, max_progress);
             TextOut(hdc, 0, windows_size_height - 220, progress_word, lstrlen(progress_word));
-            Rectangle(hdc, 0, windows_size_height - 200, windows_size_width, windows_size_height - 190);
-            HBRUSH n = CreateSolidBrush(RGB(33, 35, 39));
+            wsprintf(word, L"%d", a.size());
+            TextOut(hdc, 500, windows_size_height - 220, word, lstrlen(word));
+            Rectangle(hdc, 0, windows_size_height - 200, 500, windows_size_height - 190);
+            COLORREF c = RGB(30, 33, 35, 39);
+            HBRUSH n = CreateSolidBrush(c);
             HBRUSH o = (HBRUSH)SelectObject(hdc, n);
-            Rectangle(hdc, 0, windows_size_height - 200, (progress / max_progress) * windows_size_width, windows_size_height - 190);
+            Rectangle(hdc, 0, windows_size_height - 200, (progress / max_progress) * 500, windows_size_height - 190);
             SelectObject(hdc, o);
             DeleteObject(n);
 
+            POINT handle[5];
+            handle[0].x = (progress / max_progress) * 500 - 5;
+            handle[0].y = windows_size_height - 210;
+            handle[1].x = (progress / max_progress) * 500 - 5;
+            handle[1].y = windows_size_height - 200;
+            handle[2].x = (progress / max_progress) * 500;
+            handle[2].y = windows_size_height - 190;
+            handle[3].x = (progress / max_progress) * 500 + 5;
+            handle[3].y = windows_size_height - 200;
+            handle[4].x = (progress / max_progress) * 500 + 5;
+            handle[4].y = windows_size_height - 210;
+            Polygon(hdc, handle, 5);
+            
             GetClientRect(hWnd, &buffer);
             BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
             SelectObject(hdc, oldBitmap);
@@ -301,18 +376,29 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
+void A(HDC hdc, int idx)
+{
+    if (floor(a[idx].time * 1000) == floor(progress * 1000))
+    {
+        MoveToEx(hdc, a[idx].current_x, a[idx].current_y, NULL);
+        LineTo(hdc, a[idx].x, a[idx].y);
+    }
+}
+
 void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
+    
     if (uTimerID == progress_timer)
     {
-        RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height - 170};
+        RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
     
         progress += 0.001;
         InvalidateRect((HWND)dwUser, &r, FALSE);
         
-        if (progress >= max_progress)
+        if (floor(progress * 1000) >= floor(max_progress * 1000))
         {
             progress = 0;
+            InvalidateRect((HWND)dwUser, NULL, FALSE);
         }
     }
 }
