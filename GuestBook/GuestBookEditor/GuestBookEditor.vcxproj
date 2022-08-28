@@ -142,6 +142,9 @@
     <Image Include="GuestBookEditor.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\Hue.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
