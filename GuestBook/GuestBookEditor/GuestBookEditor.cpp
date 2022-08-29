@@ -59,10 +59,11 @@ int saturation_width = 200;
 int saturation_height = 200;
 
 bool is_hue_click;
+bool is_saturation_click;
 
-float hue; // 0 ~ 360
-float saturation; // 0 ~ 100
-float brightness; // 0 ~ 100
+double hue; // 0 ~ 360
+double saturation = 1; // 0 ~ 100
+double brightness; // 0 ~ 100
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -175,13 +176,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 void OnPaint(HDC hdc, LPARAM lParam)
 {
-    WCHAR word[1024];
+    WCHAR hue_word[1024];
     WCHAR progress_word[1024];
     SetBkMode(hdc, TRANSPARENT); // 텍스트 배경 삭제
     _stprintf_s(progress_word, L"%.3fs / %.3fs", progress, max_progress);
     TextOut(hdc, 0, windows_size_height - 220, progress_word, lstrlen(progress_word));
-    _stprintf_s(word, L"Hue: %.2f", hue);
-    TextOut(hdc, 355, 100 + (hue / 360.0f) * 200, word, lstrlen(word));
     Rectangle(hdc, 0, windows_size_height - 200, 500, windows_size_height - 190);
     COLORREF c = RGB(33, 35, 39);
     HBRUSH n = CreateSolidBrush(c);
@@ -209,8 +208,8 @@ void OnPaint(HDC hdc, LPARAM lParam)
         Point(saturation_position_x, saturation_position_y),
         Point(saturation_position_x + saturation_width, saturation_position_y),
         Color(0, 255, 255, 255),
-        HSVToRGB(332, 0.47, 1));
-    
+        HSVToRGB(360 - hue, 1, 1));
+
     Pen pen(&horizontal);
     graphics.FillRectangle(&horizontal, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
     
@@ -230,6 +229,14 @@ void OnPaint(HDC hdc, LPARAM lParam)
     graphics.DrawImage(&img, 320, 100, 30, 200);
 
     graphics.DrawRectangle(&outline, 319, 99, 31, 201);
+
+    SolidBrush sb(HSVToRGB(360 - hue, saturation, 1 - brightness));
+    graphics.FillRectangle(&sb, 370, 100, 100, 50);
+
+    graphics.DrawRectangle(&outline, 369, 99, 101, 51);
+
+    graphics.DrawEllipse(&outline, 330, 95 + (hue / 360) * 200, 10, 10);
+    graphics.DrawEllipse(&outline, saturation_position_x + (saturation / 1.0f) * saturation_width - 5, saturation_position_y + (brightness / 1.0f) * saturation_height - 5, 10, 10);
 }
 
 //
@@ -286,6 +293,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             is_progress_click = false;
             is_click = false;
             is_hue_click = false;
+            is_saturation_click = false;
         }
         break;
     case WM_LBUTTONDOWN:
@@ -299,6 +307,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             POINT point;
             RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
             RECT hue_area = {320, 100, 350, 300};
+            RECT saturation_area = { saturation_position_x, saturation_position_y, saturation_position_x + saturation_width, saturation_position_x + saturation_height };
             
             point.x = LOWORD(lParam);
             point.y = HIWORD(lParam);
@@ -314,6 +323,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 hue = min(max(((point.y - 100) * 360.0f) / 200, 0), 360.0f);
                 InvalidateRect(hWnd, NULL, FALSE);
                 is_hue_click = true;
+            }
+
+            if (PtInRect(&saturation_area, point))
+            {
+                saturation = min(max(((point.x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
+                brightness = min(max(((point.y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
+                InvalidateRect(hWnd, NULL, FALSE);
+                is_saturation_click = true;
             }
 
             //is_click = true;
@@ -342,6 +359,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 int y = HIWORD(lParam);
                 hue = min(max(((point.y - 100) * 360.0f) / 200, 0), 360.0f);
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
+
+            if (is_saturation_click)
+            {
+                int x = LOWORD(lParam);
+                int y = HIWORD(lParam);
+                saturation = min(max(((point.x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
+                brightness = min(max(((point.y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
                 InvalidateRect(hWnd, NULL, FALSE);
             }
             
@@ -535,7 +561,7 @@ Color HSVToRGB(double h, double s, double v)
             break;
         case 4:
             r = t;
-            g = q;
+            g = p;
             b = v;
             break;
         default:
