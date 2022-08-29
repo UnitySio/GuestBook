@@ -61,10 +61,13 @@ int saturation_height = 200;
 bool is_color_picker;
 bool is_hue_click;
 bool is_saturation_click;
+bool is_pen_size_click;
 
 double hue; // 0 ~ 360
 double saturation = 1; // 0 ~ 100
 double brightness; // 0 ~ 100
+
+double pen_size; // 0 ~ 255
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -179,6 +182,7 @@ void OnPaint(HDC hdc, LPARAM lParam)
 {
     WCHAR hue_word[1024];
     WCHAR saturation_word[1024];
+    WCHAR alpha_word[1024];
     WCHAR progress_word[1024];
     SetBkMode(hdc, TRANSPARENT); // 텍스트 배경 삭제
     _stprintf_s(progress_word, L"%.3fs / %.3fs", progress, max_progress);
@@ -208,17 +212,18 @@ void OnPaint(HDC hdc, LPARAM lParam)
     Graphics graphics(hdc);
 
     Pen outline(Color(255, 0, 0, 0));
+    Pen outline2(Color(255, 0, 0, 0), 3);
 
     if (is_color_picker)
     {
         SolidBrush bg(Color(255, 255, 255, 255));
-        graphics.FillRectangle(&bg, 80, 80, 410, 239);
-        graphics.DrawRectangle(&outline, 79, 79, 411, 240);
+        graphics.FillRectangle(&bg, 80, 80, 290, 289);
+        graphics.DrawRectangle(&outline, 79, 79, 291, 290);
 
         SolidBrush bga(Color(255, 255, 255, 255));
         graphics.FillRectangle(&bga, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
 
-        TextOut(hdc, 80, 60, L"Color Picker", 12);
+        TextOut(hdc, 80, 60, L"Pen Settings", 12);
 
         LinearGradientBrush horizontal(
             Point(saturation_position_x, saturation_position_y),
@@ -237,7 +242,6 @@ void OnPaint(HDC hdc, LPARAM lParam)
 
         Pen pen2(&vertical);
         graphics.FillRectangle(&vertical, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
-
         graphics.DrawRectangle(&outline, saturation_position_x - 1, saturation_position_y - 1, saturation_width + 1, saturation_height + 1);
 
         Image img(L"Resources/Hue.png");
@@ -245,13 +249,24 @@ void OnPaint(HDC hdc, LPARAM lParam)
 
         graphics.DrawRectangle(&outline, 319, 99, 31, 201);
 
+        LinearGradientBrush alpha_horizontal(
+            Point(100, 320),
+            Point(300, 320),
+            Color(0, 255, 255, 255),
+            Color(255, 0, 0, 0));
+
+        Pen pen3(&alpha_horizontal);
+        graphics.FillRectangle(&alpha_horizontal, 100, 320, 200, 30);
+        graphics.DrawRectangle(&outline, 99, 319, 201, 31);
+
         SolidBrush sb(HSVToRGB(360 - hue, saturation, 1 - brightness));
-        graphics.FillRectangle(&sb, 370, 100, 100, 50);
+        graphics.FillRectangle(&sb, 320, 320, 30, 30);
+        graphics.DrawRectangle(&outline, 319, 319, 31, 31);
 
-        graphics.DrawRectangle(&outline, 369, 99, 101, 51);
+        graphics.DrawEllipse(&outline2, 330, 95 + (hue / 360) * 200, 10, 10);
+        graphics.DrawEllipse(&outline2, saturation_position_x + (saturation / 1.0f) * saturation_width - 5, saturation_position_y + (brightness / 1.0f) * saturation_height - 5, 10, 10);
+        graphics.DrawEllipse(&outline2, 95 + (pen_size / 10) * 200, 330, 10, 10);
 
-        graphics.DrawEllipse(&outline, 330, 95 + (hue / 360) * 200, 10, 10);
-        graphics.DrawEllipse(&outline, saturation_position_x + (saturation / 1.0f) * saturation_width - 5, saturation_position_y + (brightness / 1.0f) * saturation_height - 5, 10, 10);
 
         if (is_hue_click)
         {
@@ -265,6 +280,13 @@ void OnPaint(HDC hdc, LPARAM lParam)
             _stprintf_s(saturation_word, L"H: %.f%% B: %.f%%", saturation * 100, brightness * 100);
             SetTextAlign(hdc, TA_CENTER);
             TextOut(hdc, saturation_position_x + (saturation / 1.0f) * saturation_width, saturation_position_y + (brightness / 1.0f) * saturation_height - 20, saturation_word, lstrlen(saturation_word));
+        }
+
+        if (is_pen_size_click)
+        {
+            _stprintf_s(alpha_word, L"Size: %.f", pen_size);
+            SetTextAlign(hdc, TA_CENTER);
+            TextOut(hdc, 100 + (pen_size / 10) * 200, 315, alpha_word, lstrlen(alpha_word));
         }
     }
 }
@@ -330,7 +352,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             is_click = false;
             is_hue_click = false;
             is_saturation_click = false;
-            InvalidateRect(hWnd, NULL, FALSE);
+            is_pen_size_click = false;
         }
         break;
     case WM_LBUTTONDOWN:
@@ -345,7 +367,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
             RECT hue_area = {320, 100, 350, 300};
             RECT saturation_area = { saturation_position_x, saturation_position_y, saturation_position_x + saturation_width, saturation_position_x + saturation_height };
-            
+            RECT alpha_area = { 100, 320, 300, 350 };
+
             point.x = LOWORD(lParam);
             point.y = HIWORD(lParam);
             if (PtInRect(&r, point))
@@ -354,25 +377,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 InvalidateRect(hWnd, NULL, FALSE);
                 is_progress_click = true;
             }
-            
-            if (PtInRect(&hue_area, point))
+
+            if (is_color_picker)
             {
-                hue = min(max(((point.y - 100) * 360.0f) / 200, 0), 360.0f);
-                InvalidateRect(hWnd, NULL, FALSE);
-                is_hue_click = true;
+                if (PtInRect(&hue_area, point))
+                {
+                    hue = min(max(((point.y - 100) * 360.0f) / 200, 0), 360.0f);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                    is_hue_click = true;
+                }
+
+                if (PtInRect(&saturation_area, point))
+                {
+                    saturation = min(max(((point.x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
+                    brightness = min(max(((point.y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                    is_saturation_click = true;
+                }
+
+                if (PtInRect(&alpha_area, point))
+                {
+                    pen_size = min(max(((point.x - 100) * 10.0f) / 200, 0), 10.0f);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                    is_pen_size_click = true;
+                }
             }
 
-            if (PtInRect(&saturation_area, point))
-            {
-                saturation = min(max(((point.x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
-                brightness = min(max(((point.y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
-                InvalidateRect(hWnd, NULL, FALSE);
-                is_saturation_click = true;
-            }
-
-            //is_click = true;
-
-            //is_click = true;
+            is_click = true;
             current_x = LOWORD(lParam);
             current_y = HIWORD(lParam);
         }
@@ -384,6 +415,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             point.y = HIWORD(lParam);
             RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
             RECT ar = {0, 0, windows_size_width, windows_size_height - 220};
+            RECT alpha_area = { 100, 320, 300, 350 };
+
             if (is_progress_click)
             {
                 int x = LOWORD(lParam);
@@ -395,7 +428,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (is_hue_click)
             {
                 int y = HIWORD(lParam);
-                hue = min(max(((point.y - 100) * 360.0f) / 200, 0), 360.0f);
+                hue = min(max(((y - 100) * 360.0f) / 200, 0), 360.0f);
                 InvalidateRect(hWnd, NULL, FALSE);
             }
 
@@ -403,8 +436,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 int x = LOWORD(lParam);
                 int y = HIWORD(lParam);
-                saturation = min(max(((point.x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
-                brightness = min(max(((point.y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
+                saturation = min(max(((x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
+                brightness = min(max(((y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
+
+            if (is_pen_size_click)
+            {
+                int x = LOWORD(lParam);
+                pen_size = min(max(((x - 100) * 10.0f) / 200, 0), 10.0f);
                 InvalidateRect(hWnd, NULL, FALSE);
             }
             
@@ -414,10 +454,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 tPoint p;
                 HDC hdc;
                 hdc = GetDC(hWnd);
+                Graphics graphics(hdc);
                 x = LOWORD(lParam);
                 y = HIWORD(lParam);
+                BYTE ar = HSVToRGB(360 - hue, saturation, 1 - brightness).GetR();
+                BYTE ag = HSVToRGB(360 - hue, saturation, 1 - brightness).GetG();
+                BYTE ab = HSVToRGB(360 - hue, saturation, 1 - brightness).GetB();
+                COLORREF as = RGB(ar, ag, ab);
+                HPEN n = CreatePen(PS_SOLID, (int)trunc(pen_size), as);
+                HPEN o = (HPEN)SelectObject(hdc, n);
                 MoveToEx(hdc, current_x, current_y, NULL);
                 LineTo(hdc, x, y);
+                SelectObject(hdc, o);
+                DeleteObject(n);
                 current_time = (DWORD)GetTickCount64() - create_time;
                 max_progress = (float)current_time / 1000;
                 p.current_x = current_x;
