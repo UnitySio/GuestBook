@@ -58,6 +58,7 @@ int saturation_position_y = 100;
 int saturation_width = 200;
 int saturation_height = 200;
 
+bool is_color_picker;
 bool is_hue_click;
 bool is_saturation_click;
 
@@ -177,6 +178,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 void OnPaint(HDC hdc, LPARAM lParam)
 {
     WCHAR hue_word[1024];
+    WCHAR saturation_word[1024];
     WCHAR progress_word[1024];
     SetBkMode(hdc, TRANSPARENT); // 텍스트 배경 삭제
     _stprintf_s(progress_word, L"%.3fs / %.3fs", progress, max_progress);
@@ -204,39 +206,67 @@ void OnPaint(HDC hdc, LPARAM lParam)
 
     // Color Picker
     Graphics graphics(hdc);
-    LinearGradientBrush horizontal(
-        Point(saturation_position_x, saturation_position_y),
-        Point(saturation_position_x + saturation_width, saturation_position_y),
-        Color(0, 255, 255, 255),
-        HSVToRGB(360 - hue, 1, 1));
-
-    Pen pen(&horizontal);
-    graphics.FillRectangle(&horizontal, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
-    
-    LinearGradientBrush vertical(
-        Point(saturation_position_x, saturation_position_y + saturation_height),
-        Point(saturation_position_x, saturation_position_y),
-        Color(255, 0, 0, 0),
-        Color(0, 255, 255, 255));
-    
-    Pen pen2(&vertical);
-    graphics.FillRectangle(&vertical, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
 
     Pen outline(Color(255, 0, 0, 0));
-    graphics.DrawRectangle(&outline, saturation_position_x - 1, saturation_position_y - 1, saturation_width + 1, saturation_height + 1);
 
-    Image img(L"Resources/Hue.png");
-    graphics.DrawImage(&img, 320, 100, 30, 200);
+    if (is_color_picker)
+    {
+        SolidBrush bg(Color(255, 255, 255, 255));
+        graphics.FillRectangle(&bg, 80, 80, 410, 239);
+        graphics.DrawRectangle(&outline, 79, 79, 411, 240);
 
-    graphics.DrawRectangle(&outline, 319, 99, 31, 201);
+        SolidBrush bga(Color(255, 255, 255, 255));
+        graphics.FillRectangle(&bga, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
 
-    SolidBrush sb(HSVToRGB(360 - hue, saturation, 1 - brightness));
-    graphics.FillRectangle(&sb, 370, 100, 100, 50);
+        TextOut(hdc, 80, 60, L"Color Picker", 12);
 
-    graphics.DrawRectangle(&outline, 369, 99, 101, 51);
+        LinearGradientBrush horizontal(
+            Point(saturation_position_x, saturation_position_y),
+            Point(saturation_position_x + saturation_width, saturation_position_y),
+            Color(0, 255, 255, 255),
+            HSVToRGB(360 - hue, 1, 1));
 
-    graphics.DrawEllipse(&outline, 330, 95 + (hue / 360) * 200, 10, 10);
-    graphics.DrawEllipse(&outline, saturation_position_x + (saturation / 1.0f) * saturation_width - 5, saturation_position_y + (brightness / 1.0f) * saturation_height - 5, 10, 10);
+        Pen pen(&horizontal);
+        graphics.FillRectangle(&horizontal, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
+
+        LinearGradientBrush vertical(
+            Point(saturation_position_x, saturation_position_y + saturation_height),
+            Point(saturation_position_x, saturation_position_y),
+            Color(255, 0, 0, 0),
+            Color(0, 255, 255, 255));
+
+        Pen pen2(&vertical);
+        graphics.FillRectangle(&vertical, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
+
+        graphics.DrawRectangle(&outline, saturation_position_x - 1, saturation_position_y - 1, saturation_width + 1, saturation_height + 1);
+
+        Image img(L"Resources/Hue.png");
+        graphics.DrawImage(&img, 320, 100, 30, 200);
+
+        graphics.DrawRectangle(&outline, 319, 99, 31, 201);
+
+        SolidBrush sb(HSVToRGB(360 - hue, saturation, 1 - brightness));
+        graphics.FillRectangle(&sb, 370, 100, 100, 50);
+
+        graphics.DrawRectangle(&outline, 369, 99, 101, 51);
+
+        graphics.DrawEllipse(&outline, 330, 95 + (hue / 360) * 200, 10, 10);
+        graphics.DrawEllipse(&outline, saturation_position_x + (saturation / 1.0f) * saturation_width - 5, saturation_position_y + (brightness / 1.0f) * saturation_height - 5, 10, 10);
+
+        if (is_hue_click)
+        {
+            _stprintf_s(hue_word, L"V: %.f°", 360 - hue);
+            SetTextAlign(hdc, TA_CENTER);
+            TextOut(hdc, 340, 80 + (hue / 360) * 200, hue_word, lstrlen(hue_word));
+        }
+
+        if (is_saturation_click)
+        {
+            _stprintf_s(saturation_word, L"H: %.f%% B: %.f%%", saturation * 100, brightness * 100);
+            SetTextAlign(hdc, TA_CENTER);
+            TextOut(hdc, saturation_position_x + (saturation / 1.0f) * saturation_width, saturation_position_y + (brightness / 1.0f) * saturation_height - 20, saturation_word, lstrlen(saturation_word));
+        }
+    }
 }
 
 //
@@ -287,6 +317,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_RBUTTONDOWN:
+        {
+            is_color_picker = !is_color_picker;
+            InvalidateRect(hWnd, NULL, FALSE);
+        }
+        break;
     case WM_LBUTTONUP:
         {
             ReleaseCapture();
@@ -294,6 +330,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             is_click = false;
             is_hue_click = false;
             is_saturation_click = false;
+            InvalidateRect(hWnd, NULL, FALSE);
         }
         break;
     case WM_LBUTTONDOWN:
