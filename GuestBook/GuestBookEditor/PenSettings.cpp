@@ -114,7 +114,7 @@ void PenSettings::Draw(HDC hdc)
     SetBkMode(hdc, TRANSPARENT);
 
     Pen black_outline(Color(255, 0, 0, 0));
-    Pen black_outline_temp(Color(255, 0, 0, 0), 3);
+    Pen white_outline(Color(200, 255, 255, 255), 3);
     
     SolidBrush white_background(Color(255, 255, 255, 255));
 
@@ -145,7 +145,7 @@ void PenSettings::Draw(HDC hdc)
     graphics.FillRectangle(&palette_vertical, palette_x_, palette_y_, palette_width_, palette_height_);
     graphics.DrawRectangle(&black_outline, palette_x_ - 1, palette_y_ - 1, palette_width_ + 1, palette_height_ + 1);
 
-    graphics.DrawEllipse(&black_outline_temp, palette_x_ + (s_ / 1.0f) * palette_width_ - 5, palette_y_ + (v_ / 1.0f) * palette_height_ - 5, 10, 10);
+    graphics.DrawEllipse(&white_outline, palette_x_ + (s_ / 1.0f) * palette_width_ - 5, palette_y_ + (v_ / 1.0f) * palette_height_ - 5, 10, 10);
     
     // 색상 슬라이더
     hue_slider_x_ = palette_x_ + palette_width_ + 30;
@@ -157,7 +157,7 @@ void PenSettings::Draw(HDC hdc)
     graphics.DrawImage(&hue_slider_image, hue_slider_x_, hue_slider_y_, hue_slider_width_, hue_slider_height_);
     graphics.DrawRectangle(&black_outline, hue_slider_x_ - 1, hue_slider_y_ - 1, hue_slider_width_ + 1, hue_slider_height_ + 1);
 
-    graphics.DrawEllipse(&black_outline_temp, hue_slider_x_ + 10, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5, 10, 10);
+    graphics.DrawEllipse(&white_outline, hue_slider_x_ + 10, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5, 10, 10);
     
     // 팬 크기 슬라이더
     pen_size_slider_x_ = palette_x_;
@@ -174,7 +174,7 @@ void PenSettings::Draw(HDC hdc)
     graphics.FillRectangle(&pen_size_slider_horizontal, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
     graphics.DrawRectangle(&black_outline, pen_size_slider_x_ - 1, pen_size_slider_y_ - 1, pen_size_slider_width_ + 1, pen_size_slider_height_ + 1);
 
-    graphics.DrawEllipse(&black_outline_temp, pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + 10, 10, 10);
+    graphics.DrawEllipse(&white_outline, pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + 10, 10, 10);
     
     WCHAR pen_size_word[1024];
     _stprintf_s(pen_size_word, L"%.lf", pen_size_);
