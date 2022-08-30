@@ -22,6 +22,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+void OnPaint(HDC hdc);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -110,7 +111,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      0, 0, 1280, 720, nullptr, nullptr, hInstance, nullptr);
+      0, 0, 640, 480, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -121,16 +122,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    UpdateWindow(hWnd);
 
    return TRUE;
-}
-
-void OnPaint(HDC hdc)
-{
-    Graphics graphics(hdc);
-    
-    if (pen_settings.IsOpen())
-    {
-        pen_settings.Draw(windows_size, graphics);
-    }
 }
 
 //
@@ -149,6 +140,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         {
+            pen_settings.Initialize(hWnd);
         }
         break;
     case WM_COMMAND:
@@ -174,13 +166,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.x = LOWORD(lParam);
             mouse_position.y = HIWORD(lParam);
             
-            pen_settings.Open(mouse_position);
-            InvalidateRect(hWnd, NULL, FALSE);
+            pen_settings.Open(windows_size,mouse_position);
         }
         break;
     case WM_LBUTTONUP:
         {
-            pen_settings.Up();
+            pen_settings.MouseUp();
         }
         break;
     case WM_LBUTTONDOWN:
@@ -189,8 +180,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.x = LOWORD(lParam);
             mouse_position.y = HIWORD(lParam);
             
-            pen_settings.Down(mouse_position);
-            InvalidateRect(hWnd, NULL, FALSE);
+            pen_settings.MouseDown(mouse_position);
         }
         break;
     case WM_MOUSEMOVE:
@@ -199,8 +189,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.x = LOWORD(lParam);
             mouse_position.y = HIWORD(lParam);
             
-            pen_settings.Move(mouse_position);
-            InvalidateRect(hWnd, NULL, FALSE);
+            pen_settings.MouseMove(mouse_position);
         }
         break;
     case WM_PAINT:
@@ -261,4 +250,12 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+void OnPaint(HDC hdc)
+{
+    if (pen_settings.IsOpen())
+    {
+        pen_settings.Draw(hdc);
+    }
 }
