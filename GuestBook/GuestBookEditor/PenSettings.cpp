@@ -2,6 +2,7 @@
 
 PenSettings::PenSettings()
 {
+    current_select_color = HSVToRGB(360.0f, 1.0f, 1.0f);
 }
 
 PenSettings::~PenSettings()
@@ -114,16 +115,23 @@ void PenSettings::Draw(HDC hdc)
     SetBkMode(hdc, TRANSPARENT);
 
     Pen black_outline(Color(255, 0, 0, 0));
-    Pen white_outline(Color(200, 255, 255, 255), 3);
+    Pen white_outline(Color(200, 255, 255, 255), 2);
     
     SolidBrush white_background(Color(255, 255, 255, 255));
 
     graphics.FillRectangle(&white_background, x_, y_, width_, height_);
     graphics.DrawRectangle(&black_outline, x_ - 1, y_ - 1, width_ + 1, height_ + 1);
 
+    FontFamily arial_font(L"Arial");
+    Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+    SolidBrush font_color(Color(255, 0, 0, 0));
+
+    PointF header_font_position(x_ + 5, y_ + 13);
+    graphics.DrawString(L"펜 설정", -1, &font_style, header_font_position, &font_color);
+
     // 팔레트
     palette_x_ = x_ + 20;
-    palette_y_ = y_ + 20;
+    palette_y_ = y_ + 40;
 
     SolidBrush palette_background(Color(255, 255, 255, 255));
     graphics.FillRectangle(&palette_background, palette_x_, palette_y_, palette_width_, palette_height_);
@@ -179,12 +187,9 @@ void PenSettings::Draw(HDC hdc)
     WCHAR pen_size_word[1024];
     _stprintf_s(pen_size_word, L"%.lf", pen_size_);
     
-    FontFamily fontFamily(L"Arial");
-    Font font(&fontFamily, 16, FontStyleRegular, UnitPixel);
-    PointF pointF(pen_size_slider_x_ + 5, pen_size_slider_y_ + 5);
-    SolidBrush solidBrush(Color(255, 0, 0, 0));
+    PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 7);
 
-    graphics.DrawString(pen_size_word, -1, &font, pointF, &solidBrush);
+    graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &font_color);
 
     current_select_color = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 

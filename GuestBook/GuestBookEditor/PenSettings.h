@@ -1,8 +1,6 @@
 ﻿#pragma once
 #include "framework.h"
 
-#include <cmath>
-
 class PenSettings
 {
 private:
@@ -12,7 +10,7 @@ private:
     int x_;
     int y_;
     int width_ = 300;
-    int height_ = 300;
+    int height_ = 320;
     
     double h_; // 색상(Hue)
     double s_ = 1; // 채도(Saturation)

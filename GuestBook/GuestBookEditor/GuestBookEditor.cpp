@@ -17,6 +17,9 @@ POINT windows_size;
 
 PenSettings pen_settings;
 
+bool is_click;
+int current_x, current_y;
+
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
@@ -172,6 +175,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONUP:
         {
             pen_settings.MouseUp();
+            is_click = false;
         }
         break;
     case WM_LBUTTONDOWN:
@@ -181,6 +185,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.y = HIWORD(lParam);
             
             pen_settings.MouseDown(mouse_position);
+
+            is_click = true;
+            current_x = LOWORD(lParam);
+            current_y = HIWORD(lParam);
         }
         break;
     case WM_MOUSEMOVE:
@@ -190,6 +198,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.y = HIWORD(lParam);
             
             pen_settings.MouseMove(mouse_position);
+
+            if (is_click)
+            {
+                HDC hdc;
+                hdc = GetDC(hWnd);
+                COLORREF as = RGB(pen_settings.GetR(), pen_settings.GetG(), pen_settings.GetB());
+                HPEN n = CreatePen(PS_SOLID, (int)trunc(pen_settings.GetPenSize()), as);
+                HPEN o = (HPEN)SelectObject(hdc, n);
+                MoveToEx(hdc, current_x, current_y, NULL);
+                LineTo(hdc, mouse_position.x, mouse_position.y);
+                SelectObject(hdc, o);
+                DeleteObject(n);
+                ReleaseDC(hWnd, hdc);
+                current_x = mouse_position.x;
+                current_y = mouse_position.y;
+            }
         }
         break;
     case WM_PAINT:

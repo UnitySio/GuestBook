@@ -18,6 +18,7 @@
 
 #include <Ole2.h>
 #include <gdiplus.h>
+#include <cmath>
 
 using namespace std;
 using namespace Gdiplus;
