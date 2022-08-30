@@ -9,7 +9,7 @@ private:
     // 생성될 x, y 좌표
     int x_;
     int y_;
-    int width_ = 300;
+    int width_ = 280;
     int height_ = 320;
     
     double h_; // 색상(Hue)
@@ -64,7 +64,7 @@ public:
     void Initialize(HWND hWnd);
     
     bool IsOpen();
-    
+
     void MouseUp();
     void MouseDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);

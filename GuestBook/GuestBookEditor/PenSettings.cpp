@@ -26,7 +26,6 @@ void PenSettings::MouseUp()
     is_pen_size_slider_click_ = false;
 }
 
-
 void PenSettings::MouseDown(POINT mouse_position)
 {
     if (PtInRect(&palette_area, mouse_position))
@@ -99,7 +98,7 @@ void PenSettings::Open(POINT windows_size, POINT mouse_position)
             y_ -= height_;
         }
 
-        pen_settings_area = { x_ - 1, y_ - 1, x_ + width_ + 1, y_ + height_ + 1 };
+        pen_settings_area = { x_, y_, x_ + width_, y_ + height_ };
     }
     
     is_pen_settings_open_ = !is_pen_settings_open_;
@@ -115,19 +114,19 @@ void PenSettings::Draw(HDC hdc)
     SetBkMode(hdc, TRANSPARENT);
 
     Pen black_outline(Color(255, 0, 0, 0));
-    Pen white_outline(Color(200, 255, 255, 255), 2);
+    Pen white_outline(Color(200, 255, 255, 255));
     
-    SolidBrush white_background(Color(255, 255, 255, 255));
-
-    graphics.FillRectangle(&white_background, x_, y_, width_, height_);
-    graphics.DrawRectangle(&black_outline, x_ - 1, y_ - 1, width_ + 1, height_ + 1);
+    SolidBrush white_brush(Color(255, 255, 255, 255));
+    SolidBrush black_brush(Color(255, 0, 0, 0));
+    
+    SolidBrush background(Color(255, 37, 41, 53));
+    graphics.FillRectangle(&background, x_, y_, width_, height_);
 
     FontFamily arial_font(L"Arial");
     Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
-    SolidBrush font_color(Color(255, 0, 0, 0));
 
-    PointF header_font_position(x_ + 5, y_ + 13);
-    graphics.DrawString(L"펜 설정", -1, &font_style, header_font_position, &font_color);
+    PointF header_font_position(x_ + 20, y_ + 13);
+    graphics.DrawString(L"Quick Pen Settings", -1, &font_style, header_font_position, &white_brush);
 
     // 팔레트
     palette_x_ = x_ + 20;
@@ -151,36 +150,33 @@ void PenSettings::Draw(HDC hdc)
         Color(0, 255, 255, 255));
     
     graphics.FillRectangle(&palette_vertical, palette_x_, palette_y_, palette_width_, palette_height_);
-    graphics.DrawRectangle(&black_outline, palette_x_ - 1, palette_y_ - 1, palette_width_ + 1, palette_height_ + 1);
 
     graphics.DrawEllipse(&white_outline, palette_x_ + (s_ / 1.0f) * palette_width_ - 5, palette_y_ + (v_ / 1.0f) * palette_height_ - 5, 10, 10);
     
     // 색상 슬라이더
-    hue_slider_x_ = palette_x_ + palette_width_ + 30;
+    hue_slider_x_ = palette_x_ + palette_width_ + 10;
     hue_slider_y_ = palette_y_;
 
-    graphics.FillRectangle(&white_background, hue_slider_x_, hue_slider_y_, hue_slider_width_, hue_slider_height_);
+    graphics.FillRectangle(&white_brush, hue_slider_x_, hue_slider_y_, hue_slider_width_, hue_slider_height_);
     
     Image hue_slider_image(L"Resources/Hue.png");
     graphics.DrawImage(&hue_slider_image, hue_slider_x_, hue_slider_y_, hue_slider_width_, hue_slider_height_);
-    graphics.DrawRectangle(&black_outline, hue_slider_x_ - 1, hue_slider_y_ - 1, hue_slider_width_ + 1, hue_slider_height_ + 1);
 
     graphics.DrawEllipse(&white_outline, hue_slider_x_ + 10, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5, 10, 10);
     
     // 팬 크기 슬라이더
     pen_size_slider_x_ = palette_x_;
-    pen_size_slider_y_ = palette_y_ + palette_height_ + 30;
+    pen_size_slider_y_ = palette_y_ + palette_height_ + 10;
 
-    graphics.FillRectangle(&white_background, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
+    graphics.FillRectangle(&white_brush, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
     
     LinearGradientBrush pen_size_slider_horizontal(
         Point(pen_size_slider_x_, pen_size_slider_y_),
         Point(pen_size_slider_x_ + pen_size_slider_width_, pen_size_slider_y_),
         Color(0, 255, 255, 255),
-        Color(255, 0, 0, 0));
+        Color(255, 200, 200, 200));
     
     graphics.FillRectangle(&pen_size_slider_horizontal, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
-    graphics.DrawRectangle(&black_outline, pen_size_slider_x_ - 1, pen_size_slider_y_ - 1, pen_size_slider_width_ + 1, pen_size_slider_height_ + 1);
 
     graphics.DrawEllipse(&white_outline, pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + 10, 10, 10);
     
@@ -188,22 +184,26 @@ void PenSettings::Draw(HDC hdc)
     _stprintf_s(pen_size_word, L"%.lf", pen_size_);
     
     PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 7);
-
-    graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &font_color);
+    graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &black_brush);
 
     current_select_color = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
     // 색상 미리보기
-    color_preview_x_ = pen_size_slider_x_ + pen_size_slider_width_ + 30;
+    color_preview_x_ = pen_size_slider_x_ + pen_size_slider_width_ + 10;
     color_preview_y_ = pen_size_slider_y_;
     
     SolidBrush color_preview(current_select_color);
     graphics.FillRectangle(&color_preview, color_preview_x_, color_preview_y_, color_preview_width_, color_preview_height_);
-    graphics.DrawRectangle(&black_outline, color_preview_x_ - 1, color_preview_y_ - 1, color_preview_width_ + 1, color_preview_height_ + 1);
 
     palette_area = { palette_x_ - 10, palette_y_ - 10, palette_x_ + palette_width_ + 10, palette_y_ + palette_height_ + 10 };
     hue_slider_area = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };
     pen_size_slider_area = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
+
+    WCHAR rgb_word[1024];
+    wsprintf(rgb_word, L"RGB: %d, %d, %d", GetR(), GetG(), GetB());
+    
+    PointF rgb_font_position(pen_size_slider_x_, pen_size_slider_y_ + pen_size_slider_height_ + 13);
+    graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &white_brush);
 }
 
 double PenSettings::GetPenSize()
@@ -214,7 +214,6 @@ double PenSettings::GetPenSize()
 // HSV 값을 RGB 값으로 변환
 Color PenSettings::HSVToRGB(double h, double s, double v)
 {
-    
     double r = 0;
     double g = 0;
     double b = 0;
