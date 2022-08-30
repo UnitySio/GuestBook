@@ -199,7 +199,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             
             pen_settings.MouseMove(mouse_position);
 
-            if (is_click)
+            if (is_click && pen_settings.IsOpen() == false)
             {
                 HDC hdc;
                 hdc = GetDC(hWnd);
