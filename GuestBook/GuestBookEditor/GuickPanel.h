@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "framework.h"
 
-class PenSettings
+class GuickPanel
 {
 private:
     HWND hWnd;
@@ -56,13 +56,13 @@ private:
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
 
-    void GetClientArea();
+    void UpdateWindowsArea();
     void PaletteControl(POINT mouse_position);
     void HueSliderControl(POINT mouse_position);
     void PenSizeSliderControl(POINT mouse_position);
 public:
-    PenSettings(HWND hWnd);
-    ~PenSettings();
+    GuickPanel(HWND hWnd);
+    ~GuickPanel();
     
     bool IsOpen();
 
