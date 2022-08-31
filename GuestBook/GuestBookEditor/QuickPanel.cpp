@@ -230,7 +230,7 @@ void QuickPanel::Draw(HDC hdc)
         graphics.FillPolygon(&white_brush, bottom_points, 3);
 
         WCHAR pen_size_word[1024];
-        _stprintf_s(pen_size_word, L"%.lf", pen_size_);
+        wsprintf(pen_size_word, L"%dpx", (int)trunc(pen_size_));
 
         PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 7);
         graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &black_brush);
