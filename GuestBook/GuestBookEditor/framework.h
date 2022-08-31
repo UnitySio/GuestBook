@@ -13,3 +13,15 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+#include "mmsystem.h"
+
+#include <Ole2.h>
+#include <gdiplus.h>
+#include <cmath>
+
+using namespace std;
+using namespace Gdiplus;
+
+#pragma comment(lib, "winmm.lib");
+#pragma comment(lib, "Gdiplus.lib");

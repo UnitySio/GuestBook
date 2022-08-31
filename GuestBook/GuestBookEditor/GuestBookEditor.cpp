@@ -4,10 +4,7 @@
 #include "framework.h"
 #include "GuestBookEditor.h"
 
-#include <string>
-#include <vector>
-
-using namespace std;
+#include "PenSettings.h"
 
 #define MAX_LOADSTRING 100
 
@@ -16,24 +13,15 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 
+bool is_click;
+int current_x, current_y;
+
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-
-// 윈도우 크기
-const int windows_size_width = 1280;
-const int windows_size_height = 720;
-
-// 프레임
-const int frame_rate = 60;
-
-// 타임라인 진행률
-float progress = 0; // 현재 진행률
-float max_progress = 13; // 진행률 최대치 (추후 기록된 시간의 합으로 값을 적용하여 동작)
-
-vector<ULONGLONG> times;
+void OnPaint(HDC hdc);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -44,12 +32,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: 여기에 코드를 입력합니다.
+    
+    GdiplusStartupInput gdiplus_startup_input;
+    ULONG_PTR gdiplus_token;
+
+    GdiplusStartup(&gdiplus_token, &gdiplus_startup_input, NULL);
 
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_GUESTBOOKEDITOR, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
-
+    
     // 애플리케이션 초기화를 수행합니다:
     if (!InitInstance (hInstance, nCmdShow))
     {
@@ -69,7 +62,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
     }
-
+    
+    GdiplusShutdown(gdiplus_token);
     return (int) msg.wParam;
 }
 
@@ -115,8 +109,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU,
-      0, 0, windows_size_width, windows_size_height, nullptr, nullptr, hInstance, nullptr);
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+      0, 0, 1280, 720, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -141,24 +135,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static PenSettings *pen_settings;
+    POINT mouse_position;
+
     switch (message)
     {
     case WM_CREATE:
         {
-            
-        }
-        break;
-    case WM_KEYDOWN:
-        {
-            switch (wParam)
-            {
-            case VK_LEFT:
-                SetTimer(hWnd, 1, 1000 / frame_rate, NULL);
-                break;
-            case VK_RIGHT:
-                KillTimer(hWnd, 1);
-                break;
-            }
+            pen_settings = new PenSettings(hWnd);
         }
         break;
     case WM_COMMAND:
@@ -178,38 +162,84 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
-    case WM_PAINT:
+    case WM_RBUTTONDOWN:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            WCHAR fps_word[1024];
-            WCHAR progress_word[1024];
-            wsprintf(fps_word, L"FPS: %d", frame_rate);
-            TextOut(hdc, 0, 0, fps_word, lstrlen(fps_word));
-            Rectangle(hdc, 0, windows_size_height - 200, (progress / max_progress) * windows_size_width, windows_size_height - 190);
-            wsprintf(progress_word, L"Frame: %d / %d", (int)progress, (int)max_progress);
-            TextOut(hdc, 0, windows_size_height - 220, progress_word, lstrlen(progress_word));
-            EndPaint(hWnd, &ps);
+            mouse_position.x = LOWORD(lParam);
+            mouse_position.y = HIWORD(lParam);
+            
+            pen_settings->Open(mouse_position); // 팬 설정을 여는 함수
         }
         break;
-    case WM_TIMER:
+    case WM_LBUTTONUP:
         {
-            switch (wParam)
+            pen_settings->MouseUp(); // 팬 설정이 열려있을 때 마우스 클릭에 대한 함수
+            is_click = false;
+        }
+        break;
+    case WM_LBUTTONDOWN:
+        {
+            mouse_position.x = LOWORD(lParam);
+            mouse_position.y = HIWORD(lParam);
+            
+            pen_settings->MouseDown(mouse_position); // 팬 설정이 열려있을 때 마우스 클릭에 대한 함수
+
+            is_click = true;
+            current_x = LOWORD(lParam);
+            current_y = HIWORD(lParam);
+        }
+        break;
+    case WM_MOUSEMOVE:
+        {
+            mouse_position.x = LOWORD(lParam);
+            mouse_position.y = HIWORD(lParam);
+
+            pen_settings->MouseMove(mouse_position); // 팬 설정이 열려있을 때 마우스 움직임에 대한 함수
+
+            if (is_click && pen_settings->IsOpen() == false)
             {
-            case 1:
-                progress++;
-                InvalidateRect(hWnd, NULL, TRUE);
-                
-                if (progress == max_progress)
-                {
-                    progress = 0;
-                }
-                break;
+                HDC hdc;
+                hdc = GetDC(hWnd);
+                COLORREF as = RGB(pen_settings->GetR(), pen_settings->GetG(), pen_settings->GetB());
+                HPEN n = CreatePen(PS_SOLID, (int)trunc(pen_settings->GetPenSize()), as);
+                HPEN o = (HPEN)SelectObject(hdc, n);
+                MoveToEx(hdc, current_x, current_y, NULL);
+                LineTo(hdc, mouse_position.x, mouse_position.y);
+                SelectObject(hdc, o);
+                DeleteObject(n);
+                ReleaseDC(hWnd, hdc);
+                current_x = mouse_position.x;
+                current_y = mouse_position.y;
             }
         }
         break;
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc, memDC;
+            HBITMAP newBitmap, oldBitmap;
+            RECT buffer;
+            memDC = BeginPaint(hWnd, &ps);
+
+            GetClientRect(hWnd, &buffer);
+            hdc = CreateCompatibleDC(memDC);
+            newBitmap = CreateCompatibleBitmap(memDC, buffer.right, buffer.bottom);
+            oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
+            PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
+            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+            
+            OnPaint(hdc);
+            pen_settings->Draw(hdc); // 팬 설정 그리기
+            
+            GetClientRect(hWnd, &buffer);
+            BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
+            SelectObject(hdc, oldBitmap);
+            DeleteObject(newBitmap);
+            DeleteDC(hdc);
+            EndPaint(hWnd, &ps);
+        }
+        break;
     case WM_DESTROY:
+        delete pen_settings;
         PostQuitMessage(0);
         break;
     default:
@@ -236,4 +266,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+void OnPaint(HDC hdc)
+{
 }

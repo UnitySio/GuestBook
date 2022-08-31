@@ -27,9 +27,15 @@
     <ClInclude Include="GuestBookEditor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="PenSettings.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GuestBookEditor.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="PenSettings.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
