@@ -3,7 +3,7 @@
 
 #include "framework.h"
 #include "GuestBookEditor.h"
-#include "GuickPanel.h"
+#include "QuickPanel.h"
 
 #define MAX_LOADSTRING 100
 
@@ -137,7 +137,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static GuickPanel *quick_panel;
+    static QuickPanel *quick_panel;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -148,7 +148,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         {
-            quick_panel = new GuickPanel(hWnd);
+            quick_panel = new QuickPanel(hWnd);
         }
         break;
     case WM_COMMAND:

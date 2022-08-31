@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -129,13 +129,13 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="GuestBookEditor.h" />
-    <ClInclude Include="GuickPanel.h" />
+    <ClInclude Include="QuickPanel.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GuestBookEditor.cpp" />
-    <ClCompile Include="GuickPanel.cpp" />
+    <ClCompile Include="QuickPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GuestBookEditor.rc" />

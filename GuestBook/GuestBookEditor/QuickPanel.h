@@ -1,7 +1,8 @@
 ﻿#pragma once
+
 #include "framework.h"
 
-class GuickPanel
+class QuickPanel
 {
 private:
     HWND hWnd;
@@ -11,8 +12,8 @@ private:
     // 생성될 x, y 좌표
     int x_;
     int y_;
-    int width_ = 280;
-    int height_ = 320;
+    int width_ = 420; // 280
+    int height_ = 300;
     
     double h_; // 색상(Hue)
     double s_ = 1; // 채도(Saturation)
@@ -20,7 +21,7 @@ private:
     double pen_size_; // 팬 크기
 
     // 영역
-    RECT pen_settings_area;
+    RECT quick_panel_area;
     RECT palette_area;
     RECT hue_slider_area;
     RECT pen_size_slider_area;
@@ -51,7 +52,7 @@ private:
     
     Color current_select_color = HSVToRGB(360.0f - h_, s_, 1.0f - v_);;
     
-    bool is_pen_settings_open_;
+    bool is_quick_panel_open_;
     bool is_palette_click_;
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
@@ -61,8 +62,8 @@ private:
     void HueSliderControl(POINT mouse_position);
     void PenSizeSliderControl(POINT mouse_position);
 public:
-    GuickPanel(HWND hWnd);
-    ~GuickPanel();
+    QuickPanel(HWND hWnd);
+    ~QuickPanel();
     
     bool IsOpen();
 

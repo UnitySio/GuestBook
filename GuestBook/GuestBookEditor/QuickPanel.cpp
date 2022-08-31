@@ -1,30 +1,30 @@
-﻿#include "GuickPanel.h"
+﻿#include "QuickPanel.h"
 
-GuickPanel::GuickPanel(HWND hWnd)
+QuickPanel::QuickPanel(HWND hWnd)
 {
     this->hWnd = hWnd;
     UpdateWindowsArea();
 }
 
-GuickPanel::~GuickPanel()
+QuickPanel::~QuickPanel()
 {
 }
 
-bool GuickPanel::IsOpen()
+bool QuickPanel::IsOpen()
 {
-    return is_pen_settings_open_;
+    return is_quick_panel_open_;
 }
 
-void GuickPanel::UpdateWindowsArea()
+void QuickPanel::UpdateWindowsArea()
 {
     GetClientRect(hWnd, &client_area);
     windows_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
 }
 
 
-void GuickPanel::MouseUp()
+void QuickPanel::MouseUp()
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
         ReleaseCapture();
         is_palette_click_ = false;
@@ -33,9 +33,9 @@ void GuickPanel::MouseUp()
     }
 }
 
-void GuickPanel::MouseDown(POINT mouse_position)
+void QuickPanel::MouseDown(POINT mouse_position)
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
         SetCapture(hWnd);
         if (PtInRect(&palette_area, mouse_position))
@@ -56,9 +56,9 @@ void GuickPanel::MouseDown(POINT mouse_position)
     }
 }
 
-void GuickPanel::MouseMove(POINT mouse_position)
+void QuickPanel::MouseMove(POINT mouse_position)
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
         if (PtInRect(&windows_area, mouse_position) == false)
         {
@@ -80,28 +80,28 @@ void GuickPanel::MouseMove(POINT mouse_position)
     }
 }
 
-void GuickPanel::PaletteControl(POINT mouse_position)
+void QuickPanel::PaletteControl(POINT mouse_position)
 {
     s_ = min(max(((mouse_position.x - palette_x_) * 1.0f) / palette_width_, 0), 1.0f);
     v_ = min(max(((mouse_position.y - palette_y_) * 1.0f) / palette_height_, 0), 1.0f);
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void GuickPanel::HueSliderControl(POINT mouse_position)
+void QuickPanel::HueSliderControl(POINT mouse_position)
 {
     h_ = min(max(((mouse_position.y - hue_slider_y_) * 360.0f) / hue_slider_height_, 0), 360.0f);
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void GuickPanel::PenSizeSliderControl(POINT mouse_position)
+void QuickPanel::PenSizeSliderControl(POINT mouse_position)
 {
-    pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 10.0f) / pen_size_slider_width_, 0), 10.0f);
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 30.0f) / pen_size_slider_width_, 0), 30.0f);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void GuickPanel::Open(POINT mouse_position)
+void QuickPanel::Open(POINT mouse_position)
 {
-    if (is_pen_settings_open_ == false)
+    if (is_quick_panel_open_ == false)
     {
         x_ = mouse_position.x;
         y_ = mouse_position.y;
@@ -117,17 +117,17 @@ void GuickPanel::Open(POINT mouse_position)
             y_ -= height_;
         }
 
-        pen_settings_area = { x_, y_, x_ + width_, y_ + height_ };
+        quick_panel_area = { x_, y_, x_ + width_, y_ + height_ };
     }
     
-    is_pen_settings_open_ = !is_pen_settings_open_;
+    is_quick_panel_open_ = !is_quick_panel_open_;
 
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void GuickPanel::Draw(HDC hdc)
+void QuickPanel::Draw(HDC hdc)
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
         UpdateWindowsArea();
 
@@ -137,12 +137,13 @@ void GuickPanel::Draw(HDC hdc)
         SetBkMode(hdc, TRANSPARENT);
 
         Pen black_pen(Color(255, 0, 0, 0));
-        Pen white_pen(Color(200, 255, 255, 255));
+        Pen white_pen(Color(255, 255, 255, 255));
 
         SolidBrush white_brush(Color(255, 255, 255, 255));
         SolidBrush black_brush(Color(255, 0, 0, 0));
-
-        SolidBrush background_brush(Color(255, 37, 41, 53));
+        SolidBrush white_alpha_brush(Color(50, 255, 255, 255));
+        SolidBrush background_brush(Color(255, 33, 35, 39));
+        
         graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
         FontFamily arial_font(L"Arial");
@@ -174,7 +175,8 @@ void GuickPanel::Draw(HDC hdc)
 
         graphics.FillRectangle(&palette_vertical, palette_x_, palette_y_, palette_width_, palette_height_);
 
-        graphics.DrawEllipse(&white_pen, palette_x_ + (s_ / 1.0f) * palette_width_ - 5, palette_y_ + (v_ / 1.0f) * palette_height_ - 5, 10, 10);
+        graphics.FillEllipse(&white_alpha_brush, palette_x_ + (s_ / 1.0f) * palette_width_ - 10, palette_y_ + (v_ / 1.0f) * palette_height_ - 10, 20, 20);
+        graphics.DrawEllipse(&white_pen, palette_x_ + (s_ / 1.0f) * palette_width_ - 10, palette_y_ + (v_ / 1.0f) * palette_height_ - 10, 20, 20);
 
         // 색상 슬라이더
         hue_slider_x_ = palette_x_ + palette_width_ + 10;
@@ -203,27 +205,27 @@ void GuickPanel::Draw(HDC hdc)
         pen_size_slider_x_ = palette_x_;
         pen_size_slider_y_ = palette_y_ + palette_height_ + 10;
 
-        graphics.FillRectangle(&white_brush, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
-
         LinearGradientBrush pen_size_slider_horizontal(
             Point(pen_size_slider_x_, pen_size_slider_y_),
             Point(pen_size_slider_x_ + pen_size_slider_width_, pen_size_slider_y_),
-            Color(0, 255, 255, 255),
+            Color(255, 255, 255, 255),
             Color(255, 200, 200, 200));
 
         graphics.FillRectangle(&pen_size_slider_horizontal, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
 
         Point top_points[] = {
-            Point(pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_, pen_size_slider_y_),
-            Point(pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ - 5),
-            Point(pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ - 5) };
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_, pen_size_slider_y_),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ - 5),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ - 5) };
 
         graphics.FillPolygon(&white_brush, top_points, 3);
 
+        graphics.DrawLine(&white_pen, pen_size_slider_x_, pen_size_slider_y_ + 5, pen_size_slider_x_ + 10, pen_size_slider_y_ + 5);
+
         Point bottom_points[] = {
-            Point(pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_, pen_size_slider_y_ + pen_size_slider_height_),
-            Point(pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + pen_size_slider_height_ + 5),
-            Point(pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ + pen_size_slider_height_ + 5) };
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_, pen_size_slider_y_ + pen_size_slider_height_),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + pen_size_slider_height_ + 5),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ + pen_size_slider_height_ + 5) };
 
         graphics.FillPolygon(&white_brush, bottom_points, 3);
 
@@ -246,21 +248,41 @@ void GuickPanel::Draw(HDC hdc)
         hue_slider_area = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };
         pen_size_slider_area = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
 
+        WCHAR hsv_word[1024];
+        wsprintf(hsv_word, L"HSV: %d°, %d%%, %d%%", (int)trunc(360.0f - h_), (int)trunc(s_ * 100), (int)trunc((1.0f - v_) * 100));
+
+        PointF hsv_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
+        graphics.DrawString(hsv_word, -1, &font_style, hsv_font_position, &white_brush);
+        
         WCHAR rgb_word[1024];
         wsprintf(rgb_word, L"RGB: %d, %d, %d", GetR(), GetG(), GetB());
 
-        PointF rgb_font_position(pen_size_slider_x_, pen_size_slider_y_ + pen_size_slider_height_ + 13);
+        PointF rgb_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 13);
         graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &white_brush);
+        
+        WCHAR hex_word[1024];
+        wsprintf(hex_word, L"HEX: #%02x%02x%02x", GetR(), GetG(), GetB());
+
+        PointF hex_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 26);
+        graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &white_brush);
+        
+        PointF preview_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 90);
+        graphics.DrawString(L"Preview", -1, &font_style, preview_font_position, &white_brush);
+        
+        graphics.FillRectangle(&white_brush, hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 110, 130, 130);
+        
+        Pen pen(current_select_color, pen_size_);
+        graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 180, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 180 );
     }
 }
 
-double GuickPanel::GetPenSize()
+double QuickPanel::GetPenSize()
 {
     return pen_size_; // 값 보정 작업 예정
 }
 
 // HSV 값을 RGB 값으로 변환
-Color GuickPanel::HSVToRGB(double h, double s, double v)
+Color QuickPanel::HSVToRGB(double h, double s, double v)
 {
     double r = 0;
     double g = 0;
@@ -331,17 +353,17 @@ Color GuickPanel::HSVToRGB(double h, double s, double v)
     return Color(255, (BYTE)(r * 255), (BYTE)(g * 255), (BYTE)(b * 255));
 }
 
-BYTE GuickPanel::GetR()
+BYTE QuickPanel::GetR()
 {
     return current_select_color.GetR();
 }
 
-BYTE GuickPanel::GetG()
+BYTE QuickPanel::GetG()
 {
     return current_select_color.GetG();
 }
 
-BYTE GuickPanel::GetB()
+BYTE QuickPanel::GetB()
 {
     return current_select_color.GetB();
 }
