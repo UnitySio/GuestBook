@@ -5,6 +5,8 @@ class PenSettings
 {
 private:
     HWND hWnd;
+    RECT client_area;
+    RECT windows_area;
 
     // 생성될 x, y 좌표
     int x_;
@@ -46,29 +48,28 @@ private:
     int color_preview_y_;
     int color_preview_width_ = 30;
     int color_preview_height_ = 30;
-
-    Color current_select_color;
+    
+    Color current_select_color = HSVToRGB(360.0f - h_, s_, 1.0f - v_);;
     
     bool is_pen_settings_open_;
     bool is_palette_click_;
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
 
+    void GetClientArea();
     void PaletteControl(POINT mouse_position);
     void HueSliderControl(POINT mouse_position);
     void PenSizeSliderControl(POINT mouse_position);
 public:
-    PenSettings();
+    PenSettings(HWND hWnd);
     ~PenSettings();
-
-    void Initialize(HWND hWnd);
     
     bool IsOpen();
 
     void MouseUp();
     void MouseDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
-    void Open(POINT windows_size, POINT mouse_position);
+    void Open(POINT mouse_position);
     void Draw(HDC hdc);
 
     double GetPenSize();
