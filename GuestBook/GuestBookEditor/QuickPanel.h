@@ -7,7 +7,7 @@ class QuickPanel
 private:
     HWND hWnd;
     RECT client_area;
-    RECT windows_area;
+    RECT window_area;
 
     // 생성될 x, y 좌표
     int x_;
@@ -57,7 +57,7 @@ private:
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
 
-    void UpdateWindowsArea();
+    void UpdateWindowArea();
     void PaletteControl(POINT mouse_position);
     void HueSliderControl(POINT mouse_position);
     void PenSizeSliderControl(POINT mouse_position);
@@ -73,7 +73,7 @@ public:
     void Open(POINT mouse_position);
     void Draw(HDC hdc);
 
-    double GetPenSize();
+    int GetPenSize();
 
     Color HSVToRGB(double h, double s, double v);
 

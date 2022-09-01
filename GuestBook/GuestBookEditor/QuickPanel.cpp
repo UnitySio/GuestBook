@@ -3,7 +3,7 @@
 QuickPanel::QuickPanel(HWND hWnd)
 {
     this->hWnd = hWnd;
-    UpdateWindowsArea();
+    UpdateWindowArea();
 }
 
 QuickPanel::~QuickPanel()
@@ -15,10 +15,10 @@ bool QuickPanel::IsOpen()
     return is_quick_panel_open_;
 }
 
-void QuickPanel::UpdateWindowsArea()
+void QuickPanel::UpdateWindowArea()
 {
     GetClientRect(hWnd, &client_area);
-    windows_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
+    window_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
 }
 
 
@@ -60,7 +60,7 @@ void QuickPanel::MouseMove(POINT mouse_position)
 {
     if (is_quick_panel_open_)
     {
-        if (PtInRect(&windows_area, mouse_position) == false)
+        if (PtInRect(&window_area, mouse_position) == false)
         {
             MouseUp();
         }
@@ -107,12 +107,12 @@ void QuickPanel::Open(POINT mouse_position)
         y_ = mouse_position.y;
 
         // 윈도우 크기에 따른 위치 보정
-        if (x_ > windows_area.right - width_)
+        if (x_ > window_area.right - width_)
         {
             x_ -= width_;
         }
 
-        if (y_ > windows_area.bottom - height_)
+        if (y_ > window_area.bottom - height_)
         {
             y_ -= height_;
         }
@@ -129,7 +129,7 @@ void QuickPanel::Draw(HDC hdc)
 {
     if (is_quick_panel_open_)
     {
-        UpdateWindowsArea();
+        UpdateWindowArea();
 
         Graphics graphics(hdc);
 
@@ -249,7 +249,7 @@ void QuickPanel::Draw(HDC hdc)
         pen_size_slider_area = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
 
         WCHAR hsv_word[1024];
-        wsprintf(hsv_word, L"HSV: %d°, %d%%, %d%%", (int)trunc(360.0f - h_), (int)trunc(s_ * 100), (int)trunc((1.0f - v_) * 100));
+        wsprintf(hsv_word, L"HSV: %d°, %d%%, %d%%", (int)round(360.0f - h_), (int)round(s_ * 100), (int)round((1.0f - v_) * 100));
 
         PointF hsv_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
         graphics.DrawString(hsv_word, -1, &font_style, hsv_font_position, &white_brush);
@@ -272,13 +272,13 @@ void QuickPanel::Draw(HDC hdc)
         graphics.FillRectangle(&white_brush, hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 110, 130, 130);
         
         Pen pen(current_select_color, pen_size_);
-        graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 180, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 180 );
+        graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 175, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175 );
     }
 }
 
-double QuickPanel::GetPenSize()
+int QuickPanel::GetPenSize()
 {
-    return pen_size_; // 값 보정 작업 예정
+    return (int)trunc(pen_size_);
 }
 
 // HSV 값을 RGB 값으로 변환

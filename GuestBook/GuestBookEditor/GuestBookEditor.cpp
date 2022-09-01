@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "GuestBookEditor.h"
 #include "QuickPanel.h"
+#include "Timeline.h"
 
 #define MAX_LOADSTRING 100
 
@@ -137,7 +138,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static QuickPanel *quick_panel;
+    static QuickPanel* quick_panel;
+    static Timeline* timeline;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -148,7 +150,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         {
-            quick_panel = new QuickPanel(hWnd);
+        quick_panel = new QuickPanel(hWnd);
+        timeline = new Timeline(hWnd);
         }
         break;
     case WM_COMMAND:
@@ -209,7 +212,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HDC hdc;
                 hdc = GetDC(hWnd);
                 COLORREF as = RGB(quick_panel->GetR(), quick_panel->GetG(), quick_panel->GetB());
-                HPEN n = CreatePen(PS_SOLID, (int)trunc(quick_panel->GetPenSize()), as);
+                HPEN n = CreatePen(PS_SOLID, quick_panel->GetPenSize(), as);
                 HPEN o = (HPEN)SelectObject(hdc, n);
                 MoveToEx(hdc, current_x, current_y, NULL);
                 LineTo(hdc, mouse_position.x, mouse_position.y);
@@ -237,6 +240,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
             
             OnPaint(hdc);
+            timeline->Draw(hdc);
             quick_panel->Draw(hdc);
             
             GetClientRect(hWnd, &buffer);
@@ -249,6 +253,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_DESTROY:
         delete quick_panel;
+        delete timeline;
         PostQuitMessage(0);
         break;
     default:
