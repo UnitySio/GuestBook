@@ -13,8 +13,8 @@ Timeline::~Timeline()
 
 void Timeline::UpdateWindowArea()
 {
-	GetClientRect(hWnd, &client_area);
-	window_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
+	GetClientRect(hWnd, &client_area_);
+	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
 void Timeline::Draw(HDC hdc)
@@ -27,6 +27,4 @@ void Timeline::Draw(HDC hdc)
 	SetBkColor(hdc, TRANSPARENT);
 
 	SolidBrush brush(Color(255, 0, 0, 0));
-
-	graphics.FillRectangle(&brush, 0, 100, window_area.right, 10);
 }

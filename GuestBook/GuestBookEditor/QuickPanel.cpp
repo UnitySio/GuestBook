@@ -17,8 +17,8 @@ bool QuickPanel::IsOpen()
 
 void QuickPanel::UpdateWindowArea()
 {
-    GetClientRect(hWnd, &client_area);
-    window_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
+    GetClientRect(hWnd, &client_area_);
+    window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
 
@@ -38,17 +38,17 @@ void QuickPanel::MouseDown(POINT mouse_position)
     if (is_quick_panel_open_)
     {
         SetCapture(hWnd);
-        if (PtInRect(&palette_area, mouse_position))
+        if (PtInRect(&palette_area_, mouse_position))
         {
             PaletteControl(mouse_position);
             is_palette_click_ = true;
         }
-        else if (PtInRect(&hue_slider_area, mouse_position))
+        else if (PtInRect(&hue_slider_area_, mouse_position))
         {
             HueSliderControl(mouse_position);
             is_hue_slider_click_ = true;
         }
-        else if (PtInRect(&pen_size_slider_area, mouse_position))
+        else if (PtInRect(&pen_size_slider_area_, mouse_position))
         {
             PenSizeSliderControl(mouse_position);
             is_pen_size_slider_click_ = true;
@@ -60,7 +60,7 @@ void QuickPanel::MouseMove(POINT mouse_position)
 {
     if (is_quick_panel_open_)
     {
-        if (PtInRect(&window_area, mouse_position) == false)
+        if (PtInRect(&window_area_, mouse_position) == false)
         {
             MouseUp();
         }
@@ -84,19 +84,19 @@ void QuickPanel::PaletteControl(POINT mouse_position)
 {
     s_ = min(max(((mouse_position.x - palette_x_) * 1.0f) / palette_width_, 0), 1.0f);
     v_ = min(max(((mouse_position.y - palette_y_) * 1.0f) / palette_height_, 0), 1.0f);
-    InvalidateRect(hWnd, &quick_panel_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
 }
 
 void QuickPanel::HueSliderControl(POINT mouse_position)
 {
     h_ = min(max(((mouse_position.y - hue_slider_y_) * 360.0f) / hue_slider_height_, 0), 360.0f);
-    InvalidateRect(hWnd, &quick_panel_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
 }
 
 void QuickPanel::PenSizeSliderControl(POINT mouse_position)
 {
     pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 30.0f) / pen_size_slider_width_, 0), 30.0f);
-    InvalidateRect(hWnd, &quick_panel_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
 }
 
 void QuickPanel::Open(POINT mouse_position)
@@ -107,22 +107,22 @@ void QuickPanel::Open(POINT mouse_position)
         y_ = mouse_position.y;
 
         // 윈도우 크기에 따른 위치 보정
-        if (x_ > window_area.right - width_)
+        if (x_ > window_area_.right - width_)
         {
             x_ -= width_;
         }
 
-        if (y_ > window_area.bottom - height_)
+        if (y_ > window_area_.bottom - height_)
         {
             y_ -= height_;
         }
 
-        quick_panel_area = { x_, y_, x_ + width_, y_ + height_ };
+        quick_panel_area_ = { x_, y_, x_ + width_, y_ + height_ };
     }
     
     is_quick_panel_open_ = !is_quick_panel_open_;
 
-    InvalidateRect(hWnd, &quick_panel_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
 }
 
 void QuickPanel::Draw(HDC hdc)
@@ -143,14 +143,14 @@ void QuickPanel::Draw(HDC hdc)
         SolidBrush black_brush(Color(255, 0, 0, 0));
         SolidBrush white_alpha_brush(Color(50, 255, 255, 255));
         SolidBrush background_brush(Color(255, 33, 35, 39));
-        
+
         graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
         FontFamily arial_font(L"Arial");
         Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
 
         PointF header_font_position(x_ + 20, y_ + 13);
-        graphics.DrawString(L"Quick Panel", -1, &font_style, header_font_position, &white_brush);
+        graphics.DrawString(L"빠른 패널", -1, &font_style, header_font_position, &white_brush);
 
         // 팔레트
         palette_x_ = x_ + 20;
@@ -235,44 +235,53 @@ void QuickPanel::Draw(HDC hdc)
         PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 7);
         graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &black_brush);
 
-        current_select_color = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
+        current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
         // 색상 미리보기
         color_preview_x_ = pen_size_slider_x_ + pen_size_slider_width_ + 10;
         color_preview_y_ = pen_size_slider_y_;
 
-        SolidBrush color_preview(current_select_color);
+        SolidBrush color_preview(current_color_);
         graphics.FillRectangle(&color_preview, color_preview_x_, color_preview_y_, color_preview_width_, color_preview_height_);
 
-        palette_area = { palette_x_ - 10, palette_y_ - 10, palette_x_ + palette_width_ + 10, palette_y_ + palette_height_ + 10 };
-        hue_slider_area = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };
-        pen_size_slider_area = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
+        palette_area_ = { palette_x_ - 10, palette_y_ - 10, palette_x_ + palette_width_ + 10, palette_y_ + palette_height_ + 10 };
+        hue_slider_area_ = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };
+        pen_size_slider_area_ = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
 
         WCHAR hsv_word[1024];
         wsprintf(hsv_word, L"HSV: %d°, %d%%, %d%%", (int)round(360.0f - h_), (int)round(s_ * 100), (int)round((1.0f - v_) * 100));
 
         PointF hsv_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
         graphics.DrawString(hsv_word, -1, &font_style, hsv_font_position, &white_brush);
-        
+
         WCHAR rgb_word[1024];
         wsprintf(rgb_word, L"RGB: %d, %d, %d", GetR(), GetG(), GetB());
 
         PointF rgb_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 13);
         graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &white_brush);
-        
+
         WCHAR hex_word[1024];
         wsprintf(hex_word, L"HEX: #%02x%02x%02x", GetR(), GetG(), GetB());
 
         PointF hex_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 26);
         graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &white_brush);
-        
+
         PointF preview_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 90);
-        graphics.DrawString(L"Preview", -1, &font_style, preview_font_position, &white_brush);
-        
+        graphics.DrawString(L"미리보기", -1, &font_style, preview_font_position, &white_brush);
+
         graphics.FillRectangle(&white_brush, hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 110, 130, 130);
-        
-        Pen pen(current_select_color, pen_size_);
-        graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 175, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175 );
+
+        Pen preivew_pen(current_color_, pen_size_);
+
+        Point preview_points[] = {
+            Point(hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 175),
+            Point(hue_slider_x_ + hue_slider_width_ + 52.5f, hue_slider_y_ + 170),
+            Point(hue_slider_x_ + hue_slider_width_ + 97.5f, hue_slider_y_ + 180),
+            Point(hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175) };
+
+        graphics.DrawCurve(&preivew_pen, preview_points, 4);
+
+        //graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 175, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175 );
     }
 }
 
@@ -355,15 +364,15 @@ Color QuickPanel::HSVToRGB(double h, double s, double v)
 
 BYTE QuickPanel::GetR()
 {
-    return current_select_color.GetR();
+    return current_color_.GetR();
 }
 
 BYTE QuickPanel::GetG()
 {
-    return current_select_color.GetG();
+    return current_color_.GetG();
 }
 
 BYTE QuickPanel::GetB()
 {
-    return current_select_color.GetB();
+    return current_color_.GetB();
 }

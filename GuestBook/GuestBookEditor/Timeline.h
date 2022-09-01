@@ -5,8 +5,13 @@ class Timeline
 {
 private:
     HWND hWnd;
-    RECT client_area;
-    RECT window_area;
+    RECT client_area_;
+    RECT window_area_;
+
+    int x_;
+    int y_;
+    int width_;
+    int height_;
     
     void UpdateWindowArea();
 public:
