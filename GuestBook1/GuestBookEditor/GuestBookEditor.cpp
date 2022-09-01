@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "GuestBookEditor.h"
+#include "Button.h"
 
 #define MAX_LOADSTRING 100
 
@@ -11,10 +12,17 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 // 그리기 상태를 파악하기 위한 변수
-int status;      // 0:비활성화, 1:그리기ON, 2:지우개ON
+
+int status;      // 0 : 비활성화, 1 : 그리기ON, 2 : 지우개ON
 HDC memdc;      // 메모리 DC 값
 POINT st_pos;   // 시작 POINT좌표
 HBITMAP memBitmap;  // 메모리 DC에서 사용할 Bitmap 값
+RECT eraser = { 0, 0, 100, 100 };
+RECT clear = { 100, 0, 200, 200 };
+
+// 윈도우 크기
+const int windows_size_width = 1280;
+const int windows_size_height = 720;
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -60,8 +68,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int)msg.wParam;
 }
 
-
-
 //
 //  함수: MyRegisterClass()
 //
@@ -102,8 +108,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance;       // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+    /*HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);*/
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU,
+        0, 0, windows_size_width, windows_size_height, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -116,12 +124,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     return TRUE;
 }
 
-void Button(HDC hdc)
-{
-    Graphics graphics(hdc);
-    Pen pen(Color(255, 0, 0, 0));
-    graphics.DrawRectangle(&pen, 0, 0, 100, 100);
-}
 
 //
 //  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -156,11 +158,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_LBUTTONDOWN:
     {
-        //마우스 상태 활성화
-        status = 1;
-        //시작 좌표 저장
+        // 시작 좌표 저장
         st_pos.x = GET_X_LPARAM(lParam);
         st_pos.y = GET_Y_LPARAM(lParam);
+
+        // 마우스 상태 결정
+        status = Button(hWnd, lParam, memdc, status, eraser, clear, st_pos);
+
+        /*
+        if (PtInRect(&eraser, st_pos))
+        {
+            //status = 0;
+            MessageBox(hWnd, L"지우개 활성화", L"알림", MB_OK);
+
+            //마우스 상태 활성화
+            status = 2;
+
+            //지우는 좌표 받아오기
+            st_pos.x = GET_X_LPARAM(lParam);
+            st_pos.y = GET_Y_LPARAM(lParam);
+        }
+        else if (PtInRect(&clear, st_pos))
+        {
+            MessageBox(hWnd, L"화면 전체 지우기", L"알림", MB_OK);
+            RECT rect;
+            GetClientRect(hWnd, &rect);
+            FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+        }
+        */
         break;
     }
     case WM_LBUTTONUP:
@@ -168,16 +193,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         status = 0;
         break;
     }
-    case WM_RBUTTONDOWN:
+    /*case WM_RBUTTONDOWN:
     {
-        //마우스 상태 활성화
-        status = 2;
+            //마우스 상태 활성화
+            status = 2;
 
-        //지우는 좌표 받아오기
-        st_pos.x = GET_X_LPARAM(lParam);
-        st_pos.y = GET_Y_LPARAM(lParam);
+            //지우는 좌표 받아오기
+            st_pos.x = GET_X_LPARAM(lParam);
+            st_pos.y = GET_Y_LPARAM(lParam);
         break;
     }
+    */
     case WM_RBUTTONUP:
     {
         status = 0;
@@ -185,7 +211,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_MOUSEMOVE:
     {
-        if (status == 1)    // 만약 좌클릭중인 상태이면
+        if (status == 1)    // 그리기 상태
         {
             // 좌표를 받아서 값을 추가합니다.
             POINT pos;
@@ -206,7 +232,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             st_pos.y = pos.y;
         }
 
-        //만약 우클릭중인 상태이면
+        // 지우개 상태
         if (status == 2)
         {
             POINT pos;
@@ -220,7 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             HBITMAP oldBitmap = (HBITMAP)SelectObject(memdc, memBitmap);
             //그리기 색상 설정
-            HPEN newPen = CreatePen(PS_SOLID, 10, RGB(255, 255, 255));      // 팬 객채 생성(검은색)
+            HPEN newPen = CreatePen(PS_SOLID, 10, RGB(255, 255, 255));      // 팬 객채 생성(흰 색)
             HPEN oldPen = (HPEN)SelectObject(memdc, newPen);
 
             MoveToEx(memdc, st_pos.x, st_pos.y, NULL);
@@ -241,10 +267,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PAINTSTRUCT ps;
         hdc = BeginPaint(hWnd, &ps);
         RECT rect;
+
         GetClientRect(hWnd, &rect);
         HBITMAP oldBitmap = (HBITMAP)SelectObject(memdc, memBitmap);        // 비트 패턴을 저장하기 위한 변수
         BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
-        Button(hdc);    // 버튼 생성
+
         EndPaint(hWnd, &ps);
         break;
     }

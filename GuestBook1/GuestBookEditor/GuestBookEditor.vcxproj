@@ -132,8 +132,10 @@
     <ClInclude Include="PenSettings.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Button.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="GuestBookEditor.cpp" />
     <ClCompile Include="PenSettings.cpp" />
   </ItemGroup>

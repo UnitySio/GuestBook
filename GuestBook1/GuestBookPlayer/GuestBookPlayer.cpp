@@ -3,6 +3,16 @@
 
 #include "framework.h"
 #include "GuestBookEditor.h"
+#include "mmsystem.h"
+
+#include <Ole2.h>
+#include <gdiplus.h>
+
+using namespace std;
+using namespace Gdiplus;
+
+#pragma comment(lib, "winmm.lib");
+#pragma comment(lib, "Gdiplus.lib");
 
 #define MAX_LOADSTRING 100
 
@@ -10,11 +20,10 @@
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
-// 그리기 상태를 파악하기 위한 변수
-int status;      // 0:비활성화, 1:그리기ON, 2:지우개ON
-HDC memdc;      // 메모리 DC 값
-POINT st_pos;   // 시작 POINT좌표
-HBITMAP memBitmap;  // 메모리 DC에서 사용할 Bitmap 값
+
+// 윈도우 크기
+const int windows_size_width = 1280;
+const int windows_size_height = 720;
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -31,6 +40,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: 여기에 코드를 입력합니다.
+
+    GdiplusStartupInput gdiplus_startup_input;
+    ULONG_PTR gdiplus_token;
+
+    GdiplusStartup(&gdiplus_token, &gdiplus_startup_input, NULL);
 
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -57,6 +71,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    GdiplusShutdown(gdiplus_token);
     return (int)msg.wParam;
 }
 
@@ -100,10 +115,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-    hInst = hInstance;       // 인스턴스 핸들을 전역 변수에 저장합니다.
+    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU,
+        0, 0, windows_size_width, windows_size_height, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -116,12 +131,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     return TRUE;
 }
 
-void Button(HDC hdc)
+void OnPaint(HDC hdc, LPARAM lParam)
 {
     Graphics graphics(hdc);
     Pen pen(Color(255, 0, 0, 0));
     graphics.DrawRectangle(&pen, 0, 0, 100, 100);
+    graphics.DrawRectangle(&pen, 100, 0, 100, 100);
 }
+
+
 
 //
 //  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -133,129 +151,117 @@ void Button(HDC hdc)
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
+bool is_click = false;
+int pre_x;
+int pre_y;
+int current_x;
+int current_y;
+RECT r;
+RECT r1;
+POINT point;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HDC hdc;
     switch (message)
     {
-    case WM_CREATE:
+    case WM_COMMAND:
     {
-        // memBitmap 그리고 memDC 생성하기 위한 과정
-        hdc = GetDC(hWnd);
-
-        memdc = CreateCompatibleDC(hdc);
-        RECT rect;
-        GetClientRect(hWnd, &rect);     // 현재 윈도우 창 크기 받아오기
-        memBitmap = CreateCompatibleBitmap(memdc, rect.right, rect.bottom);     // 사용자의 화면과 같은 크기의 비트맵 생성
-        SelectObject(memdc, memBitmap);
-        FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));    // 화면 전체를 흰색으로 칠하기
-        BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);   // 원본 DC인 memdc의 비트맵을 사본 DC인 hdc에 그대로 복사.
-
-        ReleaseDC(hWnd, hdc);
-        break;
+        int wmId = LOWORD(wParam);
+        // 메뉴 선택을 구문 분석합니다:
+        switch (wmId)
+        {
+        case IDM_ABOUT:
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            break;
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
     }
+    break;
     case WM_LBUTTONDOWN:
     {
-        //마우스 상태 활성화
-        status = 1;
-        //시작 좌표 저장
-        st_pos.x = GET_X_LPARAM(lParam);
-        st_pos.y = GET_Y_LPARAM(lParam);
-        break;
+        is_click = true;
+        r = { 0,0,100,100 };
+        r1 = { 100, 0, 200, 100 };
+        point.x = LOWORD(lParam);
+        point.y = HIWORD(lParam);
+
+        if (PtInRect(&r, point))
+        {
+            is_click = false;
+            MessageBox(hWnd, TEXT("버튼이 눌렸습니다."), TEXT("메시지 박스"), MB_ICONINFORMATION | MB_RETRYCANCEL);
+        }
+        if (PtInRect(&r1, point))
+        {
+            is_click = false;
+            MessageBox(hWnd, TEXT("2번째 버튼이 눌렸습니다."), TEXT("메시지 박스"), MB_ICONINFORMATION | MB_RETRYCANCEL);
+        }
+
     }
+    break;
     case WM_LBUTTONUP:
     {
-        status = 0;
-        break;
+        is_click = false;
     }
-    case WM_RBUTTONDOWN:
-    {
-        //마우스 상태 활성화
-        status = 2;
+    break;
 
-        //지우는 좌표 받아오기
-        st_pos.x = GET_X_LPARAM(lParam);
-        st_pos.y = GET_Y_LPARAM(lParam);
-        break;
-    }
-    case WM_RBUTTONUP:
-    {
-        status = 0;
-        break;
-    }
     case WM_MOUSEMOVE:
     {
-        if (status == 1)    // 만약 좌클릭중인 상태이면
+        HDC hdc;
+
+        hdc = GetDC(hWnd);
+
+
+
+        if (true == is_click)
         {
-            // 좌표를 받아서 값을 추가합니다.
-            POINT pos;
-            pos.x = GET_X_LPARAM(lParam);
-            pos.y = GET_Y_LPARAM(lParam);
+            Graphics graphics(hdc);
+            Pen pen(Color(255, 0, 0, 0));
 
-            RECT rect;
-            GetClientRect(hWnd, &rect);
-            hdc = GetDC(hWnd);
+            current_x = LOWORD(lParam);
+            current_y = HIWORD(lParam);
 
-            HBITMAP oldBitmap = (HBITMAP)SelectObject(memdc, memBitmap);
-            MoveToEx(memdc, st_pos.x, st_pos.y, NULL);
-            LineTo(memdc, pos.x, pos.y);
-            BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
+            graphics.DrawLine(&pen, point.x, point.y, current_x, current_y);
 
-            ReleaseDC(hWnd, hdc);
-            st_pos.x = pos.x;
-            st_pos.y = pos.y;
+            point.x = current_x;
+            point.y = current_y;
         }
 
-        //만약 우클릭중인 상태이면
-        if (status == 2)
-        {
-            POINT pos;
-            pos.x = GET_X_LPARAM(lParam);
-            pos.y = GET_Y_LPARAM(lParam);
-
-            RECT rect;
-            GetClientRect(hWnd, &rect);
-
-            hdc = GetDC(hWnd);
-
-            HBITMAP oldBitmap = (HBITMAP)SelectObject(memdc, memBitmap);
-            //그리기 색상 설정
-            HPEN newPen = CreatePen(PS_SOLID, 10, RGB(255, 255, 255));      // 팬 객채 생성(검은색)
-            HPEN oldPen = (HPEN)SelectObject(memdc, newPen);
-
-            MoveToEx(memdc, st_pos.x, st_pos.y, NULL);
-            LineTo(memdc, pos.x, pos.y);
-            BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
-
-            SelectObject(memdc, oldPen);
-            DeleteObject(newPen);
-
-            ReleaseDC(hWnd, hdc);
-            st_pos.x = pos.x;
-            st_pos.y = pos.y;
-        }
-        break;
+        ReleaseDC(hWnd, hdc);
     }
+    break;
+
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
-        hdc = BeginPaint(hWnd, &ps);
-        RECT rect;
-        GetClientRect(hWnd, &rect);
-        HBITMAP oldBitmap = (HBITMAP)SelectObject(memdc, memBitmap);        // 비트 패턴을 저장하기 위한 변수
-        BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
-        Button(hdc);    // 버튼 생성
+        HDC hdc, memDC;
+        HBITMAP newBitmap, oldBitmap;
+        RECT buffer;
+        memDC = BeginPaint(hWnd, &ps);
+
+        GetClientRect(hWnd, &buffer);
+        hdc = CreateCompatibleDC(memDC);
+        newBitmap = CreateCompatibleBitmap(memDC, buffer.right, buffer.bottom);
+        oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
+        PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
+        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+
+        OnPaint(hdc, lParam);
+
+        GetClientRect(hWnd, &buffer);
+        BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
+        SelectObject(hdc, oldBitmap);
+        DeleteObject(newBitmap);
+        DeleteDC(hdc);
         EndPaint(hWnd, &ps);
-        break;
     }
+    break;
     case WM_DESTROY:
-    {
-        DeleteObject(memBitmap);
-        DeleteDC(memdc);
         PostQuitMessage(0);
         break;
-    }
-
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

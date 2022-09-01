@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{8608d7fc-6812-4c92-9eaa-4407647bd999}</ProjectGuid>
-    <RootNamespace>GuestBookEditor</RootNamespace>
+    <ProjectGuid>{dd25e606-da87-49b2-9365-0639dfe6fe14}</ProjectGuid>
+    <RootNamespace>GuestBookPlayer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -128,24 +128,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="GuestBookEditor.h" />
-    <ClInclude Include="PenSettings.h" />
+    <ClInclude Include="GuestBookPlayer.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GuestBookEditor.cpp" />
-    <ClCompile Include="PenSettings.cpp" />
+    <ClCompile Include="GuestBookPlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="GuestBookEditor.rc" />
+    <ResourceCompile Include="GuestBookPlayer.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="GuestBookEditor.ico" />
+    <Image Include="GuestBookPlayer.ico" />
     <Image Include="small.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Resources\Hue.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
