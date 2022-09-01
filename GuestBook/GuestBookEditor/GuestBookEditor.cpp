@@ -4,10 +4,11 @@
 #include "framework.h"
 #include "GuestBookEditor.h"
 #include "mmsystem.h"
-
+#include<vector>
+#include<iostream>
 #include <Ole2.h>
 #include <gdiplus.h>
-#include <vector>
+#include<algorithm>
 
 using namespace std;
 using namespace Gdiplus;
@@ -26,68 +27,22 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름�
 const int windows_size_width = 1280;
 const int windows_size_height = 720;
 
-// 타임라인 진행률
-float progress; // 현재 진행률
-float max_progress; // 진행률 최대치 (추후 기록된 시간의 합으로 값을 적용하여 동작)
-
-UINT progress_timer;
-
-ULONGLONG create_time;
-ULONGLONG current_time;
-
-bool is_progress_click;
-
-bool is_click;
-int current_x;
-int current_y;
-
-struct tPoint
-{
-    int current_x;
-    int current_y;
-    int x;
-    int y;
-    float time;
-};
-
-vector<tPoint> a;
-
-// Color Picker
-int saturation_position_x = 100;
-int saturation_position_y = 100;
-int saturation_width = 200;
-int saturation_height = 200;
-
-bool is_color_picker;
-bool is_hue_click;
-bool is_saturation_click;
-bool is_pen_size_click;
-
-double hue; // 0 ~ 360
-double saturation = 1; // 0 ~ 100
-double brightness; // 0 ~ 100
-
-double pen_size; // 0 ~ 255
-
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
-void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
-Color HSVToRGB(double h, double s, double v);
-
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPWSTR    lpCmdLine,
+    _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: 여기에 코드를 입력합니다.
-    
+
     GdiplusStartupInput gdiplus_startup_input;
     ULONG_PTR gdiplus_token;
 
@@ -97,9 +52,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_GUESTBOOKEDITOR, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
-    
+
     // 애플리케이션 초기화를 수행합니다:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }
@@ -117,9 +72,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
     }
-    
+
     GdiplusShutdown(gdiplus_token);
-    return (int) msg.wParam;
+    return (int)msg.wParam;
 }
 
 
@@ -135,17 +90,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_GUESTBOOKEDITOR));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_GUESTBOOKEDITOR);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_GUESTBOOKEDITOR));
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_GUESTBOOKEDITOR);
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
 }
@@ -162,134 +117,31 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
+    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU,
-      0, 0, windows_size_width, windows_size_height, nullptr, nullptr, hInstance, nullptr);
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU,
+        0, 0, windows_size_width, windows_size_height, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+    if (!hWnd)
+    {
+        return FALSE;
+    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
 
-   return TRUE;
+    return TRUE;
 }
 
 void OnPaint(HDC hdc, LPARAM lParam)
 {
-    WCHAR hue_word[1024];
-    WCHAR saturation_word[1024];
-    WCHAR alpha_word[1024];
-    WCHAR progress_word[1024];
-    SetBkMode(hdc, TRANSPARENT); // 텍스트 배경 삭제
-    _stprintf_s(progress_word, L"%.3fs / %.3fs", progress, max_progress);
-    TextOut(hdc, 0, windows_size_height - 220, progress_word, lstrlen(progress_word));
-    Rectangle(hdc, 0, windows_size_height - 200, 500, windows_size_height - 190);
-    COLORREF c = RGB(33, 35, 39);
-    HBRUSH n = CreateSolidBrush(c);
-    HBRUSH o = (HBRUSH)SelectObject(hdc, n);
-    Rectangle(hdc, 0, windows_size_height - 200, (progress / max_progress) * 500, windows_size_height - 190);
-    SelectObject(hdc, o);
-    DeleteObject(n);
-
-    POINT handle[5];
-    handle[0].x = (progress / max_progress) * 500 - 5;
-    handle[0].y = windows_size_height - 210;
-    handle[1].x = (progress / max_progress) * 500 - 5;
-    handle[1].y = windows_size_height - 200;
-    handle[2].x = (progress / max_progress) * 500;
-    handle[2].y = windows_size_height - 190;
-    handle[3].x = (progress / max_progress) * 500 + 5;
-    handle[3].y = windows_size_height - 200;
-    handle[4].x = (progress / max_progress) * 500 + 5;
-    handle[4].y = windows_size_height - 210;
-    Polygon(hdc, handle, 5);
-
-    // Color Picker
     Graphics graphics(hdc);
-
-    Pen outline(Color(255, 0, 0, 0));
-    Pen outline2(Color(255, 0, 0, 0), 3);
-
-    if (is_color_picker)
-    {
-        SolidBrush bg(Color(255, 255, 255, 255));
-        graphics.FillRectangle(&bg, 80, 80, 290, 289);
-        graphics.DrawRectangle(&outline, 79, 79, 291, 290);
-
-        SolidBrush bga(Color(255, 255, 255, 255));
-        graphics.FillRectangle(&bga, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
-
-        TextOut(hdc, 80, 60, L"Pen Settings", 12);
-
-        LinearGradientBrush horizontal(
-            Point(saturation_position_x, saturation_position_y),
-            Point(saturation_position_x + saturation_width, saturation_position_y),
-            Color(0, 255, 255, 255),
-            HSVToRGB(360 - hue, 1, 1));
-
-        Pen pen(&horizontal);
-        graphics.FillRectangle(&horizontal, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
-
-        LinearGradientBrush vertical(
-            Point(saturation_position_x, saturation_position_y + saturation_height),
-            Point(saturation_position_x, saturation_position_y),
-            Color(255, 0, 0, 0),
-            Color(0, 255, 255, 255));
-
-        Pen pen2(&vertical);
-        graphics.FillRectangle(&vertical, saturation_position_x, saturation_position_y, saturation_width, saturation_height);
-        graphics.DrawRectangle(&outline, saturation_position_x - 1, saturation_position_y - 1, saturation_width + 1, saturation_height + 1);
-
-        Image img(L"Resources/Hue.png");
-        graphics.DrawImage(&img, 320, 100, 30, 200);
-
-        graphics.DrawRectangle(&outline, 319, 99, 31, 201);
-
-        LinearGradientBrush alpha_horizontal(
-            Point(100, 320),
-            Point(300, 320),
-            Color(0, 255, 255, 255),
-            Color(255, 0, 0, 0));
-
-        Pen pen3(&alpha_horizontal);
-        graphics.FillRectangle(&alpha_horizontal, 100, 320, 200, 30);
-        graphics.DrawRectangle(&outline, 99, 319, 201, 31);
-
-        SolidBrush sb(HSVToRGB(360 - hue, saturation, 1 - brightness));
-        graphics.FillRectangle(&sb, 320, 320, 30, 30);
-        graphics.DrawRectangle(&outline, 319, 319, 31, 31);
-
-        graphics.DrawEllipse(&outline2, 330, 95 + (hue / 360) * 200, 10, 10);
-        graphics.DrawEllipse(&outline2, saturation_position_x + (saturation / 1.0f) * saturation_width - 5, saturation_position_y + (brightness / 1.0f) * saturation_height - 5, 10, 10);
-        graphics.DrawEllipse(&outline2, 95 + (pen_size / 10) * 200, 330, 10, 10);
-
-
-        if (is_hue_click)
-        {
-            _stprintf_s(hue_word, L"V: %.f°", 360 - hue);
-            SetTextAlign(hdc, TA_CENTER);
-            TextOut(hdc, 340, 80 + (hue / 360) * 200, hue_word, lstrlen(hue_word));
-        }
-
-        if (is_saturation_click)
-        {
-            _stprintf_s(saturation_word, L"H: %.f%% B: %.f%%", saturation * 100, brightness * 100);
-            SetTextAlign(hdc, TA_CENTER);
-            TextOut(hdc, saturation_position_x + (saturation / 1.0f) * saturation_width, saturation_position_y + (brightness / 1.0f) * saturation_height - 20, saturation_word, lstrlen(saturation_word));
-        }
-
-        if (is_pen_size_click)
-        {
-            _stprintf_s(alpha_word, L"Size: %.f", pen_size);
-            SetTextAlign(hdc, TA_CENTER);
-            TextOut(hdc, 100 + (pen_size / 10) * 200, 315, alpha_word, lstrlen(alpha_word));
-        }
-    }
+    Pen pen(Color(255, 0, 0, 0));
+    graphics.DrawRectangle(&pen, 0, 0, 100, 100);
+    graphics.DrawRectangle(&pen, 100, 0, 100, 100);
 }
+
+
 
 //
 //  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -301,238 +153,145 @@ void OnPaint(HDC hdc, LPARAM lParam)
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
+bool is_click = false;
+int pre_x;
+int pre_y;
+int current_x;
+int current_y;
+RECT r;
+RECT r1;
+POINT point;
+std::vector<std::vector<POINT>> list;   // 사용자가 그린 그림을 저장할 2차원 벡터
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_CREATE:
+    case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // 메뉴 선택을 구문 분석합니다:
+        switch (wmId)
         {
+        case IDM_ABOUT:
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            break;
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
         }
-        break;
-    case WM_KEYDOWN:
-        {
-            TIMECAPS timecaps;
-            timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
-            
-            switch (wParam)
-            {
-            case VK_LEFT:
-                InvalidateRect(hWnd, NULL, FALSE);
-                if (progress_timer != 0)
-                {
-                    timeKillEvent(progress_timer);
-                }
-                
-                progress_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD)hWnd, TIME_PERIODIC);
-                break;
-            case VK_RIGHT:
-                timeKillEvent(progress_timer);
-                progress_timer = 0;
-                break;
-            case VK_UP:
-                current_time = (DWORD)GetTickCount64() - create_time;
-                max_progress = (float)current_time / 1000;
-                
-                RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
-                InvalidateRect(hWnd, &r, FALSE);
-                break;
-            }
-        }
-        break;
-    case WM_RBUTTONDOWN:
-        {
-            is_color_picker = !is_color_picker;
-            InvalidateRect(hWnd, NULL, FALSE);
-        }
-        break;
-    case WM_LBUTTONUP:
-        {
-            ReleaseCapture();
-            is_progress_click = false;
-            is_click = false;
-            is_hue_click = false;
-            is_saturation_click = false;
-            is_pen_size_click = false;
-        }
-        break;
+    }
+    break;
     case WM_LBUTTONDOWN:
+    {
+        is_click = true;
+        r = { 0,0,100,100 };
+        r1 = { 100, 0, 200, 100 };
+        point.x = LOWORD(lParam);
+        point.y = HIWORD(lParam);
+        std::vector<POINT> tempv;   // 그림을 저장할 임시 벡터
+        list.push_back(tempv);
+        list[list.size() - 1].push_back(point);     // 계속해서 vector를 추가하고 접근하기
+        tempv.clear();
+        std::vector<POINT>().swap(tempv);
+
+
+        if (PtInRect(&r, point))
         {
-            SetCapture(hWnd);
-            if (create_time == 0)
-            {
-                create_time = (DWORD)GetTickCount64();
-            }
-            
-            POINT point;
-            RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
-            RECT hue_area = {320, 100, 350, 300};
-            RECT saturation_area = { saturation_position_x, saturation_position_y, saturation_position_x + saturation_width, saturation_position_x + saturation_height };
-            RECT alpha_area = { 100, 320, 300, 350 };
+            is_click = false;
+            POINT pos;  
+            // 지우는 좌표 받아오기
+            pos.x = LOWORD(lParam);
+            pos.y = HIWORD(lParam);
 
-            point.x = LOWORD(lParam);
-            point.y = HIWORD(lParam);
-            if (PtInRect(&r, point))
-            {
-                progress = min(max((point.x * max_progress) / 500, 0), max_progress);
-                InvalidateRect(hWnd, NULL, FALSE);
-                is_progress_click = true;
-            }
 
-            if (is_color_picker)
-            {
-                if (PtInRect(&hue_area, point))
-                {
-                    hue = min(max(((point.y - 100) * 360.0f) / 200, 0), 360.0f);
-                    InvalidateRect(hWnd, NULL, FALSE);
-                    is_hue_click = true;
-                }
 
-                if (PtInRect(&saturation_area, point))
-                {
-                    saturation = min(max(((point.x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
-                    brightness = min(max(((point.y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
-                    InvalidateRect(hWnd, NULL, FALSE);
-                    is_saturation_click = true;
-                }
 
-                if (PtInRect(&alpha_area, point))
-                {
-                    pen_size = min(max(((point.x - 100) * 10.0f) / 200, 0), 10.0f);
-                    InvalidateRect(hWnd, NULL, FALSE);
-                    is_pen_size_click = true;
-                }
-            }
+        }
+        if (PtInRect(&r1, point))
+        {
+            is_click = false;
+            MessageBox(hWnd, TEXT("2번째 버튼이 눌렸습니다."), TEXT("메시지 박스"), MB_ICONINFORMATION | MB_RETRYCANCEL);
+        }
+       
+    }
+    break;
+    case WM_LBUTTONUP:
+    {
+        is_click = false;
+    }
+    break;
+    
+    case WM_MOUSEMOVE:
+    {
+        HDC hdc;
 
-            is_click = true;
+        hdc = GetDC(hWnd);
+
+        
+
+        if (true == is_click)
+        {
+            Graphics graphics(hdc);
+            Pen pen(Color(255, 0, 0, 0));
+
             current_x = LOWORD(lParam);
             current_y = HIWORD(lParam);
-        }
-        break;
-    case WM_MOUSEMOVE:
-        {
-            POINT point;
-            point.x = LOWORD(lParam);
-            point.y = HIWORD(lParam);
-            RECT r = {0, windows_size_height - 220, windows_size_width, windows_size_height};
-            RECT ar = {0, 0, windows_size_width, windows_size_height - 220};
-            RECT alpha_area = { 100, 320, 300, 350 };
+            list[list.size()].push_back(point);
 
-            if (is_progress_click)
-            {
-                int x = LOWORD(lParam);
-                progress = min(max((x * max_progress) / 500, 0), max_progress);
-                InvalidateRect(hWnd, &r, FALSE);
-                InvalidateRect(hWnd, &ar, FALSE);
-            }
-
-            if (is_hue_click)
-            {
-                int y = HIWORD(lParam);
-                hue = min(max(((y - 100) * 360.0f) / 200, 0), 360.0f);
-                InvalidateRect(hWnd, NULL, FALSE);
-            }
-
-            if (is_saturation_click)
-            {
-                int x = LOWORD(lParam);
-                int y = HIWORD(lParam);
-                saturation = min(max(((x - saturation_position_x) * 1.0f) / saturation_width, 0), 1.0f);
-                brightness = min(max(((y - saturation_position_y) * 1.0f) / saturation_height, 0), 1.0f);
-                InvalidateRect(hWnd, NULL, FALSE);
-            }
-
-            if (is_pen_size_click)
-            {
-                int x = LOWORD(lParam);
-                pen_size = min(max(((x - 100) * 10.0f) / 200, 0), 10.0f);
-                InvalidateRect(hWnd, NULL, FALSE);
-            }
+            graphics.DrawLine(&pen, point.x, point.y, current_x, current_y);
             
-            if (is_click && PtInRect(&ar, point))
-            {
-                int x, y;
-                tPoint p;
-                HDC hdc;
-                hdc = GetDC(hWnd);
-                Graphics graphics(hdc);
-                x = LOWORD(lParam);
-                y = HIWORD(lParam);
-                BYTE ar = HSVToRGB(360 - hue, saturation, 1 - brightness).GetR();
-                BYTE ag = HSVToRGB(360 - hue, saturation, 1 - brightness).GetG();
-                BYTE ab = HSVToRGB(360 - hue, saturation, 1 - brightness).GetB();
-                COLORREF as = RGB(ar, ag, ab);
-                HPEN n = CreatePen(PS_SOLID, (int)trunc(pen_size), as);
-                HPEN o = (HPEN)SelectObject(hdc, n);
-                MoveToEx(hdc, current_x, current_y, NULL);
-                LineTo(hdc, x, y);
-                SelectObject(hdc, o);
-                DeleteObject(n);
-                current_time = (DWORD)GetTickCount64() - create_time;
-                max_progress = (float)current_time / 1000;
-                p.current_x = current_x;
-                p.current_y = current_y;
-                p.x = x;
-                p.y = y;
-                p.time = (float)current_time / 1000;
-                a.push_back(p);
-                InvalidateRect(hWnd, &r, FALSE);
-                ReleaseDC(hWnd, hdc);
-                current_x = x;
-                current_y = y;
-            }
+            point.x = current_x;
+            point.y  = current_y;
         }
-        break;
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // 메뉴 선택을 구문 분석합니다:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
+        InvalidateRect(hWnd, NULL, FALSE);
+        UpdateWindow(hWnd);
+        ReleaseDC(hWnd, hdc);
+    }
+    break;
+
     case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc, memDC;
-            HBITMAP newBitmap, oldBitmap;
-            RECT buffer;
-            memDC = BeginPaint(hWnd, &ps);
+    {
+        PAINTSTRUCT ps;
+        HDC hdc, memDC;
+        HBITMAP newBitmap, oldBitmap;
+        RECT buffer;
+        memDC = BeginPaint(hWnd, &ps);
 
-            GetClientRect(hWnd, &buffer);
-            hdc = CreateCompatibleDC(memDC);
-            newBitmap = CreateCompatibleBitmap(memDC, buffer.right, buffer.bottom);
-            oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
-            PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        GetClientRect(hWnd, &buffer);
+        hdc = CreateCompatibleDC(memDC);
+        newBitmap = CreateCompatibleBitmap(memDC, buffer.right, buffer.bottom);
+        oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
+        PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
+        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        FillRect(hdc, &buffer, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
-            OnPaint(hdc, lParam);
-            
-            GetClientRect(hWnd, &buffer);
-            BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
-            SelectObject(hdc, oldBitmap);
-            DeleteObject(newBitmap);
-            DeleteDC(hdc);
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_TIMER:
+        for (int i = 0; i < list.size(); i++)
         {
-            switch (wParam)
+            POINT st_pos = list[i].at(0);
+
+            for (int j = 0; j < list[i].size(); j++)
             {
-                default:
-                    break;
+                POINT next_pos = list[i].at(j);
+                MoveToEx(memDC, st_pos.x, st_pos.y, NULL);
+                LineTo(memDC, next_pos.x, next_pos.y);
+                st_pos = next_pos;
             }
         }
-        break;
+
+        OnPaint(hdc, lParam);
+
+        GetClientRect(hWnd, &buffer);
+        BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
+        SelectObject(hdc, oldBitmap);
+        DeleteObject(newBitmap);
+        DeleteDC(hdc);
+        EndPaint(hWnd, &ps);
+    }
+    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -560,103 +319,4 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
-}
-
-/*void A(HDC hdc, int idx)
-{
-    if (floor(a[idx].time * 1000) == floor(progress * 1000))
-    {
-        MoveToEx(hdc, a[idx].current_x, a[idx].current_y, NULL);
-        LineTo(hdc, a[idx].x, a[idx].y);
-    }
-}*/
-
-void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
-{
-    
-    if (uTimerID == progress_timer)
-    {
-        RECT ar = {0, windows_size_height - 220, windows_size_width, windows_size_height};
-    
-        progress += 0.001;
-        InvalidateRect((HWND)dwUser, &ar, FALSE);
-
-        // trunc로 변경 고려
-        if (floor(progress * 1000) >= floor(max_progress * 1000))
-        {
-            progress = 0;
-            InvalidateRect((HWND)dwUser, NULL, FALSE);
-        }
-    }
-}
-
-Color HSVToRGB(double h, double s, double v)
-{
-    double r = 0;
-    double g = 0;
-    double b = 0;
-
-    if (s == 0)
-    {
-        r = v;
-        g = v;
-        b = v;
-    }
-    else
-    {
-        int i;
-        double f, p, q, t;
-
-        if (h == 360)
-        {
-            h = 0;
-        }
-        else
-        {
-            h = h / 60;
-        }
-
-        i = (int)trunc(h);
-        f = h - i;
-
-        p = v * (1.0 - s);
-        q = v * (1.0 - (s * f));
-        t = v * (1.0 - (s * (1.0 - f)));
-
-        switch (i)
-        {
-        case 0:
-            r = v;
-            g = t;
-            b = p;
-            break;
-        case 1:
-            r = q;
-            g = v;
-            b = p;
-            break;
-        case 2:
-            r = p;
-            g = v;
-            b = t;
-            break;
-        case 3:
-            r = p;
-            g = q;
-            b = v;
-            break;
-        case 4:
-            r = t;
-            g = p;
-            b = v;
-            break;
-        default:
-            r = v;
-            g = p;
-            b = q;
-            break;
-        }
-    }
-    
-    return Color(255, (BYTE)(r * 255), (BYTE)(g * 255), (BYTE)(b * 255));
 }
