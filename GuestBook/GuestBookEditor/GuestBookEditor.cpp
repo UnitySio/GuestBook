@@ -3,8 +3,8 @@
 
 #include "framework.h"
 #include "GuestBookEditor.h"
-
-#include "PenSettings.h"
+#include "QuickPanel.h"
+#include "Timeline.h"
 
 #define MAX_LOADSTRING 100
 
@@ -16,12 +16,15 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름�
 bool is_click;
 int current_x, current_y;
 
+//UINT double_click_timer;
+
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 void OnPaint(HDC hdc);
+void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -80,7 +83,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.style          = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
     wcex.lpfnWndProc    = WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
@@ -135,14 +138,20 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static PenSettings *pen_settings;
+    static QuickPanel* quick_panel;
+    static Timeline* timeline;
+
+    TIMECAPS timecaps;
+    timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
+
     POINT mouse_position;
 
     switch (message)
     {
     case WM_CREATE:
         {
-            pen_settings = new PenSettings(hWnd);
+        quick_panel = new QuickPanel(hWnd);
+        timeline = new Timeline(hWnd);
         }
         break;
     case WM_COMMAND:
@@ -162,30 +171,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
-    case WM_RBUTTONDOWN:
-        {
-            mouse_position.x = LOWORD(lParam);
-            mouse_position.y = HIWORD(lParam);
-            
-            pen_settings->Open(mouse_position); // 팬 설정을 여는 함수
-        }
-        break;
     case WM_LBUTTONUP:
         {
-            pen_settings->MouseUp(); // 팬 설정이 열려있을 때 마우스 클릭에 대한 함수
+            quick_panel->MouseUp();
             is_click = false;
         }
         break;
     case WM_LBUTTONDOWN:
         {
+            //timeKillEvent(double_click_timer);
+            //double_click_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD)hWnd, TIME_PERIODIC);
+
             mouse_position.x = LOWORD(lParam);
             mouse_position.y = HIWORD(lParam);
             
-            pen_settings->MouseDown(mouse_position); // 팬 설정이 열려있을 때 마우스 클릭에 대한 함수
+            quick_panel->MouseDown(mouse_position);
 
             is_click = true;
             current_x = LOWORD(lParam);
             current_y = HIWORD(lParam);
+        }
+        break;
+    case WM_LBUTTONDBLCLK:
+        {
+            mouse_position.x = LOWORD(lParam);
+            mouse_position.y = HIWORD(lParam);
+
+            quick_panel->Open(mouse_position);
         }
         break;
     case WM_MOUSEMOVE:
@@ -193,14 +205,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.x = LOWORD(lParam);
             mouse_position.y = HIWORD(lParam);
 
-            pen_settings->MouseMove(mouse_position); // 팬 설정이 열려있을 때 마우스 움직임에 대한 함수
+            quick_panel->MouseMove(mouse_position);
 
-            if (is_click && pen_settings->IsOpen() == false)
+            if (is_click && quick_panel->IsOpen() == false)
             {
                 HDC hdc;
                 hdc = GetDC(hWnd);
-                COLORREF as = RGB(pen_settings->GetR(), pen_settings->GetG(), pen_settings->GetB());
-                HPEN n = CreatePen(PS_SOLID, (int)trunc(pen_settings->GetPenSize()), as);
+                COLORREF as = RGB(quick_panel->GetR(), quick_panel->GetG(), quick_panel->GetB());
+                HPEN n = CreatePen(PS_SOLID, quick_panel->GetPenSize(), as);
                 HPEN o = (HPEN)SelectObject(hdc, n);
                 MoveToEx(hdc, current_x, current_y, NULL);
                 LineTo(hdc, mouse_position.x, mouse_position.y);
@@ -228,7 +240,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
             
             OnPaint(hdc);
-            pen_settings->Draw(hdc); // 팬 설정 그리기
+            timeline->Draw(hdc);
+            quick_panel->Draw(hdc);
             
             GetClientRect(hWnd, &buffer);
             BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
@@ -239,7 +252,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
-        delete pen_settings;
+        delete quick_panel;
+        delete timeline;
         PostQuitMessage(0);
         break;
     default:
@@ -270,4 +284,10 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void OnPaint(HDC hdc)
 {
+}
+
+// 비동기 타이머
+void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+
 }

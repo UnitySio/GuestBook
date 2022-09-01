@@ -1,30 +1,30 @@
-﻿#include "PenSettings.h"
+﻿#include "QuickPanel.h"
 
-PenSettings::PenSettings(HWND hWnd)
+QuickPanel::QuickPanel(HWND hWnd)
 {
-    GetClientArea();
     this->hWnd = hWnd;
+    UpdateWindowArea();
 }
 
-PenSettings::~PenSettings()
+QuickPanel::~QuickPanel()
 {
 }
 
-bool PenSettings::IsOpen()
+bool QuickPanel::IsOpen()
 {
-    return is_pen_settings_open_;
+    return is_quick_panel_open_;
 }
 
-void PenSettings::GetClientArea()
+void QuickPanel::UpdateWindowArea()
 {
     GetClientRect(hWnd, &client_area);
-    windows_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
+    window_area = { 0, 0, client_area.right - client_area.left, client_area.bottom - client_area.top };
 }
 
 
-void PenSettings::MouseUp()
+void QuickPanel::MouseUp()
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
         ReleaseCapture();
         is_palette_click_ = false;
@@ -33,9 +33,9 @@ void PenSettings::MouseUp()
     }
 }
 
-void PenSettings::MouseDown(POINT mouse_position)
+void QuickPanel::MouseDown(POINT mouse_position)
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
         SetCapture(hWnd);
         if (PtInRect(&palette_area, mouse_position))
@@ -56,11 +56,11 @@ void PenSettings::MouseDown(POINT mouse_position)
     }
 }
 
-void PenSettings::MouseMove(POINT mouse_position)
+void QuickPanel::MouseMove(POINT mouse_position)
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
-        if (PtInRect(&windows_area, mouse_position) == false)
+        if (PtInRect(&window_area, mouse_position) == false)
         {
             MouseUp();
         }
@@ -80,76 +80,77 @@ void PenSettings::MouseMove(POINT mouse_position)
     }
 }
 
-void PenSettings::PaletteControl(POINT mouse_position)
+void QuickPanel::PaletteControl(POINT mouse_position)
 {
     s_ = min(max(((mouse_position.x - palette_x_) * 1.0f) / palette_width_, 0), 1.0f);
     v_ = min(max(((mouse_position.y - palette_y_) * 1.0f) / palette_height_, 0), 1.0f);
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void PenSettings::HueSliderControl(POINT mouse_position)
+void QuickPanel::HueSliderControl(POINT mouse_position)
 {
     h_ = min(max(((mouse_position.y - hue_slider_y_) * 360.0f) / hue_slider_height_, 0), 360.0f);
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void PenSettings::PenSizeSliderControl(POINT mouse_position)
+void QuickPanel::PenSizeSliderControl(POINT mouse_position)
 {
-    pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 10.0f) / pen_size_slider_width_, 0), 10.0f);
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 30.0f) / pen_size_slider_width_, 0), 30.0f);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void PenSettings::Open(POINT mouse_position)
+void QuickPanel::Open(POINT mouse_position)
 {
-    if (is_pen_settings_open_ == false)
+    if (is_quick_panel_open_ == false)
     {
         x_ = mouse_position.x;
         y_ = mouse_position.y;
 
         // 윈도우 크기에 따른 위치 보정
-        if (x_ > windows_area.right - width_)
+        if (x_ > window_area.right - width_)
         {
             x_ -= width_;
         }
 
-        if (y_ > windows_area.bottom - height_)
+        if (y_ > window_area.bottom - height_)
         {
             y_ -= height_;
         }
 
-        pen_settings_area = { x_, y_, x_ + width_, y_ + height_ };
+        quick_panel_area = { x_, y_, x_ + width_, y_ + height_ };
     }
     
-    is_pen_settings_open_ = !is_pen_settings_open_;
+    is_quick_panel_open_ = !is_quick_panel_open_;
 
-    InvalidateRect(hWnd, &pen_settings_area, FALSE);
+    InvalidateRect(hWnd, &quick_panel_area, FALSE);
 }
 
-void PenSettings::Draw(HDC hdc)
+void QuickPanel::Draw(HDC hdc)
 {
-    if (is_pen_settings_open_)
+    if (is_quick_panel_open_)
     {
-        GetClientArea();
-        
+        UpdateWindowArea();
+
         Graphics graphics(hdc);
 
         // 배경 제거
         SetBkMode(hdc, TRANSPARENT);
 
-        Pen black_outline(Color(255, 0, 0, 0));
-        Pen white_outline(Color(200, 255, 255, 255));
-    
+        Pen black_pen(Color(255, 0, 0, 0));
+        Pen white_pen(Color(255, 255, 255, 255));
+
         SolidBrush white_brush(Color(255, 255, 255, 255));
         SolidBrush black_brush(Color(255, 0, 0, 0));
-    
-        SolidBrush background(Color(255, 37, 41, 53));
-        graphics.FillRectangle(&background, x_, y_, width_, height_);
+        SolidBrush white_alpha_brush(Color(50, 255, 255, 255));
+        SolidBrush background_brush(Color(255, 33, 35, 39));
+        
+        graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
         FontFamily arial_font(L"Arial");
         Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
 
         PointF header_font_position(x_ + 20, y_ + 13);
-        graphics.DrawString(L"Quick Pen Settings", -1, &font_style, header_font_position, &white_brush);
+        graphics.DrawString(L"Quick Panel", -1, &font_style, header_font_position, &white_brush);
 
         // 팔레트
         palette_x_ = x_ + 20;
@@ -157,55 +158,80 @@ void PenSettings::Draw(HDC hdc)
 
         SolidBrush palette_background(Color(255, 255, 255, 255));
         graphics.FillRectangle(&palette_background, palette_x_, palette_y_, palette_width_, palette_height_);
-    
+
         LinearGradientBrush palette_horizontal(
             Point(palette_x_, palette_y_),
             Point(palette_x_ + palette_width_, palette_y_),
             Color(0, 255, 255, 255),
             HSVToRGB(360.0f - h_, 1, 1));
-    
+
         graphics.FillRectangle(&palette_horizontal, palette_x_, palette_y_, palette_width_, palette_height_);
-    
+
         LinearGradientBrush palette_vertical(
             Point(palette_x_, palette_y_ + palette_height_),
             Point(palette_x_, palette_y_),
             Color(255, 0, 0, 0),
             Color(0, 255, 255, 255));
-    
+
         graphics.FillRectangle(&palette_vertical, palette_x_, palette_y_, palette_width_, palette_height_);
 
-        graphics.DrawEllipse(&white_outline, palette_x_ + (s_ / 1.0f) * palette_width_ - 5, palette_y_ + (v_ / 1.0f) * palette_height_ - 5, 10, 10);
-    
+        graphics.FillEllipse(&white_alpha_brush, palette_x_ + (s_ / 1.0f) * palette_width_ - 10, palette_y_ + (v_ / 1.0f) * palette_height_ - 10, 20, 20);
+        graphics.DrawEllipse(&white_pen, palette_x_ + (s_ / 1.0f) * palette_width_ - 10, palette_y_ + (v_ / 1.0f) * palette_height_ - 10, 20, 20);
+
         // 색상 슬라이더
         hue_slider_x_ = palette_x_ + palette_width_ + 10;
         hue_slider_y_ = palette_y_;
 
         graphics.FillRectangle(&white_brush, hue_slider_x_, hue_slider_y_, hue_slider_width_, hue_slider_height_);
-    
+
         Image hue_slider_image(L"Resources/Hue.png");
         graphics.DrawImage(&hue_slider_image, hue_slider_x_, hue_slider_y_, hue_slider_width_, hue_slider_height_);
 
-        graphics.DrawEllipse(&white_outline, hue_slider_x_ + 10, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5, 10, 10);
-    
+        Point left_points[] = {
+            Point(hue_slider_x_, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_),
+            Point(hue_slider_x_ - 5, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ + 5),
+            Point(hue_slider_x_ - 5, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5) };
+
+        graphics.FillPolygon(&white_brush, left_points, 3);
+
+        Point right_points[] = {
+            Point(hue_slider_x_ + hue_slider_width_, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_),
+            Point(hue_slider_x_ + hue_slider_width_ + 5, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ + 5),
+            Point(hue_slider_x_ + hue_slider_width_ + 5, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5) };
+
+        graphics.FillPolygon(&white_brush, right_points, 3);
+
         // 팬 크기 슬라이더
         pen_size_slider_x_ = palette_x_;
         pen_size_slider_y_ = palette_y_ + palette_height_ + 10;
 
-        graphics.FillRectangle(&white_brush, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
-    
         LinearGradientBrush pen_size_slider_horizontal(
             Point(pen_size_slider_x_, pen_size_slider_y_),
             Point(pen_size_slider_x_ + pen_size_slider_width_, pen_size_slider_y_),
-            Color(0, 255, 255, 255),
+            Color(255, 255, 255, 255),
             Color(255, 200, 200, 200));
-    
+
         graphics.FillRectangle(&pen_size_slider_horizontal, pen_size_slider_x_, pen_size_slider_y_, pen_size_slider_width_, pen_size_slider_height_);
 
-        graphics.DrawEllipse(&white_outline, pen_size_slider_x_ + (pen_size_ / 10.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + 10, 10, 10);
-    
+        Point top_points[] = {
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_, pen_size_slider_y_),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ - 5),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ - 5) };
+
+        graphics.FillPolygon(&white_brush, top_points, 3);
+
+        graphics.DrawLine(&white_pen, pen_size_slider_x_, pen_size_slider_y_ + 5, pen_size_slider_x_ + 10, pen_size_slider_y_ + 5);
+
+        Point bottom_points[] = {
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_, pen_size_slider_y_ + pen_size_slider_height_),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ - 5, pen_size_slider_y_ + pen_size_slider_height_ + 5),
+            Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ + pen_size_slider_height_ + 5) };
+
+        graphics.FillPolygon(&white_brush, bottom_points, 3);
+
         WCHAR pen_size_word[1024];
-        _stprintf_s(pen_size_word, L"%.lf", pen_size_);
-    
+        wsprintf(pen_size_word, L"%dpx", (int)trunc(pen_size_));
+
         PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 7);
         graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &black_brush);
 
@@ -214,7 +240,7 @@ void PenSettings::Draw(HDC hdc)
         // 색상 미리보기
         color_preview_x_ = pen_size_slider_x_ + pen_size_slider_width_ + 10;
         color_preview_y_ = pen_size_slider_y_;
-    
+
         SolidBrush color_preview(current_select_color);
         graphics.FillRectangle(&color_preview, color_preview_x_, color_preview_y_, color_preview_width_, color_preview_height_);
 
@@ -222,21 +248,41 @@ void PenSettings::Draw(HDC hdc)
         hue_slider_area = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };
         pen_size_slider_area = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
 
+        WCHAR hsv_word[1024];
+        wsprintf(hsv_word, L"HSV: %d°, %d%%, %d%%", (int)round(360.0f - h_), (int)round(s_ * 100), (int)round((1.0f - v_) * 100));
+
+        PointF hsv_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
+        graphics.DrawString(hsv_word, -1, &font_style, hsv_font_position, &white_brush);
+        
         WCHAR rgb_word[1024];
         wsprintf(rgb_word, L"RGB: %d, %d, %d", GetR(), GetG(), GetB());
-    
-        PointF rgb_font_position(pen_size_slider_x_, pen_size_slider_y_ + pen_size_slider_height_ + 13);
+
+        PointF rgb_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 13);
         graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &white_brush);
+        
+        WCHAR hex_word[1024];
+        wsprintf(hex_word, L"HEX: #%02x%02x%02x", GetR(), GetG(), GetB());
+
+        PointF hex_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 26);
+        graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &white_brush);
+        
+        PointF preview_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 90);
+        graphics.DrawString(L"Preview", -1, &font_style, preview_font_position, &white_brush);
+        
+        graphics.FillRectangle(&white_brush, hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 110, 130, 130);
+        
+        Pen pen(current_select_color, pen_size_);
+        graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 175, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175 );
     }
 }
 
-double PenSettings::GetPenSize()
+int QuickPanel::GetPenSize()
 {
-    return pen_size_;
+    return (int)trunc(pen_size_);
 }
 
 // HSV 값을 RGB 값으로 변환
-Color PenSettings::HSVToRGB(double h, double s, double v)
+Color QuickPanel::HSVToRGB(double h, double s, double v)
 {
     double r = 0;
     double g = 0;
@@ -307,17 +353,17 @@ Color PenSettings::HSVToRGB(double h, double s, double v)
     return Color(255, (BYTE)(r * 255), (BYTE)(g * 255), (BYTE)(b * 255));
 }
 
-BYTE PenSettings::GetR()
+BYTE QuickPanel::GetR()
 {
     return current_select_color.GetR();
 }
 
-BYTE PenSettings::GetG()
+BYTE QuickPanel::GetG()
 {
     return current_select_color.GetG();
 }
 
-BYTE PenSettings::GetB()
+BYTE QuickPanel::GetB()
 {
     return current_select_color.GetB();
 }
