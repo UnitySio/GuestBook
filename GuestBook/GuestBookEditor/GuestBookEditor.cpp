@@ -140,6 +140,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static QuickPanel* quick_panel;
     static Timeline* timeline;
+    static TCHAR input[256];
+    static int input_length;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -169,6 +171,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
+        }
+        break;
+    case WM_CHAR:
+        {
+            switch (wParam)
+            {
+            case 0x08: // 백스페이스
+                if (input_length != 0)
+                {
+                    input[input_length] = wParam;
+                    input[input_length - 1] = 0;
+                }
+                break;
+            case 0x09: // 탭
+                break;
+            default:
+                input[input_length] = wParam;
+                input[input_length + 1] = 0;
+                break;
+            }
+
+            input_length = lstrlen(input);
+            
+            InvalidateRect(hWnd, NULL, FALSE);
         }
         break;
     case WM_LBUTTONUP:
@@ -238,6 +264,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
             PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+
+            TextOut(hdc, 0, 0, input, lstrlen(input));
             
             OnPaint(hdc);
             timeline->Draw(hdc);
@@ -284,6 +312,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void OnPaint(HDC hdc)
 {
+    
 }
 
 // 비동기 타이머
