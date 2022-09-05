@@ -6,8 +6,8 @@ class QuickPanel
 {
 private:
     HWND hWnd;
-    RECT client_area;
-    RECT window_area;
+    RECT client_area_;
+    RECT window_area_;
 
     // 생성될 x, y 좌표
     int x_;
@@ -21,10 +21,10 @@ private:
     double pen_size_; // 팬 크기
 
     // 영역
-    RECT quick_panel_area;
-    RECT palette_area;
-    RECT hue_slider_area;
-    RECT pen_size_slider_area;
+    RECT quick_panel_area_;
+    RECT palette_area_;
+    RECT hue_slider_area_;
+    RECT pen_size_slider_area_;
 
     // 팔레트
     int palette_x_;
@@ -50,7 +50,7 @@ private:
     int color_preview_width_ = 30;
     int color_preview_height_ = 30;
     
-    Color current_select_color = HSVToRGB(360.0f - h_, s_, 1.0f - v_);;
+    Color current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);;
     
     bool is_quick_panel_open_;
     bool is_palette_click_;

@@ -6,6 +6,8 @@
 #include "QuickPanel.h"
 #include "Timeline.h"
 
+#include <vector>
+
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
@@ -15,6 +17,18 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름�
 
 bool is_click;
 int current_x, current_y;
+
+struct P
+{
+    int current_x;
+    int current_y;
+    int x;
+    int y;
+    int width;
+    COLORREF color;
+};
+
+vector<P> v;
 
 //UINT double_click_timer;
 
@@ -140,6 +154,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static QuickPanel* quick_panel;
     static Timeline* timeline;
+    static TCHAR input[256];
+    int input_length;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -160,6 +176,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // 메뉴 선택을 구문 분석합니다:
             switch (wmId)
             {
+            case IDM_NEW_FILE:
+                if (v.size() != 0)
+                {
+                    if (MessageBox(hWnd, L"저장하지 않은 내용은 지워집니다.", L"새 파일", MB_YESNO) == IDYES)
+                    {
+                        v.clear();
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                }
+                break;
+            case IDM_SAVE:
+                break;
+            case IDM_LOAD:
+                break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -171,9 +201,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_CHAR: // 키보드 입력(테스트)
+        {
+            RECT area = { 0, 0, 512, 32 };
+            input_length = lstrlen(input);
+            switch (wParam)
+            {
+            case 0x08: // 백스페이스
+                if (input_length != 0)
+                {
+                    input[input_length] = wParam;
+                    input[input_length - 1] = NULL;
+                }
+                break;
+            case 0x0D: // 엔터
+                break;
+            case 0x09: // 탭
+                break;
+            case 0x1B: // ESC
+                break;
+            default:
+
+                input[input_length] = wParam;
+                input[input_length + 1] = NULL;
+                break;
+            }
+            
+            InvalidateRect(hWnd, &area, FALSE);
+        }
+        break;
     case WM_LBUTTONUP:
         {
             quick_panel->MouseUp();
+            timeline->MouseUp();
             is_click = false;
         }
         break;
@@ -186,6 +246,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.y = HIWORD(lParam);
             
             quick_panel->MouseDown(mouse_position);
+            timeline->MouseDown(mouse_position);
 
             is_click = true;
             current_x = LOWORD(lParam);
@@ -206,16 +267,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             mouse_position.y = HIWORD(lParam);
 
             quick_panel->MouseMove(mouse_position);
+            timeline->MouseMove(mouse_position);
 
             if (is_click && quick_panel->IsOpen() == false)
             {
                 HDC hdc;
                 hdc = GetDC(hWnd);
-                COLORREF as = RGB(quick_panel->GetR(), quick_panel->GetG(), quick_panel->GetB());
-                HPEN n = CreatePen(PS_SOLID, quick_panel->GetPenSize(), as);
+                COLORREF color = RGB(quick_panel->GetR(), quick_panel->GetG(), quick_panel->GetB());
+                HPEN n = CreatePen(PS_SOLID, quick_panel->GetPenSize(), color);
                 HPEN o = (HPEN)SelectObject(hdc, n);
                 MoveToEx(hdc, current_x, current_y, NULL);
                 LineTo(hdc, mouse_position.x, mouse_position.y);
+                v.push_back({ current_x, current_y, mouse_position.x, mouse_position.y, quick_panel->GetPenSize(), color });
                 SelectObject(hdc, o);
                 DeleteObject(n);
                 ReleaseDC(hWnd, hdc);
@@ -238,6 +301,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
             PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+
+            TextOut(hdc, 0, 0, input, lstrlen(input));
             
             OnPaint(hdc);
             timeline->Draw(hdc);
@@ -284,6 +349,15 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void OnPaint(HDC hdc)
 {
+    for (int i = 0; i < v.size(); i++)
+    {
+        HPEN n = CreatePen(PS_SOLID, v[i].width, v[i].color);
+        HPEN o = (HPEN)SelectObject(hdc, n);
+        MoveToEx(hdc, v[i].current_x, v[i].current_y, NULL);
+        LineTo(hdc, v[i].x, v[i].y);
+        SelectObject(hdc, o);
+        DeleteObject(n);
+    }
 }
 
 // 비동기 타이머
