@@ -20,6 +20,7 @@ HBITMAP memBitmap;  // 메모리 DC에서 사용할 Bitmap 값
 RECT eraser = { 0, 0, 100, 100 };
 RECT clear = { 100, 0, 200, 200 };
 
+
 // 윈도우 크기
 const int windows_size_width = 1280;
 const int windows_size_height = 720;
@@ -138,6 +139,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
+    RECT rect;
     switch (message)
     {
     case WM_CREATE:
@@ -146,7 +148,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         hdc = GetDC(hWnd);
 
         memdc = CreateCompatibleDC(hdc);
-        RECT rect;
+        
         GetClientRect(hWnd, &rect);     // 현재 윈도우 창 크기 받아오기
         memBitmap = CreateCompatibleBitmap(memdc, rect.right, rect.bottom);     // 사용자의 화면과 같은 크기의 비트맵 생성
         SelectObject(memdc, memBitmap);
@@ -165,27 +167,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // 마우스 상태 결정
         status = Button(hWnd, lParam, memdc, status, eraser, clear, st_pos);
 
-        /*
-        if (PtInRect(&eraser, st_pos))
-        {
-            //status = 0;
-            MessageBox(hWnd, L"지우개 활성화", L"알림", MB_OK);
-
-            //마우스 상태 활성화
-            status = 2;
-
-            //지우는 좌표 받아오기
-            st_pos.x = GET_X_LPARAM(lParam);
-            st_pos.y = GET_Y_LPARAM(lParam);
-        }
-        else if (PtInRect(&clear, st_pos))
-        {
-            MessageBox(hWnd, L"화면 전체 지우기", L"알림", MB_OK);
-            RECT rect;
-            GetClientRect(hWnd, &rect);
-            FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
-        }
-        */
         break;
     }
     case WM_LBUTTONUP:
@@ -193,17 +174,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         status = 0;
         break;
     }
-    /*case WM_RBUTTONDOWN:
-    {
-            //마우스 상태 활성화
-            status = 2;
-
-            //지우는 좌표 받아오기
-            st_pos.x = GET_X_LPARAM(lParam);
-            st_pos.y = GET_Y_LPARAM(lParam);
-        break;
-    }
-    */
     case WM_RBUTTONUP:
     {
         status = 0;
