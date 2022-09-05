@@ -241,8 +241,8 @@ void QuickPanel::Draw(HDC hdc)
         color_preview_x_ = pen_size_slider_x_ + pen_size_slider_width_ + 10;
         color_preview_y_ = pen_size_slider_y_;
 
-        SolidBrush color_preview(current_color_);
-        graphics.FillRectangle(&color_preview, color_preview_x_, color_preview_y_, color_preview_width_, color_preview_height_);
+        SolidBrush color_preview_brush(current_color_);
+        graphics.FillRectangle(&color_preview_brush, color_preview_x_, color_preview_y_, color_preview_width_, color_preview_height_);
 
         palette_area_ = { palette_x_ - 10, palette_y_ - 10, palette_x_ + palette_width_ + 10, palette_y_ + palette_height_ + 10 };
         hue_slider_area_ = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };

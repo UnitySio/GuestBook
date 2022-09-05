@@ -14,12 +14,11 @@ private:
     int width_;
     int height_;
 
-    double progress_ = 90;
-    double max_progress_ = 100;
+    double progress_ = 0;
+    double max_progress_ = 10;
 
     // 영역
     RECT timeline_area_;
-    RECT pregress_area_;
 
     // 프로그래스
     int progress_x_;
@@ -30,6 +29,7 @@ private:
     bool is_progress_click;
     
     void UpdateWindowArea();
+    void ProgressControl(POINT mouse_position);
 public:
     Timeline(HWND hWnd);
     ~Timeline();
