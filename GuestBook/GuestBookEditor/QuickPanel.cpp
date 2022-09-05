@@ -280,8 +280,6 @@ void QuickPanel::Draw(HDC hdc)
             Point(hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175) };
 
         graphics.DrawCurve(&preivew_pen, preview_points, 4);
-
-        //graphics.DrawLine(&pen, hue_slider_x_ + hue_slider_width_ + 30, hue_slider_y_ + 175, hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175 );
     }
 }
 
