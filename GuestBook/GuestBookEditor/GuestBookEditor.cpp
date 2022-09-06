@@ -162,6 +162,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         SelectObject(btndc, btnBitmap);
         Rectangle(btndc, 0, 0, 100, 100);
         Rectangle(btndc, 100, 0, 200, 100);
+        TextOut(btndc, 25, 45, L"지우개", strlen("지우개"));
         BitBlt(hdc, 0, 0, 200, 200, btndc, 0, 0, SRCCOPY);
 
         ReleaseDC(hWnd, hdc);
