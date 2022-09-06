@@ -15,6 +15,8 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 
+Timeline* timeline;
+
 bool is_click;
 int current_x, current_y;
 
@@ -30,7 +32,7 @@ struct P
 
 vector<P> v;
 
-//UINT double_click_timer;
+UINT double_click_timer;
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -153,7 +155,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static QuickPanel* quick_panel;
-    static Timeline* timeline;
     static TCHAR input[256];
     int input_length;
 
@@ -166,8 +167,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         {
-        quick_panel = new QuickPanel(hWnd);
-        timeline = new Timeline(hWnd);
+            quick_panel = new QuickPanel(hWnd);
+            timeline = new Timeline(hWnd);
+
+            //timeKillEvent(double_click_timer);
+            double_click_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD)hWnd, TIME_PERIODIC);
         }
         break;
     case WM_COMMAND:
@@ -239,9 +243,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_LBUTTONDOWN:
         {
-            //timeKillEvent(double_click_timer);
-            //double_click_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD)hWnd, TIME_PERIODIC);
-
             mouse_position.x = LOWORD(lParam);
             mouse_position.y = HIWORD(lParam);
             
@@ -363,5 +364,5 @@ void OnPaint(HDC hdc)
 // 비동기 타이머
 void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-
+    timeline->Play();
 }

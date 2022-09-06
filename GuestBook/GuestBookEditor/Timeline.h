@@ -37,6 +37,7 @@ public:
     void MouseUp();
     void MouseDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
+    void Play();
     void Draw(HDC hdc);
 };
 
