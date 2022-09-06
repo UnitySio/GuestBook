@@ -15,15 +15,12 @@ int Button(HWND hWnd, LPARAM lParam, HDC memdc, int status, RECT eraser, RECT cl
 
         return 2;
     }
+
     else if (PtInRect(&clear, st_pos))
     {
-        MessageBox(hWnd, L"화면 전체 지우기", L"알림", MB_OK);
-
-        RECT rect;
-        GetClientRect(hWnd, &rect);
-        FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
         return 0;
     }
     else
         return 1;
+
 }

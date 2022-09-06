@@ -15,10 +15,12 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름�
 
 int status;      // 0 : 비활성화, 1 : 그리기ON, 2 : 지우개ON
 HDC memdc;      // 메모리 DC 값
+HDC btndc;      // 버튼 DC 값
 POINT st_pos;   // 시작 POINT좌표
 HBITMAP memBitmap;  // 메모리 DC에서 사용할 Bitmap 값
-RECT eraser = { 0, 0, 100, 100 };
-RECT clear = { 100, 0, 200, 200 };
+HBITMAP btnBitmap;
+RECT eraser = { 0, 0, 100, 50 };
+RECT clear = { 100, 0, 200, 100 };
 
 
 // 윈도우 크기
@@ -148,12 +150,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         hdc = GetDC(hWnd);
 
         memdc = CreateCompatibleDC(hdc);
+        btndc = CreateCompatibleDC(hdc);
         
         GetClientRect(hWnd, &rect);     // 현재 윈도우 창 크기 받아오기
         memBitmap = CreateCompatibleBitmap(memdc, rect.right, rect.bottom);     // 사용자의 화면과 같은 크기의 비트맵 생성
         SelectObject(memdc, memBitmap);
-        FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));    // 화면 전체를 흰색으로 칠하기
-        BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);   // 원본 DC인 memdc의 비트맵을 사본 DC인 hdc에 그대로 복사.
+        FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));    // 화면 전체를 흰색으로 칠하기(배경색 지정)
+        BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);   // memdc에 그린 그림(?)을 hdc로 복사
+
+        btnBitmap = CreateCompatibleBitmap(btndc, 200, 100);
+        SelectObject(btndc, btnBitmap);
+        Rectangle(btndc, 0, 0, 100, 100);
+        Rectangle(btndc, 100, 0, 200, 100);
+        BitBlt(hdc, 0, 0, 200, 200, btndc, 0, 0, SRCCOPY);
 
         ReleaseDC(hWnd, hdc);
         break;
@@ -164,19 +173,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         st_pos.x = GET_X_LPARAM(lParam);
         st_pos.y = GET_Y_LPARAM(lParam);
 
-        // 마우스 상태 결정
-        status = Button(hWnd, lParam, memdc, status, eraser, clear, st_pos);
+        if (PtInRect(&clear, st_pos))
+        {
+            MessageBox(hWnd, L"화면 전체 지우기", L"알림", MB_OK);
+
+            GetClientRect(hWnd, &rect);
+            FillRect(memdc, &rect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+            InvalidateRect(hWnd, &rect, FALSE);
+            break;
+        }
+        else
+            status = 1;
 
         break;
     }
     case WM_LBUTTONUP:
     {
         status = 0;
-        break;
-    }
-    case WM_RBUTTONUP:
-    {
-        status = 0;
+
+        // 시작 좌표 저장
+        st_pos.x = GET_X_LPARAM(lParam);
+        st_pos.y = GET_Y_LPARAM(lParam);
+
+        if (PtInRect(&eraser, st_pos))
+        {
+            MessageBox(hWnd, L"지우개 활성화", L"알림", MB_OK);
+
+            //마우스 상태 활성화
+            status = 2;
+
+            //지우는 좌표 받아오기
+            st_pos.x = GET_X_LPARAM(lParam);
+            st_pos.y = GET_Y_LPARAM(lParam);
+        }
         break;
     }
     case WM_MOUSEMOVE:
@@ -188,7 +217,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             pos.x = GET_X_LPARAM(lParam);
             pos.y = GET_Y_LPARAM(lParam);
 
-            RECT rect;
             GetClientRect(hWnd, &rect);
             hdc = GetDC(hWnd);
 
@@ -196,6 +224,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             MoveToEx(memdc, st_pos.x, st_pos.y, NULL);
             LineTo(memdc, pos.x, pos.y);
             BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
+            BitBlt(hdc, 0, 0, rect.right, rect.bottom, btndc, 0, 0, SRCCOPY);
 
             ReleaseDC(hWnd, hdc);
             st_pos.x = pos.x;
@@ -209,7 +238,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             pos.x = GET_X_LPARAM(lParam);
             pos.y = GET_Y_LPARAM(lParam);
 
-            RECT rect;
             GetClientRect(hWnd, &rect);
 
             hdc = GetDC(hWnd);
@@ -222,6 +250,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             MoveToEx(memdc, st_pos.x, st_pos.y, NULL);
             LineTo(memdc, pos.x, pos.y);
             BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
+            BitBlt(hdc, 0, 0, rect.right, rect.bottom, btndc, 0, 0, SRCCOPY);
+            InvalidateRect(hWnd, &rect, FALSE);
 
             SelectObject(memdc, oldPen);
             DeleteObject(newPen);
@@ -229,6 +259,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             ReleaseDC(hWnd, hdc);
             st_pos.x = pos.x;
             st_pos.y = pos.y;
+        }
+        if (status == 0)
+        {
+            break;
         }
         break;
     }
@@ -241,6 +275,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetClientRect(hWnd, &rect);
         HBITMAP oldBitmap = (HBITMAP)SelectObject(memdc, memBitmap);        // 비트 패턴을 저장하기 위한 변수
         BitBlt(hdc, 0, 0, rect.right, rect.bottom, memdc, 0, 0, SRCCOPY);
+        BitBlt(hdc, 0, 0, rect.right, rect.bottom, btndc, 0, 0, SRCCOPY);
 
         EndPaint(hWnd, &ps);
         break;
