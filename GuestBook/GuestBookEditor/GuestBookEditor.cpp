@@ -15,6 +15,8 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
 
+double timer;
+
 Timeline* timeline;
 
 bool is_click;
@@ -28,11 +30,12 @@ struct P
     int y;
     int width;
     COLORREF color;
+    double time;
 };
 
 vector<P> v;
 
-UINT double_click_timer;
+UINT drawing_timer;
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -169,9 +172,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             quick_panel = new QuickPanel(hWnd);
             timeline = new Timeline(hWnd);
-
-            //timeKillEvent(double_click_timer);
-            double_click_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD)hWnd, TIME_PERIODIC);
         }
         break;
     case WM_COMMAND:
@@ -185,6 +185,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     if (MessageBox(hWnd, L"저장하지 않은 내용은 지워집니다.", L"새 파일", MB_YESNO) == IDYES)
                     {
+                        timer = 0;
                         v.clear();
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
@@ -239,6 +240,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             quick_panel->MouseUp();
             timeline->MouseUp();
             is_click = false;
+
+            timeKillEvent(drawing_timer);
         }
         break;
     case WM_LBUTTONDOWN:
@@ -252,6 +255,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             is_click = true;
             current_x = LOWORD(lParam);
             current_y = HIWORD(lParam);
+
+            drawing_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD)hWnd, TIME_PERIODIC);
         }
         break;
     case WM_LBUTTONDBLCLK:
@@ -279,7 +284,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 HPEN o = (HPEN)SelectObject(hdc, n);
                 MoveToEx(hdc, current_x, current_y, NULL);
                 LineTo(hdc, mouse_position.x, mouse_position.y);
-                v.push_back({ current_x, current_y, mouse_position.x, mouse_position.y, quick_panel->GetPenSize(), color });
+                v.push_back({ current_x, current_y, mouse_position.x, mouse_position.y, quick_panel->GetPenSize(), color, timer });
                 SelectObject(hdc, o);
                 DeleteObject(n);
                 ReleaseDC(hWnd, hdc);
@@ -350,8 +355,27 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void OnPaint(HDC hdc)
 {
+    Graphics graphics(hdc);
+
+    SolidBrush black_brush(Color(255, 0, 0, 0));
+
+    FontFamily arial_font(L"Arial");
+    Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+
+    WCHAR header_word[1024];
+    _stprintf_s(header_word, L"Timer: %.3lfs", timer);
+
+    PointF header_font_position(10, 10);
+    graphics.DrawString(header_word, -1, &font_style, header_font_position, &black_brush);
+
+
     for (int i = 0; i < v.size(); i++)
     {
+        WCHAR word[1024];
+        _stprintf_s(word, L"[%d]Time: %.3lfs", i, v[i].time);
+        PointF font_position(10, 20 + (i * 13));
+        graphics.DrawString(word, -1, &font_style, font_position, &black_brush);
+
         HPEN n = CreatePen(PS_SOLID, v[i].width, v[i].color);
         HPEN o = (HPEN)SelectObject(hdc, n);
         MoveToEx(hdc, v[i].current_x, v[i].current_y, NULL);
@@ -364,5 +388,9 @@ void OnPaint(HDC hdc)
 // 비동기 타이머
 void CALLBACK TimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-    timeline->Play();
+    if (uTimerID == drawing_timer)
+    {
+        timer += 0.001;
+        InvalidateRect((HWND)dwUser, NULL, FALSE);
+    }
 }
