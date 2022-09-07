@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{dd25e606-da87-49b2-9365-0639dfe6fe14}</ProjectGuid>
-    <RootNamespace>GuestBookPlayer</RootNamespace>
+    <ProjectGuid>{707ce35f-bfad-4cbc-8ab5-5bcb70b00864}</ProjectGuid>
+    <RootNamespace>GuestBookEditor</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -128,18 +128,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="GuestBookPlayer.h" />
+    <ClInclude Include="GuestBookEditor.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GuestBookPlayer.cpp" />
+    <ClCompile Include="GuestBookEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="GuestBookPlayer.rc" />
+    <ResourceCompile Include="GuestBookEditor.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="GuestBookPlayer.ico" />
+    <Image Include="GuestBookEditor.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
