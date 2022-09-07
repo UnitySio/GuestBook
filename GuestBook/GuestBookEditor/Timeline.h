@@ -14,8 +14,8 @@ private:
     int width_;
     int height_;
 
-    double progress_ = 0;
-    double max_progress_ = 10;
+    double time_ = 0;
+    double max_time_ = 0;
 
     // ¿µ¿ª
     RECT timeline_area_;
@@ -26,7 +26,7 @@ private:
     int progress_width_;
     int progress_height_;
 
-    bool is_progress_click;
+    bool is_progress_click_;
     
     void UpdateWindowArea();
     void ProgressControl(POINT mouse_position);
@@ -37,6 +37,7 @@ public:
     void MouseUp();
     void MouseDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
+    void UpdateMaxTime(double time);
     void Play();
     void Draw(HDC hdc);
 };

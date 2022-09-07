@@ -248,22 +248,16 @@ void QuickPanel::Draw(HDC hdc)
         hue_slider_area_ = { hue_slider_x_, hue_slider_y_ - 10, hue_slider_x_ + hue_slider_width_, hue_slider_y_ + hue_slider_height_ + 10 };
         pen_size_slider_area_ = { pen_size_slider_x_ - 10, pen_size_slider_y_, pen_size_slider_x_ + pen_size_slider_width_ + 10, pen_size_slider_y_ + pen_size_slider_height_ };
 
-        WCHAR hsv_word[1024];
-        wsprintf(hsv_word, L"HSV: %d°, %d%%, %d%%", (int)round(360.0f - h_), (int)round(s_ * 100), (int)round((1.0f - v_) * 100));
-
-        PointF hsv_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
-        graphics.DrawString(hsv_word, -1, &font_style, hsv_font_position, &white_brush);
-
         WCHAR rgb_word[1024];
         wsprintf(rgb_word, L"RGB: %d, %d, %d", GetR(), GetG(), GetB());
 
-        PointF rgb_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 13);
+        PointF rgb_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
         graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &white_brush);
 
         WCHAR hex_word[1024];
         wsprintf(hex_word, L"HEX: #%02x%02x%02x", GetR(), GetG(), GetB());
 
-        PointF hex_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 26);
+        PointF hex_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 13);
         graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &white_brush);
 
         PointF preview_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 90);

@@ -290,6 +290,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 ReleaseDC(hWnd, hdc);
                 current_x = mouse_position.x;
                 current_y = mouse_position.y;
+                timeline->UpdateMaxTime(timer);
             }
         }
         break;
@@ -368,14 +369,8 @@ void OnPaint(HDC hdc)
     PointF header_font_position(10, 10);
     graphics.DrawString(header_word, -1, &font_style, header_font_position, &black_brush);
 
-
     for (int i = 0; i < v.size(); i++)
     {
-        WCHAR word[1024];
-        _stprintf_s(word, L"[%d]Time: %.3lfs", i, v[i].time);
-        PointF font_position(10, 20 + (i * 13));
-        graphics.DrawString(word, -1, &font_style, font_position, &black_brush);
-
         HPEN n = CreatePen(PS_SOLID, v[i].width, v[i].color);
         HPEN o = (HPEN)SelectObject(hdc, n);
         MoveToEx(hdc, v[i].current_x, v[i].current_y, NULL);
