@@ -19,7 +19,7 @@ HDC btndc;      // 버튼 DC 값
 POINT st_pos;   // 시작 POINT좌표
 HBITMAP memBitmap;  // 메모리 DC에서 사용할 Bitmap 값
 HBITMAP btnBitmap;
-RECT eraser = { 0, 0, 100, 50 };
+RECT eraser = { 0, 0, 100, 100 };
 RECT clear = { 100, 0, 200, 100 };
 
 
@@ -162,7 +162,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         SelectObject(btndc, btnBitmap);
         Rectangle(btndc, 0, 0, 100, 100);
         Rectangle(btndc, 100, 0, 200, 100);
-        TextOut(btndc, 25, 45, L"지우개", strlen("지우개"));
+        TextOut(btndc, 25, 45, L"지우개", 3);
+        TextOut(btndc, 110, 45, L"전체지우기", 5);
         BitBlt(hdc, 0, 0, 200, 200, btndc, 0, 0, SRCCOPY);
 
         ReleaseDC(hWnd, hdc);
