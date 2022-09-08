@@ -133,11 +133,13 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Timeline.h" />
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GuestBookEditor.cpp" />
     <ClCompile Include="QuickPanel.cpp" />
     <ClCompile Include="Timeline.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GuestBookEditor.rc" />
