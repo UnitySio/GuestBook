@@ -18,12 +18,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     Window::Create();
 
     // 전역 문자열을 초기화합니다.
-    LoadStringW(hInstance, IDS_APP_TITLE, Window::GetWindow()->szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_GUESTBOOKEDITOR, Window::GetWindow()->szWindowClass, MAX_LOADSTRING);
-    Window::GetWindow()->MyRegisterClass(hInstance);
+    LoadStringW(hInstance, IDS_APP_TITLE, Window::GetInstance()->szTitle, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_GUESTBOOKEDITOR, Window::GetInstance()->szWindowClass, MAX_LOADSTRING);
+    Window::GetInstance()->MyRegisterClass(hInstance);
 
     // 애플리케이션 초기화를 수행합니다:
-    if (!Window::GetWindow()->InitInstance(hInstance, nCmdShow))
+    if (!Window::GetInstance()->InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }

@@ -53,6 +53,7 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static QuickPanel* quick_panel;
+    static Canvas* canvas;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -63,7 +64,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
+        GetClientRect(hWnd, &client_area_);
+        window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
+
         quick_panel = new QuickPanel(hWnd);
+        timeline = new Timeline(hWnd);
+        canvas = new Canvas(hWnd, 50, 50, window_area_.right - 100, 300);
     }
     break;
     case WM_COMMAND:
@@ -91,6 +97,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_PAINT:
     {
+        GetClientRect(hWnd, &client_area_);
+        window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
+
         PAINTSTRUCT ps;
         HDC hdc, memDC;
         HBITMAP newBitmap, oldBitmap;
@@ -105,6 +114,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
         OnPaint(hdc);
+        canvas->Draw(hdc);
+        timeline->Draw(hdc);
         quick_panel->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
@@ -118,8 +129,11 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONUP:
     {
         quick_panel->MouseUp();
+        timeline->MouseUp();
+        canvas->MouseUp();
 
         timeKillEvent(drawing_timer);
+        drawing_timer = NULL;
     }
     break;
     case WM_LBUTTONDOWN:
@@ -128,8 +142,16 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseDown(mouse_position);
+        timeline->MouseDown(mouse_position);
+        if (!quick_panel->IsOpen())
+        {
+            canvas->MouseDown(mouse_position);
+        }
 
-        drawing_timer = timeSetEvent(1, timecaps.wPeriodMax, StaticTimerProc, (DWORD)this, TIME_PERIODIC);
+        if (canvas->IsInCanvas(mouse_position))
+        {
+            drawing_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
+        }
     }
     break;
     case WM_LBUTTONDBLCLK:
@@ -146,10 +168,26 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseMove(mouse_position);
+        timeline->MouseMove(mouse_position);
+        canvas->MouseMove(mouse_position);
+
+        timeline->UpdateMaxTime(timer);
+
+        if (!canvas->IsInCanvas(mouse_position))
+        {
+            timeKillEvent(drawing_timer);
+            drawing_timer = NULL;
+        }
+        else if (drawing_timer == NULL)
+        {
+            drawing_timer = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
+        }
     }
     break;
     case WM_DESTROY:
         delete quick_panel;
+        delete timeline;
+        delete canvas;
         PostQuitMessage(0);
         break;
     default:
@@ -178,10 +216,15 @@ INT_PTR CALLBACK Window::About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     return (INT_PTR)FALSE;
 }
 
-void CALLBACK Window::StaticTimerProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-    instance_->timer += 0.001;
-    InvalidateRect(instance_->hWnd, NULL, FALSE);
+    RECT area = { 0, 0, 500, 30 };
+    Window* window = (Window*)dwUser;
+    if (m_nTimerID == window->drawing_timer)
+    {
+        window->timer += 0.001;
+        InvalidateRect(window->hWnd, &area, FALSE);
+    }
 }
 
 void Window::OnPaint(HDC hdc)
@@ -216,7 +259,7 @@ void Window::Create()
 	}
 }
 
-Window* Window::GetWindow()
+Window* Window::GetInstance()
 {
     return instance_;
 }
