@@ -20,7 +20,7 @@ void Timeline::UpdateWindowArea()
 void Timeline::MouseUp()
 {
 	ReleaseCapture();
-	is_progress_click = false;
+	is_progress_click_ = false;
 }
 
 void Timeline::MouseDown(POINT mouse_position)
@@ -29,7 +29,7 @@ void Timeline::MouseDown(POINT mouse_position)
 	if (PtInRect(&timeline_area_, mouse_position))
 	{
 		ProgressControl(mouse_position);
-		is_progress_click = true;
+		is_progress_click_ = true;
 	}
 }
 
@@ -39,7 +39,7 @@ void Timeline::MouseMove(POINT mouse_position)
 	{
 		MouseUp();
 	}
-	if (is_progress_click)
+	if (is_progress_click_)
 	{
 		ProgressControl(mouse_position);
 	}
@@ -47,20 +47,25 @@ void Timeline::MouseMove(POINT mouse_position)
 
 void Timeline::ProgressControl(POINT mouse_position)
 {
-	progress_ = min(max(((mouse_position.x - progress_x_) * max_progress_) / progress_width_, 0), max_progress_);
-	InvalidateRect(hWnd, NULL, FALSE);
+	time_ = min(max(((mouse_position.x - progress_x_) * max_time_) / progress_width_, 0), max_time_);
+	InvalidateRect(hWnd, &timeline_area_, FALSE);
+}
+
+void Timeline::UpdateMaxTime(double time)
+{
+	max_time_ = time;
 }
 
 void Timeline::Play()
 {
-	progress_ += 0.001;
+	time_ += 0.001;
 
-	if ((int)trunc(progress_ * 1000) == (int)trunc(max_progress_ * 1000))
+	if ((int)trunc(time_ * 1000) == (int)trunc(max_time_ * 1000))
 	{
-		progress_ = 0;
+		time_ = 0;
 	}
 
-	InvalidateRect(hWnd, NULL, FALSE);
+	InvalidateRect(hWnd, &timeline_area_, FALSE);
 }
 
 void Timeline::Draw(HDC hdc)
@@ -95,27 +100,25 @@ void Timeline::Draw(HDC hdc)
 	graphics.FillRectangle(&background_brush, x_, y_ + 30, width_, height_ - 30);
 
 	WCHAR header_word[1024];
-	_stprintf_s(header_word, L"타임라인 %.3lf초 / %.3lf초", progress_, max_progress_);
+	_stprintf_s(header_word, L"타임라인 %.3lf초 / %.3lf초", time_, max_time_);
 
-	PointF header_font_position(x_, y_ + 9);
+	PointF header_font_position(x_ + 10, y_ + 9);
 	graphics.DrawString(header_word, -1, &font_style, header_font_position, &white_brush);
 
 	timeline_area_ = { x_, y_, x_ + width_, y_ + height_ };
 
 	// 프로그래스
 	progress_x_ = x_;
-	progress_y_ = y_ + 30;
+	progress_y_ = y_ + 60;
 	progress_width_ = width_;
 	progress_height_ = 15;
 
-	graphics.DrawLine(&white_pen, x_, y_ + 45, x_ + width_, y_ + 45);
-
 	Point points[] = {
-		Point(progress_x_ + (progress_ / max_progress_) * progress_width_ - 10, progress_y_),
-		Point(progress_x_ + (progress_ / max_progress_) * progress_width_, progress_y_ + progress_height_),
-		Point(progress_x_ + (progress_ / max_progress_) * progress_width_ + 10, progress_y_) };
+		Point(progress_x_ + (time_ / max_time_) * progress_width_ - 10, progress_y_),
+		Point(progress_x_ + (time_ / max_time_) * progress_width_, progress_y_ + progress_height_),
+		Point(progress_x_ + (time_ / max_time_) * progress_width_ + 10, progress_y_) };
 
 	
 	graphics.FillPolygon(&yellow_brush, points, 3);
-	graphics.DrawLine(&yellow_pen, progress_x_ + (progress_ / max_progress_) * progress_width_, progress_y_ + progress_height_, progress_x_ + (progress_ / max_progress_) * progress_width_, y_ + height_);
+	graphics.DrawLine(&yellow_pen, progress_x_ + (time_ / max_time_) * progress_width_, progress_y_ + progress_height_, progress_x_ + (time_ / max_time_) * progress_width_, y_ + height_);
 }
