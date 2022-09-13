@@ -17,7 +17,7 @@ private:
 
 		double time;
 
-		Color color;
+		COLORREF color;
 	};
 
 	HWND hWnd;
@@ -41,8 +41,9 @@ public:
 
 	void MouseUp();
 	void MouseDown(POINT mouse_position);
-	void MouseMove(POINT mouse_position);
-	bool IsInCanvas(POINT mouse_position);
+	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);
 	void Draw(HDC hdc);
+
+	vector<PointInfo> GetPoints();
 };
 
