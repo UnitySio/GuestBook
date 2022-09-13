@@ -14,9 +14,6 @@ private:
     int width_;
     int height_;
 
-    double time_ = 0;
-    double max_time_ = 0;
-
     // ¿µ¿ª
     RECT timeline_area_;
 
@@ -33,6 +30,9 @@ private:
 public:
     Timeline(HWND hWnd);
     ~Timeline();
+
+    double time_ = 0;
+    double max_time_ = 0;
 
     void MouseUp();
     void MouseDown(POINT mouse_position);

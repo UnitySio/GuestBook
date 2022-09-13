@@ -30,12 +30,14 @@ private:
 	RECT client_area_;
 	RECT window_area_;
 
-	UINT drawing_timer;
-	double timer;
+	UINT drawing_timer_;
+	double timer_;
 
-	Timeline* timeline;
+	Timeline* timeline_;
+	Canvas* canvas_;
 
-	int current_x, current_y;
+	int current_x_;
+	int current_y_;
 public:
 	WCHAR szTitle[MAX_LOADSTRING]; // 제목 표시줄 텍스트입니다.
 	WCHAR szWindowClass[MAX_LOADSTRING]; // 기본 창 클래스 이름입니다.
