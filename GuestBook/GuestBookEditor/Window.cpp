@@ -68,7 +68,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         quick_panel = new QuickPanel(hWnd);
         timeline_ = new Timeline(hWnd);
-        canvas_ = new Canvas(hWnd, 50, 50, window_area_.right - 100, 300);
+        canvas_ = new Canvas(hWnd, window_area_.right - 100, 300);
     }
     break;
     case WM_COMMAND:
@@ -112,8 +112,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
-        OnPaint(hdc);
         canvas_->Draw(hdc);
+        OnPaint(hdc);
         timeline_->Draw(hdc);
         quick_panel->Draw(hdc);
 
@@ -125,12 +125,34 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         EndPaint(hWnd, &ps);
     }
     break;
+    case WM_KEYDOWN:
+    {
+        switch (wParam)
+        {
+        case VK_LEFT:
+            timeline_->Play();
+
+            if (play_timer_ == NULL)
+            
+            {
+                play_timer_ = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
+            }
+            else
+            {
+                timeKillEvent(play_timer_);
+                play_timer_ = NULL;
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
+            break;
+        }
+    }
+    break;
     case WM_LBUTTONUP:
     {
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
         quick_panel->MouseUp();
-        timeline_->MouseUp();
+        //timeline_->MouseUp();
         canvas_->MouseUp();
 
         timeKillEvent(drawing_timer_);
@@ -143,13 +165,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseDown(mouse_position);
-        timeline_->MouseDown(mouse_position);
-        if (!quick_panel->IsOpen())
+
+        if (!quick_panel->IsOpen() and !timeline_->IsPlaying())
         {
+            //timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
         }
-
-        drawing_timer_ = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
     }
     break;
     case WM_LBUTTONDBLCLK:
@@ -157,7 +178,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        quick_panel->Open(mouse_position);
+        if (!timeline_->IsPlaying())
+        {
+            quick_panel->Open(mouse_position);
+        }
     }
     break;
     case WM_MOUSEMOVE:
@@ -166,12 +190,25 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseMove(mouse_position);
-        timeline_->MouseMove(mouse_position);
+        //timeline_->MouseMove(mouse_position);
 
-        COLORREF color = RGB(quick_panel->GetR(), quick_panel->GetG(), quick_panel->GetB());
-        canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, color);
+        canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, quick_panel->GetRGB());
 
-        timeline_->UpdateMaxTime(timer_);
+        if (canvas_->IsCanvasClick())
+        {
+            if (drawing_timer_ == NULL)
+            {
+                drawing_timer_ = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
+            }
+
+            timeline_->UpdateMaxTime(timer_);
+
+        }
+        else
+        {
+            timeKillEvent(drawing_timer_);
+            drawing_timer_ = NULL;
+        }
     }
     break;
     case WM_DESTROY:
@@ -220,23 +257,33 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
         InvalidateRect(window->hWnd, &area, FALSE);
     }
 
+    if (m_nTimerID == window->play_timer_)
+    {
+        window->timeline_->AddTime(0.001);
+
+        for (int i = 0; i < window->canvas_->GetPoints().size(); i++)
+        {
+            if ((int)trunc(window->canvas_->GetPoints()[i].time * 1000) == window->timeline_->GetTime())
+            {
+                HPEN n = CreatePen(PS_SOLID, window->canvas_->GetPoints()[i].width, window->canvas_->GetPoints()[i].color);
+                HPEN o = (HPEN)SelectObject(hdc, n);
+                MoveToEx(hdc, window->canvas_->GetPoints()[i].start_x, window->canvas_->GetPoints()[i].start_y, NULL);
+                LineTo(hdc, window->canvas_->GetPoints()[i].end_x, window->canvas_->GetPoints()[i].end_y);
+                SelectObject(hdc, o);
+                DeleteObject(n);
+            }
+        }
+    }
+
     ReleaseDC(window->hWnd, hdc);
 }
 
 void Window::OnPaint(HDC hdc)
 {
-    Graphics graphics(hdc);
-
-    SolidBrush black_brush(Color(255, 0, 0, 0));
-
-    FontFamily arial_font(L"Arial");
-    Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
-
-    WCHAR header_word[1024];
-    _stprintf_s(header_word, L"Timer: %.3lfs", timer_);
-
-    PointF header_font_position(10, 10);
-    graphics.DrawString(header_word, -1, &font_style, header_font_position, &black_brush);
+    if (timeline_->IsPlaying() == false)
+    {
+        canvas_->UpdateDraw(hdc);
+    }
 }
 
 Window::Window() : hInst(NULL), hWnd(NULL) // 멤버 변수 리스트 초기화

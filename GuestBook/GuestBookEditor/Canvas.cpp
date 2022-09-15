@@ -1,17 +1,22 @@
 #include "Canvas.h"
 
-Canvas::Canvas(HWND hWnd, int x, int y, int width, int height)
+Canvas::Canvas(HWND hWnd, int width, int height)
 {
 	this->hWnd = hWnd;
-	x_ = x;
-	y_ = y;
 	width_ = width;
 	height_ = height;
+	UpdateWindowArea();
 }
 
 Canvas::~Canvas()
 {
 
+}
+
+void Canvas::UpdateWindowArea()
+{
+	GetClientRect(hWnd, &client_area_);
+	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
 void Canvas::MouseUp()
@@ -45,7 +50,7 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 		HPEN o = (HPEN)SelectObject(hdc, n);
 		MoveToEx(hdc, current_x, current_y, NULL);
 		LineTo(hdc, mouse_position.x, mouse_position.y);
-		points_.push_back({ current_x, current_y, mouse_position.x, mouse_position.y, width, time, color });
+		points_.push_back({ current_x - x_, current_y, mouse_position.x - x_, mouse_position.y, width, time, color });
 		SelectObject(hdc, o);
 		DeleteObject(n);
 		ReleaseDC(hWnd, hdc);
@@ -56,20 +61,46 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 
 void Canvas::Draw(HDC hdc)
 {
+	UpdateWindowArea();
+
+	// 윈도우 크기에 따른 위치 보정
+	x_ = (window_area_.right - width_) / 2;
+
 	Graphics graphics(hdc);
+
+	// 배경 제거
+	SetBkMode(hdc, TRANSPARENT);
 
 	FontFamily arial_font(L"Arial");
 	Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
 
-	Pen black_pen(Color(255, 0, 0, 0));
-	graphics.DrawRectangle(&black_pen, x_, y_, width_, height_);
+	Pen outline_pen(Color(255, 33, 35, 39));
 
 	SolidBrush black_brush(Color(255, 0, 0, 0));
+	SolidBrush background_brush(Color(255, 255, 255, 255));
 
-	PointF header_font_position(x_ + 10, y_ - 18);
-	graphics.DrawString(L"캔버스", -1, &font_style, header_font_position, &black_brush);
-
+	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
+	graphics.DrawRectangle(&outline_pen, x_ - 1, y_ - 1, width_ + 1, height_ + 1);
+	
 	canvas_area_ = { x_, y_, x_ + width_, y_ + height_ };
+}
+
+void Canvas::UpdateDraw(HDC hdc)
+{
+	for (int i = 0; i < points_.size(); i++)
+	{
+		HPEN n = CreatePen(PS_SOLID, points_[i].width, points_[i].color);
+		HPEN o = (HPEN)SelectObject(hdc, n);
+		MoveToEx(hdc, points_[i].start_x + x_, points_[i].start_y, NULL);
+		LineTo(hdc, points_[i].end_x + x_, points_[i].end_y);
+		SelectObject(hdc, o);
+		DeleteObject(n);
+	}
+}
+
+bool Canvas::IsCanvasClick()
+{
+	return is_canvas_click_;
 }
 
 vector<Canvas::PointInfo> Canvas::GetPoints()
