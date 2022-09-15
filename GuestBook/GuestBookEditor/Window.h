@@ -31,6 +31,8 @@ private:
 	RECT window_area_;
 
 	UINT drawing_timer_;
+	UINT play_timer_;
+
 	double timer_;
 
 	Timeline* timeline_;

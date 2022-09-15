@@ -80,4 +80,6 @@ public:
     BYTE GetR();
     BYTE GetG();
     BYTE GetB();
+
+    COLORREF GetRGB();
 };

@@ -368,3 +368,8 @@ BYTE QuickPanel::GetB()
 {
     return current_color_.GetB();
 }
+
+COLORREF QuickPanel::GetRGB()
+{
+    return RGB(GetR(), GetG(), GetB());
+}

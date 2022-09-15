@@ -17,7 +17,7 @@ void Timeline::UpdateWindowArea()
 	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
-void Timeline::MouseUp()
+/*void Timeline::MouseUp()
 {
 	ReleaseCapture();
 	is_progress_click_ = false;
@@ -49,22 +49,24 @@ void Timeline::ProgressControl(POINT mouse_position)
 {
 	time_ = min(max(((mouse_position.x - progress_x_) * max_time_) / progress_width_, 0), max_time_);
 	InvalidateRect(hWnd, &timeline_area_, FALSE);
+}*/
+
+void Timeline::AddTime(double time)
+{
+	time_ += time;
+
+	if (time_ > max_time_)
+	{
+		time_ = 0;
+		InvalidateRect(hWnd, NULL, FALSE);
+	}
+
+	InvalidateRect(hWnd, &timeline_area_, FALSE);
 }
 
 void Timeline::UpdateMaxTime(double time)
 {
 	max_time_ = time;
-}
-
-void Timeline::Play()
-{
-	time_ += 0.001;
-
-	if ((int)trunc(time_ * 1000) == (int)trunc(max_time_ * 1000))
-	{
-		time_ = 0;
-	}
-
 	InvalidateRect(hWnd, &timeline_area_, FALSE);
 }
 
@@ -121,4 +123,30 @@ void Timeline::Draw(HDC hdc)
 	
 	graphics.FillPolygon(&yellow_brush, points, 3);
 	graphics.DrawLine(&yellow_pen, progress_x_ + (time_ / max_time_) * progress_width_, progress_y_ + progress_height_, progress_x_ + (time_ / max_time_) * progress_width_, y_ + height_);
+}
+
+void Timeline::Play()
+{
+	is_playing_ = !is_playing_;
+
+	if (is_playing_)
+	{
+		time_ = 0;
+		InvalidateRect(hWnd, NULL, FALSE);
+	}
+}
+
+int Timeline::GetTime()
+{
+	return (int)trunc(time_ * 1000);
+}
+
+int Timeline::GetMaxTime()
+{
+	return (int)trunc(max_time_ * 1000);
+}
+
+bool Timeline::IsPlaying()
+{
+	return is_playing_;
 }
