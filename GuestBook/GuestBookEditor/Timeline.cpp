@@ -17,7 +17,7 @@ void Timeline::UpdateWindowArea()
 	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
-/*void Timeline::MouseUp()
+void Timeline::MouseUp()
 {
 	ReleaseCapture();
 	is_progress_click_ = false;
@@ -48,8 +48,8 @@ void Timeline::MouseMove(POINT mouse_position)
 void Timeline::ProgressControl(POINT mouse_position)
 {
 	time_ = min(max(((mouse_position.x - progress_x_) * max_time_) / progress_width_, 0), max_time_);
-	InvalidateRect(hWnd, &timeline_area_, FALSE);
-}*/
+	InvalidateRect(hWnd, NULL, FALSE);
+}
 
 void Timeline::AddTime(double time)
 {
@@ -58,10 +58,10 @@ void Timeline::AddTime(double time)
 	if (time_ > max_time_)
 	{
 		time_ = 0;
-		InvalidateRect(hWnd, NULL, FALSE);
+		//InvalidateRect(hWnd, NULL, FALSE);
 	}
 
-	InvalidateRect(hWnd, &timeline_area_, FALSE);
+	//InvalidateRect(hWnd, &timeline_area_, FALSE);
 }
 
 void Timeline::UpdateMaxTime(double time)
@@ -127,13 +127,14 @@ void Timeline::Draw(HDC hdc)
 
 void Timeline::Play()
 {
-	is_playing_ = !is_playing_;
-
 	if (is_playing_)
 	{
 		time_ = 0;
-		InvalidateRect(hWnd, NULL, FALSE);
 	}
+
+	is_playing_ = !is_playing_;
+
+	InvalidateRect(hWnd, NULL, FALSE);
 }
 
 int Timeline::GetTime()

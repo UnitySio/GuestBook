@@ -35,8 +35,9 @@ private:
 
 	double timer_;
 
-	Timeline* timeline_;
-	Canvas* canvas_;
+	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
+	unique_ptr<Timeline> timeline_;
+	unique_ptr<Canvas> canvas_;
 
 	int current_x_;
 	int current_y_;

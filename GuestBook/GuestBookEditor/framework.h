@@ -16,6 +16,7 @@
 
 #include "mmsystem.h"
 
+#include <memory>
 #include <Ole2.h>
 #include <gdiplus.h>
 #include <cmath>

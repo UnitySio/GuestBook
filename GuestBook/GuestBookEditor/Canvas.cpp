@@ -103,6 +103,11 @@ bool Canvas::IsCanvasClick()
 	return is_canvas_click_;
 }
 
+int Canvas::GetX()
+{
+	return x_;
+}
+
 vector<Canvas::PointInfo> Canvas::GetPoints()
 {
 	return points_;
