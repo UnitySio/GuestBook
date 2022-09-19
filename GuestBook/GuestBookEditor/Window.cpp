@@ -1,7 +1,8 @@
 #include "Window.h"
 
 // 멤버 변수 초기화
-Window* Window::instance_ = nullptr;
+unique_ptr<Window> Window::instance_ = nullptr;
+once_flag Window::flag_;
 
 // 창 클래스를 등록
 ATOM Window::MyRegisterClass(HINSTANCE hInstance)
@@ -52,7 +53,7 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static QuickPanel* quick_panel;
+    static unique_ptr<QuickPanel> quick_panel;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -66,9 +67,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetClientRect(hWnd, &client_area_);
         window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 
-        quick_panel = new QuickPanel(hWnd);
-        timeline_ = new Timeline(hWnd);
-        canvas_ = new Canvas(hWnd, window_area_.right - 100, 300);
+        quick_panel = make_unique<QuickPanel>(hWnd);
+        timeline_ = make_unique<Timeline>(hWnd);
+        canvas_ = make_unique<Canvas>(hWnd, window_area_.right - 100, 300);
     }
     break;
     case WM_COMMAND:
@@ -152,7 +153,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
         quick_panel->MouseUp();
-        //timeline_->MouseUp();
+        timeline_->MouseUp();
         canvas_->MouseUp();
 
         timeKillEvent(drawing_timer_);
@@ -168,7 +169,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         if (!quick_panel->IsOpen() and !timeline_->IsPlaying())
         {
-            //timeline_->MouseDown(mouse_position);
+            timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
         }
     }
@@ -190,7 +191,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseMove(mouse_position);
-        //timeline_->MouseMove(mouse_position);
+        timeline_->MouseMove(mouse_position);
 
         canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, quick_panel->GetRGB());
 
@@ -212,9 +213,11 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
     case WM_DESTROY:
-        delete quick_panel;
-        delete timeline_;
-        delete canvas_;
+        // 수동으로 메모리 해제 시 사용(일반적으로는 자동으로 메모리를 해제)
+        /*timeline_.reset();
+        canvas_.reset();
+        quick_panel.reset();*/
+
         PostQuitMessage(0);
         break;
     default:
@@ -260,19 +263,7 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
     if (m_nTimerID == window->play_timer_)
     {
         window->timeline_->AddTime(0.001);
-
-        for (int i = 0; i < window->canvas_->GetPoints().size(); i++)
-        {
-            if ((int)trunc(window->canvas_->GetPoints()[i].time * 1000) == window->timeline_->GetTime())
-            {
-                HPEN n = CreatePen(PS_SOLID, window->canvas_->GetPoints()[i].width, window->canvas_->GetPoints()[i].color);
-                HPEN o = (HPEN)SelectObject(hdc, n);
-                MoveToEx(hdc, window->canvas_->GetPoints()[i].start_x, window->canvas_->GetPoints()[i].start_y, NULL);
-                LineTo(hdc, window->canvas_->GetPoints()[i].end_x, window->canvas_->GetPoints()[i].end_y);
-                SelectObject(hdc, o);
-                DeleteObject(n);
-            }
-        }
+        InvalidateRect(window->hWnd, NULL, FALSE);
     }
 
     ReleaseDC(window->hWnd, hdc);
@@ -284,25 +275,36 @@ void Window::OnPaint(HDC hdc)
     {
         canvas_->UpdateDraw(hdc);
     }
-}
+    else
+    {
+        /*아래와 같은 방식으로 계속해서 다시 그리는 방식을 선택한 이유는
+        순차적인 탐색을 하면서 조금씩 조금씩 그리는 경우 비용이 비싸며,
+        현재 사용하고 있는 타이머의 구조상 재시간안에 모두 실행할 수 없어
+        문제가 발생하기 때문에 아래와 같은 방식을 사용하였다.*/
 
-Window::Window() : hInst(NULL), hWnd(NULL) // 멤버 변수 리스트 초기화
-{
-}
+        for (int i = 0; i < canvas_->GetPoints().size(); i++)
+        {
+            if ((int)trunc(canvas_->GetPoints()[i].time * 1000) > timeline_->GetTime())
+            {
+                break;
+            }
 
-Window::~Window()
-{
-}
-
-void Window::Create()
-{
-	if (!instance_)
-	{
-		instance_ = new Window();
-	}
+            HPEN n = CreatePen(PS_SOLID, canvas_->GetPoints()[i].width, canvas_->GetPoints()[i].color);
+            HPEN o = (HPEN)SelectObject(hdc, n);
+            MoveToEx(hdc, canvas_->GetPoints()[i].start_x + canvas_->GetX(), canvas_->GetPoints()[i].start_y, NULL);
+            LineTo(hdc, canvas_->GetPoints()[i].end_x + canvas_->GetX(), canvas_->GetPoints()[i].end_y);
+            SelectObject(hdc, o);
+            DeleteObject(n);
+        }
+    }
 }
 
 Window* Window::GetInstance()
 {
-    return instance_;
+    call_once(flag_, []()
+        {
+            instance_.reset(new Window);
+        });
+
+    return instance_.get();
 }

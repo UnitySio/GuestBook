@@ -11,9 +11,6 @@
 class Window
 {
 private:
-	Window();
-	~Window();
-
 	HINSTANCE hInst; // 현재 인스턴스
 	HWND hWnd;
 
@@ -25,7 +22,8 @@ private:
 	void OnPaint(HDC hdc);
 
 	// 싱글톤
-	static Window* instance_;
+	static unique_ptr<Window> instance_;
+	static once_flag flag_;
 
 	RECT client_area_;
 	RECT window_area_;
@@ -35,19 +33,22 @@ private:
 
 	double timer_;
 
-	Timeline* timeline_;
-	Canvas* canvas_;
+	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
+	unique_ptr<Timeline> timeline_;
+	unique_ptr<Canvas> canvas_;
 
 	int current_x_;
 	int current_y_;
 public:
+	Window() = default;
+	~Window() = default;
+
 	WCHAR szTitle[MAX_LOADSTRING]; // 제목 표시줄 텍스트입니다.
 	WCHAR szWindowClass[MAX_LOADSTRING]; // 기본 창 클래스 이름입니다.
 
 	ATOM MyRegisterClass(HINSTANCE hinstance);
 	BOOL InitInstance(HINSTANCE, int);
 
-	static void Create();
 	static Window* GetInstance();
 };
 

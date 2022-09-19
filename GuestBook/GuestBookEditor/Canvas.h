@@ -51,6 +51,7 @@ public:
 
 	bool IsCanvasClick();
 
+	int GetX();
 	vector<PointInfo> GetPoints();
 };
 

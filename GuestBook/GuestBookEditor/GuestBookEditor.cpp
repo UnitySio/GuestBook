@@ -15,8 +15,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     GdiplusStartup(&gdiplus_token, &gdiplus_startup_input, NULL);
 
-    Window::Create();
-
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, Window::GetInstance()->szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_GUESTBOOKEDITOR, Window::GetInstance()->szWindowClass, MAX_LOADSTRING);

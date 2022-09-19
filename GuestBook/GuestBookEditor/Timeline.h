@@ -30,14 +30,14 @@ private:
     bool is_playing_;
     
     void UpdateWindowArea();
-    //void ProgressControl(POINT mouse_position);
+    void ProgressControl(POINT mouse_position);
 public:
     Timeline(HWND hWnd);
     ~Timeline();
 
-    /*void MouseUp();
+    void MouseUp();
     void MouseDown(POINT mouse_position);
-    void MouseMove(POINT mouse_position);*/
+    void MouseMove(POINT mouse_position);
     void AddTime(double time);
     void UpdateMaxTime(double time);
     void Draw(HDC hdc);
