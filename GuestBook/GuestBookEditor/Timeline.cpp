@@ -147,6 +147,26 @@ int Timeline::GetMaxTime()
 	return (int)trunc(max_time_ * 1000);
 }
 
+int Timeline::GetWidth()
+{
+	return width_;
+}
+
+int Timeline::GetHeight()
+{
+	return height_;
+}
+
+int Timeline::GetX()
+{
+	return x_;
+}
+
+int Timeline::GetY()
+{
+	return y_;
+}
+
 bool Timeline::IsPlaying()
 {
 	return is_playing_;

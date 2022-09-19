@@ -79,6 +79,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wmId)
         {
         case IDM_NEW_FILE:
+            canvas_->Reset();
+            timer_ = 0;
+            timeline_->UpdateMaxTime(0);
+            InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
             break;
@@ -114,8 +118,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
         canvas_->Draw(hdc);
-        OnPaint(hdc);
         timeline_->Draw(hdc);
+        OnPaint(hdc);
         quick_panel->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
@@ -152,6 +156,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
+
         quick_panel->MouseUp();
         timeline_->MouseUp();
         canvas_->MouseUp();
@@ -301,7 +306,7 @@ void Window::OnPaint(HDC hdc)
 
 Window* Window::GetInstance()
 {
-    call_once(flag_, []()
+    call_once(flag_, []() // 람다식
         {
             instance_.reset(new Window);
         });

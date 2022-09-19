@@ -43,6 +43,8 @@ public:
 	Canvas(HWND hWnd, int width, int height);
 	~Canvas();
 
+	void Reset();
+
 	void MouseUp();
 	void MouseDown(POINT mouse_position);
 	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);

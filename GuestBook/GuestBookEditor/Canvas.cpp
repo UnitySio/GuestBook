@@ -19,6 +19,11 @@ void Canvas::UpdateWindowArea()
 	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
+void Canvas::Reset()
+{
+	points_.clear();
+}
+
 void Canvas::MouseUp()
 {
 	is_canvas_click_ = false;

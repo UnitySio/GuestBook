@@ -43,6 +43,9 @@ public:
 	Window() = default;
 	~Window() = default;
 
+	Window(const Window&) = delete;
+	Window &operator=(const Window&) = delete;
+
 	WCHAR szTitle[MAX_LOADSTRING]; // 제목 표시줄 텍스트입니다.
 	WCHAR szWindowClass[MAX_LOADSTRING]; // 기본 창 클래스 이름입니다.
 
