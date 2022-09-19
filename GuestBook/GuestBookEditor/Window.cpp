@@ -1,7 +1,8 @@
 #include "Window.h"
 
 // 멤버 변수 초기화
-Window* Window::instance_ = nullptr;
+unique_ptr<Window> Window::instance_ = nullptr;
+once_flag Window::flag_;
 
 // 창 클래스를 등록
 ATOM Window::MyRegisterClass(HINSTANCE hInstance)
@@ -298,23 +299,12 @@ void Window::OnPaint(HDC hdc)
     }
 }
 
-Window::Window() : hInst(NULL), hWnd(NULL) // 멤버 변수 리스트 초기화
-{
-}
-
-Window::~Window()
-{
-}
-
-void Window::Create()
-{
-	if (!instance_)
-	{
-		instance_ = new Window();
-	}
-}
-
 Window* Window::GetInstance()
 {
-    return instance_;
+    call_once(flag_, []()
+        {
+            instance_.reset(new Window);
+        });
+
+    return instance_.get();
 }
