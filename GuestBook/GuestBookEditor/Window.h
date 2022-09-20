@@ -6,6 +6,11 @@
 #include "Timeline.h"
 #include "Canvas.h"
 
+#include <filesystem>
+#include <fstream>
+
+namespace fs = filesystem;
+
 #define MAX_LOADSTRING 100
 
 class Window

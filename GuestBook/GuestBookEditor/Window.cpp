@@ -85,6 +85,16 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
+        {
+            fs::path p("./Guests");
+            if (fs::exists(p) && fs::is_directory(p))
+            {
+            }
+            else
+            {
+                fs::create_directory(p);
+            }
+        }
             break;
         case IDM_LOAD:
             break;
