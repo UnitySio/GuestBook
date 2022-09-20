@@ -41,7 +41,7 @@ private:
 	void UpdateWindowArea();
 public:
 	Canvas(HWND hWnd, int width, int height);
-	~Canvas();
+	~Canvas() = default;
 
 	void Reset();
 
@@ -49,11 +49,10 @@ public:
 	void MouseDown(POINT mouse_position);
 	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);
 	void Draw(HDC hdc);
-	void UpdateDraw(HDC hdc);
+	void DrawPoint(HDC hdc, int idx);
 
 	bool IsCanvasClick();
 
-	int GetX();
 	vector<PointInfo> GetPoints();
 };
 

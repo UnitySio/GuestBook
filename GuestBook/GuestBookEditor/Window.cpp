@@ -278,7 +278,10 @@ void Window::OnPaint(HDC hdc)
 {
     if (timeline_->IsPlaying() == false)
     {
-        canvas_->UpdateDraw(hdc);
+        for (int i = 0; i < canvas_->GetPoints().size(); i++)
+        {
+            canvas_->DrawPoint(hdc, i);
+        }
     }
     else
     {
@@ -289,17 +292,10 @@ void Window::OnPaint(HDC hdc)
 
         for (int i = 0; i < canvas_->GetPoints().size(); i++)
         {
-            if ((int)trunc(canvas_->GetPoints()[i].time * 1000) > timeline_->GetTime())
+            if ((int)trunc(canvas_->GetPoints()[i].time * 1000) <= timeline_->GetTime())
             {
-                break;
+                canvas_->DrawPoint(hdc, i);
             }
-
-            HPEN n = CreatePen(PS_SOLID, canvas_->GetPoints()[i].width, canvas_->GetPoints()[i].color);
-            HPEN o = (HPEN)SelectObject(hdc, n);
-            MoveToEx(hdc, canvas_->GetPoints()[i].start_x + canvas_->GetX(), canvas_->GetPoints()[i].start_y, NULL);
-            LineTo(hdc, canvas_->GetPoints()[i].end_x + canvas_->GetX(), canvas_->GetPoints()[i].end_y);
-            SelectObject(hdc, o);
-            DeleteObject(n);
         }
     }
 }

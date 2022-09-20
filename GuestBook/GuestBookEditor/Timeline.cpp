@@ -6,11 +6,6 @@ Timeline::Timeline(HWND hWnd)
 	UpdateWindowArea();
 }
 
-Timeline::~Timeline()
-{
-
-}
-
 void Timeline::UpdateWindowArea()
 {
 	GetClientRect(hWnd, &client_area_);

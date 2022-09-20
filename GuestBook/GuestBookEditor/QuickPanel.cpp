@@ -6,10 +6,6 @@ QuickPanel::QuickPanel(HWND hWnd)
     UpdateWindowArea();
 }
 
-QuickPanel::~QuickPanel()
-{
-}
-
 bool QuickPanel::IsOpen()
 {
     return is_quick_panel_open_;

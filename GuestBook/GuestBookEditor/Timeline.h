@@ -33,7 +33,7 @@ private:
     void ProgressControl(POINT mouse_position);
 public:
     Timeline(HWND hWnd);
-    ~Timeline();
+    ~Timeline() = default;
 
     void MouseUp();
     void MouseDown(POINT mouse_position);

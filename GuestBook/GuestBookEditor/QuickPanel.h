@@ -63,7 +63,7 @@ private:
     void PenSizeSliderControl(POINT mouse_position);
 public:
     QuickPanel(HWND hWnd);
-    ~QuickPanel();
+    ~QuickPanel() = default;
     
     bool IsOpen();
 

@@ -8,11 +8,6 @@ Canvas::Canvas(HWND hWnd, int width, int height)
 	UpdateWindowArea();
 }
 
-Canvas::~Canvas()
-{
-
-}
-
 void Canvas::UpdateWindowArea()
 {
 	GetClientRect(hWnd, &client_area_);
@@ -90,27 +85,19 @@ void Canvas::Draw(HDC hdc)
 	canvas_area_ = { x_, y_, x_ + width_, y_ + height_ };
 }
 
-void Canvas::UpdateDraw(HDC hdc)
+void Canvas::DrawPoint(HDC hdc, int idx)
 {
-	for (int i = 0; i < points_.size(); i++)
-	{
-		HPEN n = CreatePen(PS_SOLID, points_[i].width, points_[i].color);
-		HPEN o = (HPEN)SelectObject(hdc, n);
-		MoveToEx(hdc, points_[i].start_x + x_, points_[i].start_y, NULL);
-		LineTo(hdc, points_[i].end_x + x_, points_[i].end_y);
-		SelectObject(hdc, o);
-		DeleteObject(n);
-	}
+	HPEN n = CreatePen(PS_SOLID, points_[idx].width, points_[idx].color);
+	HPEN o = (HPEN)SelectObject(hdc, n);
+	MoveToEx(hdc, points_[idx].start_x + x_, points_[idx].start_y, NULL);
+	LineTo(hdc, points_[idx].end_x + x_, points_[idx].end_y);
+	SelectObject(hdc, o);
+	DeleteObject(n);
 }
 
 bool Canvas::IsCanvasClick()
 {
 	return is_canvas_click_;
-}
-
-int Canvas::GetX()
-{
-	return x_;
 }
 
 vector<Canvas::PointInfo> Canvas::GetPoints()
