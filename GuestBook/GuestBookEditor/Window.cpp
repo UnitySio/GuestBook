@@ -85,18 +85,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
-        {
-            fs::path p("./Guests");
-            if (fs::exists(p) && fs::is_directory(p))
-            {
-            }
-            else
-            {
-                fs::create_directory(p);
-            }
-        }
+            canvas_->SaveCanvas();
             break;
         case IDM_LOAD:
+            canvas_->LoadCanvas();
+            timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
+            timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
             break;
         case IDM_ABOUT:
             DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -286,11 +280,36 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
 
 void Window::OnPaint(HDC hdc)
 {
+    Graphics graphics(hdc);
+
+    FontFamily arial_font(L"Arial");
+    Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+    SolidBrush black_brush(Color(255, 0, 0, 0));
+
+    Region region(Rect(0, 0, 100, 50));
+    graphics.SetClip(&region, CombineModeReplace);
+
+    fs::path p("./Guests");
+    fs::directory_iterator iter(p);
+    int count = 0;
+    WCHAR header_word[1024];
+
+    while (iter != fs::end(iter))
+    {
+        const fs::directory_entry& entry = *iter;
+        auto a = entry.path().c_str();
+        wsprintf(header_word, a);
+        PointF header_font_position(10, 10 + (count * 13));
+        graphics.DrawString(header_word, -1, &font_style, header_font_position, &black_brush);
+        iter++;
+        count++;
+    }
+
     if (timeline_->IsPlaying() == false)
     {
         for (int i = 0; i < canvas_->GetPoints().size(); i++)
         {
-            canvas_->DrawPoint(hdc, i);
+            canvas_->DrawLine(hdc, i);
         }
     }
     else
@@ -304,7 +323,7 @@ void Window::OnPaint(HDC hdc)
         {
             if ((int)trunc(canvas_->GetPoints()[i].time * 1000) <= timeline_->GetTime())
             {
-                canvas_->DrawPoint(hdc, i);
+                canvas_->DrawLine(hdc, i);
             }
         }
     }

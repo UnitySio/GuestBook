@@ -88,7 +88,7 @@ void Timeline::Draw(HDC hdc)
 
 	// 타임라인
 	x_ = 0;
-	y_ = window_area_.bottom - 230;
+	y_ = window_area_.bottom - 200;
 	width_ = window_area_.right;
 	height_ = window_area_.bottom - y_;
 

@@ -3,6 +3,10 @@
 #include "framework.h"
 
 #include <vector>
+#include <filesystem>
+#include <fstream>
+
+namespace fs = filesystem;
 
 class Canvas
 {
@@ -49,7 +53,9 @@ public:
 	void MouseDown(POINT mouse_position);
 	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);
 	void Draw(HDC hdc);
-	void DrawPoint(HDC hdc, int idx);
+	void DrawLine(HDC hdc, int idx);
+	void SaveCanvas();
+	void LoadCanvas();
 
 	bool IsCanvasClick();
 

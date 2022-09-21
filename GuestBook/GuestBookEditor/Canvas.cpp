@@ -85,7 +85,7 @@ void Canvas::Draw(HDC hdc)
 	canvas_area_ = { x_, y_, x_ + width_, y_ + height_ };
 }
 
-void Canvas::DrawPoint(HDC hdc, int idx)
+void Canvas::DrawLine(HDC hdc, int idx)
 {
 	HPEN n = CreatePen(PS_SOLID, points_[idx].width, points_[idx].color);
 	HPEN o = (HPEN)SelectObject(hdc, n);
@@ -93,6 +93,55 @@ void Canvas::DrawPoint(HDC hdc, int idx)
 	LineTo(hdc, points_[idx].end_x + x_, points_[idx].end_y);
 	SelectObject(hdc, o);
 	DeleteObject(n);
+}
+
+void Canvas::SaveCanvas()
+{
+	string path = "./Guests";
+	size_t size = points_.size();
+	int file_count = 0;
+	fs::path p(path);
+	fs::directory_iterator start(p);
+	fs::directory_iterator end;
+	file_count = distance(start, end);
+
+	if (!fs::exists(p) && !fs::is_directory(p))
+	{
+		fs::create_directory(p);
+	}
+
+	ofstream save(path + "/Guest" + to_string(file_count) + ".gb", ios::binary);
+	if (save.is_open())
+	{
+		if (size != 0)
+		{
+			save.write((const char*)&size, 4);
+			save.write((const char*)&points_[0], size * sizeof(PointInfo));
+		}
+		save.close();
+	}
+}
+
+void Canvas::LoadCanvas()
+{
+	string path = "./Guests";
+	size_t size = 0;
+	int file_count = 0;
+	fs::path p(path);
+	fs::directory_iterator start(p);
+	fs::directory_iterator end;
+	file_count = distance(start, end) - 1;
+
+	ifstream load(path + "/Guest" + to_string(file_count) + ".gb", ios::binary);
+	if (load.is_open())
+	{
+		load.read((char*)&size, 4);
+		points_.resize(size);
+		load.read((char*)&points_[0], size * sizeof(PointInfo));
+		load.close();
+	}
+
+	InvalidateRect(hWnd, &canvas_area_, FALSE);
 }
 
 bool Canvas::IsCanvasClick()
