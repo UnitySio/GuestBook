@@ -5,6 +5,7 @@
 #include "QuickPanel.h"
 #include "Timeline.h"
 #include "Canvas.h"
+#include "FileManager.h"
 
 #define MAX_LOADSTRING 100
 

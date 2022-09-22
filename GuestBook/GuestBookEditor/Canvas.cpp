@@ -110,7 +110,7 @@ void Canvas::SaveCanvas()
 		fs::create_directory(p);
 	}
 
-	ofstream save(path + "/Guest" + to_string(file_count) + ".gb", ios::binary);
+	ofstream save(path + "/Guest" + /*to_string(file_count)*/ + ".gb", ios::binary);
 	if (save.is_open())
 	{
 		if (size != 0)
@@ -122,17 +122,16 @@ void Canvas::SaveCanvas()
 	}
 }
 
-void Canvas::LoadCanvas()
+void Canvas::LoadCanvas(string path)
 {
-	string path = "./Guests";
 	size_t size = 0;
 	int file_count = 0;
-	fs::path p(path);
+	fs::path p("./Guests");
 	fs::directory_iterator start(p);
 	fs::directory_iterator end;
 	file_count = distance(start, end) - 1;
 
-	ifstream load(path + "/Guest" + to_string(file_count) + ".gb", ios::binary);
+	ifstream load(path, ios::binary);
 	if (load.is_open())
 	{
 		load.read((char*)&size, 4);

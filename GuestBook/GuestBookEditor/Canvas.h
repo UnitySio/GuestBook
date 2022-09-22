@@ -55,7 +55,7 @@ public:
 	void Draw(HDC hdc);
 	void DrawLine(HDC hdc, int idx);
 	void SaveCanvas();
-	void LoadCanvas();
+	void LoadCanvas(string path);
 
 	bool IsCanvasClick();
 

@@ -54,6 +54,7 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static unique_ptr<QuickPanel> quick_panel;
+    static unique_ptr<FileManager> file_manager;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -70,6 +71,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         quick_panel = make_unique<QuickPanel>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
         canvas_ = make_unique<Canvas>(hWnd, window_area_.right - 100, 300);
+        file_manager = make_unique<FileManager>(hWnd);
     }
     break;
     case WM_COMMAND:
@@ -88,7 +90,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             canvas_->SaveCanvas();
             break;
         case IDM_LOAD:
-            canvas_->LoadCanvas();
+            canvas_->LoadCanvas("");
             timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
             timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
             break;
@@ -123,6 +125,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         canvas_->Draw(hdc);
         timeline_->Draw(hdc);
+        file_manager->Draw(hdc);
         OnPaint(hdc);
         quick_panel->Draw(hdc);
 
@@ -164,6 +167,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         quick_panel->MouseUp();
         timeline_->MouseUp();
         canvas_->MouseUp();
+        file_manager->MouseUp();
 
         timeKillEvent(drawing_timer_);
         drawing_timer_ = NULL;
@@ -180,8 +184,14 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
+            file_manager->MouseDown(mouse_position);
+
+            canvas_->LoadCanvas(file_manager->GetListBoxItem()[file_manager->GetIndex()].file_path.string());
+            timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
+            timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
         }
     }
+
     break;
     case WM_LBUTTONDBLCLK:
     {
@@ -201,6 +211,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         quick_panel->MouseMove(mouse_position);
         timeline_->MouseMove(mouse_position);
+        file_manager->MouseMove(mouse_position);
 
         canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, quick_panel->GetRGB());
 
@@ -280,7 +291,7 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
 
 void Window::OnPaint(HDC hdc)
 {
-    Graphics graphics(hdc);
+    /*Graphics graphics(hdc);
 
     FontFamily arial_font(L"Arial");
     Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
@@ -303,7 +314,7 @@ void Window::OnPaint(HDC hdc)
         graphics.DrawString(header_word, -1, &font_style, header_font_position, &black_brush);
         iter++;
         count++;
-    }
+    }*/
 
     if (timeline_->IsPlaying() == false)
     {
