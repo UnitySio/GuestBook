@@ -124,9 +124,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
         canvas_->Draw(hdc);
+        OnPaint(hdc);
         timeline_->Draw(hdc);
         file_manager->Draw(hdc);
-        OnPaint(hdc);
         quick_panel->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
@@ -186,9 +186,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             canvas_->MouseDown(mouse_position);
             file_manager->MouseDown(mouse_position);
 
-            canvas_->LoadCanvas(file_manager->GetListBoxItem()[file_manager->GetIndex()].file_path.string());
-            timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
-            timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
+            if (file_manager->IsItemClick())
+            {
+                canvas_->LoadCanvas(file_manager->GetListBoxItem()[file_manager->GetIndex()].file_path.string());
+                timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
+                timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
+            }
         }
     }
 

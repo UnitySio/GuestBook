@@ -84,17 +84,15 @@ void Timeline::Draw(HDC hdc)
 	SolidBrush background_brush(Color(255, 33, 35, 39));
 
 	FontFamily arial_font(L"Arial");
-	Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	// 타임라인
 	x_ = 0;
-	y_ = window_area_.bottom - 200;
-	width_ = window_area_.right;
+	y_ = window_area_.bottom - 300;
+	width_ = window_area_.right - 300;
 	height_ = window_area_.bottom - y_;
 
-
-	graphics.FillRectangle(&background_brush, x_, y_, 200, 30);
-	graphics.FillRectangle(&background_brush, x_, y_ + 30, width_, height_ - 30);
+	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
 	WCHAR header_word[1024];
 	_stprintf_s(header_word, L"타임라인 %.3lf초 / %.3lf초", time_, max_time_);

@@ -101,16 +101,17 @@ void Canvas::SaveCanvas()
 	size_t size = points_.size();
 	int file_count = 0;
 	fs::path p(path);
-	fs::directory_iterator start(p);
-	fs::directory_iterator end;
-	file_count = distance(start, end);
 
 	if (!fs::exists(p) && !fs::is_directory(p))
 	{
 		fs::create_directory(p);
 	}
 
-	ofstream save(path + "/Guest" + /*to_string(file_count)*/ + ".gb", ios::binary);
+	fs::directory_iterator start(p);
+	fs::directory_iterator end;
+	file_count = distance(start, end);
+
+	ofstream save(path + "/Guest" + to_string(file_count) + ".gb", ios::binary);
 	if (save.is_open())
 	{
 		if (size != 0)
@@ -127,6 +128,7 @@ void Canvas::LoadCanvas(string path)
 	size_t size = 0;
 	int file_count = 0;
 	fs::path p("./Guests");
+
 	fs::directory_iterator start(p);
 	fs::directory_iterator end;
 	file_count = distance(start, end) - 1;

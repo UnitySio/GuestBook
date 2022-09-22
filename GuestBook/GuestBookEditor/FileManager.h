@@ -26,9 +26,15 @@ private:
     int width_ = 300;
     int height_ = 300;
 
-    vector<ListBoxItem> listBoxItems_;
-    int item_select_ = 0;
+    int list_box_x_;
+    int list_box_y_;
+    int list_box_width_;
+    int list_box_height_;
 
+    vector<ListBoxItem> list_box_items_;
+    int item_select_ = 0;
+    bool is_item_click_;
+    
     void UpdateWindowArea();
 public:
     FileManager(HWND hWnd);
@@ -42,6 +48,9 @@ public:
     void FileRefresh();
 
     vector<ListBoxItem> GetListBoxItem();
+    
     int GetIndex();
+
+    bool IsItemClick();
 };
 

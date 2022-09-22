@@ -171,8 +171,16 @@ void QuickPanel::Draw(HDC hdc)
 
         graphics.FillRectangle(&palette_vertical, palette_x_, palette_y_, palette_width_, palette_height_);
 
+        Region region(Rect(palette_x_, palette_y_, palette_width_, palette_height_));
+
+        // 클리핑 마스크 시작
+        graphics.SetClip(&region, CombineModeReplace);
+
         graphics.FillEllipse(&white_alpha_brush, palette_x_ + (s_ / 1.0f) * palette_width_ - 10, palette_y_ + (v_ / 1.0f) * palette_height_ - 10, 20, 20);
         graphics.DrawEllipse(&white_pen, palette_x_ + (s_ / 1.0f) * palette_width_ - 10, palette_y_ + (v_ / 1.0f) * palette_height_ - 10, 20, 20);
+
+        // 클리핑 마스크 종료
+        graphics.ResetClip();
 
         // 색상 슬라이더
         hue_slider_x_ = palette_x_ + palette_width_ + 10;
