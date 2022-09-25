@@ -21,7 +21,10 @@ void Canvas::Reset()
 
 void Canvas::MouseUp()
 {
-	is_canvas_click_ = false;
+	if (is_canvas_click_)
+	{
+		is_canvas_click_ = false;
+	}
 }
 
 void Canvas::MouseDown(POINT mouse_position)
@@ -38,12 +41,6 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 {
 	if (is_canvas_click_)
 	{
-		if (!PtInRect(&canvas_area_, mouse_position))
-		{
-			MouseUp();
-			return;
-		}
-
 		HDC hdc;
 		hdc = GetDC(hWnd);
 		HPEN n = CreatePen(PS_SOLID, width, color);

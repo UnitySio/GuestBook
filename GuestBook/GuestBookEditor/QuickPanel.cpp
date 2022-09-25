@@ -22,10 +22,13 @@ void QuickPanel::MouseUp()
 {
     if (is_quick_panel_open_)
     {
-        ReleaseCapture();
-        is_palette_click_ = false;
-        is_hue_slider_click_ = false;
-        is_pen_size_slider_click_ = false;
+        if (is_palette_click_ || is_hue_slider_click_ || is_pen_size_slider_click_)
+        {
+            ReleaseCapture();
+            is_palette_click_ = false;
+            is_hue_slider_click_ = false;
+            is_pen_size_slider_click_ = false;
+        }
     }
 }
 
@@ -56,7 +59,7 @@ void QuickPanel::MouseMove(POINT mouse_position)
 {
     if (is_quick_panel_open_)
     {
-        if (PtInRect(&window_area_, mouse_position) == false)
+        if (!PtInRect(&window_area_, mouse_position))
         {
             MouseUp();
         }

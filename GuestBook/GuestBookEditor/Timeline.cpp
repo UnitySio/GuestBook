@@ -14,15 +14,18 @@ void Timeline::UpdateWindowArea()
 
 void Timeline::MouseUp()
 {
-	ReleaseCapture();
-	is_progress_click_ = false;
+	if (is_progress_click_)
+	{
+		ReleaseCapture();
+		is_progress_click_ = false;
+	}
 }
 
 void Timeline::MouseDown(POINT mouse_position)
 {
-	SetCapture(hWnd);
 	if (PtInRect(&timeline_area_, mouse_position))
 	{
+		SetCapture(hWnd);
 		ProgressControl(mouse_position);
 		is_progress_click_ = true;
 	}
@@ -30,10 +33,11 @@ void Timeline::MouseDown(POINT mouse_position)
 
 void Timeline::MouseMove(POINT mouse_position)
 {
-	if (PtInRect(&window_area_, mouse_position) == false)
+	if (!PtInRect(&window_area_, mouse_position))
 	{
 		MouseUp();
 	}
+
 	if (is_progress_click_)
 	{
 		ProgressControl(mouse_position);
@@ -89,7 +93,7 @@ void Timeline::Draw(HDC hdc)
 	// 타임라인
 	x_ = 0;
 	y_ = window_area_.bottom - 300;
-	width_ = window_area_.right - 300;
+	width_ = window_area_.right - 500;
 	height_ = window_area_.bottom - y_;
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
