@@ -52,7 +52,7 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 		HPEN o = (HPEN)SelectObject(hdc, n);
 		MoveToEx(hdc, current_x, current_y, NULL);
 		LineTo(hdc, mouse_position.x, mouse_position.y);
-		points_.push_back({ current_x - x_, current_y, mouse_position.x - x_, mouse_position.y, width, time, color });
+		points_.push_back({ current_x - x_, current_y - y_, mouse_position.x - x_, mouse_position.y - y_, width, time, color });
 		SelectObject(hdc, o);
 		DeleteObject(n);
 		ReleaseDC(hWnd, hdc);
@@ -66,7 +66,8 @@ void Canvas::Draw(HDC hdc)
 	UpdateWindowArea();
 
 	// 윈도우 크기에 따른 위치 보정
-	x_ = (window_area_.right - width_) / 2;
+	x_ = (window_area_.right - width_ - 350) / 2;
+	y_ = (window_area_.bottom - height_ - 300) / 2;
 
 	Graphics graphics(hdc);
 
@@ -91,8 +92,8 @@ void Canvas::DrawLine(HDC hdc, int idx)
 {
 	HPEN n = CreatePen(PS_SOLID, points_[idx].width, points_[idx].color);
 	HPEN o = (HPEN)SelectObject(hdc, n);
-	MoveToEx(hdc, points_[idx].start_x + x_, points_[idx].start_y, NULL);
-	LineTo(hdc, points_[idx].end_x + x_, points_[idx].end_y);
+	MoveToEx(hdc, points_[idx].start_x + x_, points_[idx].start_y + y_, NULL);
+	LineTo(hdc, points_[idx].end_x + x_, points_[idx].end_y + y_);
 	SelectObject(hdc, o);
 	DeleteObject(n);
 }

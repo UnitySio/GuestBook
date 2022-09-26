@@ -54,6 +54,7 @@ private:
     
     double scroll_bar_thumb_ratio_;
     double scroll_bar_thumb_percent_;
+    double scroll_bar_thumb_height_;
     
     void UpdateWindowArea();
     void ScrollBarControl(POINT mouse_position);

@@ -93,7 +93,7 @@ void Timeline::Draw(HDC hdc)
 	// 타임라인
 	x_ = 0;
 	y_ = window_area_.bottom - 300;
-	width_ = window_area_.right - 500;
+	width_ = window_area_.right;
 	height_ = window_area_.bottom - y_;
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
