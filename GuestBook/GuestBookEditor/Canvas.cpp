@@ -41,6 +41,11 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 {
 	if (is_canvas_click_)
 	{
+		if (!PtInRect(&canvas_area_, mouse_position))
+		{
+			MouseUp();
+		}
+
 		HDC hdc;
 		hdc = GetDC(hWnd);
 		HPEN n = CreatePen(PS_SOLID, width, color);

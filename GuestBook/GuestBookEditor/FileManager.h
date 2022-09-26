@@ -37,7 +37,6 @@ private:
 
     vector<ListBoxItem> list_box_items_;
     int item_select_ = 0;
-    bool is_list_box_click_;
     bool is_item_click_;
     fs::path current_path_ = "./Guests";
 
@@ -48,17 +47,17 @@ private:
     int scroll_bar_width_;
     int scroll_bar_height_;
 
-    int scroll_bar_thumb_width_;
-    int scroll_bar_thumb_height_;
-
     bool is_scroll_bar_click_;
 
     RECT scroll_bar_area_;
+    RECT file_manager_area_;
     
-    double ratio_;
-    double percent_;
+    double scroll_bar_thumb_ratio_;
+    double scroll_bar_thumb_percent_;
     
     void UpdateWindowArea();
+    void ScrollBarControl(POINT mouse_position);
+
     wchar_t* ConvertBytes(uintmax_t bytes); // 단위 변환
 public:
     FileManager(HWND hWnd);
