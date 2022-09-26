@@ -44,6 +44,7 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 		if (!PtInRect(&canvas_area_, mouse_position))
 		{
 			MouseUp();
+			return;
 		}
 
 		HDC hdc;
@@ -98,44 +99,64 @@ void Canvas::DrawLine(HDC hdc, int idx)
 	DeleteObject(n);
 }
 
-void Canvas::SaveCanvas()
+void Canvas::OpenSaveFile()
 {
-	string path = "./Guests";
+	WCHAR file_name[256] = L"";
+	OPENFILENAME OFN;
+	memset(&OFN, 0, sizeof(OPENFILENAME));
+	OFN.lStructSize = sizeof(OPENFILENAME);
+	OFN.hwndOwner = hWnd;
+	OFN.lpstrFilter = L"Guest Book(*.gb)\0*.gb";
+	OFN.lpstrDefExt = L"gb";
+	OFN.lpstrFile = file_name;
+	OFN.nMaxFile = 256;
+	OFN.lpstrInitialDir = L"C:\\";
+
 	size_t size = points_.size();
-	int file_count = 0;
-	fs::path p(path);
 
-	if (!fs::exists(p) && !fs::is_directory(p))
+	if (GetSaveFileName(&OFN) != 0)
 	{
-		fs::create_directory(p);
-	}
-
-	fs::directory_iterator start(p);
-	fs::directory_iterator end;
-	file_count = distance(start, end);
-
-	ofstream save(path + "/Guest" + to_string(file_count) + ".gb", ios::binary);
-	if (save.is_open())
-	{
-		if (size != 0)
+		ofstream save(OFN.lpstrFile, ios::binary);
+		if (save.is_open())
 		{
-			save.write((const char*)&size, 4);
-			save.write((const char*)&points_[0], size * sizeof(PointInfo));
+			if (size != 0)
+			{
+				save.write((const char*)&size, 4);
+				save.write((const char*)&points_[0], size * sizeof(PointInfo));
+			}
+
+			save.close();
 		}
-		save.close();
 	}
 }
 
-void Canvas::LoadCanvas(string path)
+void Canvas::OpenLoadFile()
+{
+	WCHAR file_name[256] = L"";
+	OPENFILENAME OFN;
+	memset(&OFN, 0, sizeof(OPENFILENAME));
+	OFN.lStructSize = sizeof(OPENFILENAME);
+	OFN.hwndOwner = hWnd;
+	OFN.lpstrFilter = L"Guest Book(*.gb)\0*.gb";
+	OFN.lpstrDefExt = L"gb";
+	OFN.lpstrFile = file_name;
+	OFN.nMaxFile = 256;
+	OFN.lpstrInitialDir = L"C:\\";
+
+	if (GetOpenFileName(&OFN) != 0)
+	{
+		wstring str = OFN.lpstrFile;
+		string a;
+
+		str.assign(a.begin(), a.end());
+		LoadGBFile(a);
+	}
+}
+
+void Canvas::LoadGBFile(string path)
 {
 	size_t size = 0;
-	int file_count = 0;
-	fs::path p("./Guests");
-
-	fs::directory_iterator start(p);
-	fs::directory_iterator end;
-	file_count = distance(start, end) - 1;
-
+	
 	ifstream load(path, ios::binary);
 	if (load.is_open())
 	{

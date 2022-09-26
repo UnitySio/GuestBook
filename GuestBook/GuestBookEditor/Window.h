@@ -26,9 +26,6 @@ private:
 	static unique_ptr<Window> instance_;
 	static once_flag flag_;
 
-	RECT client_area_;
-	RECT window_area_;
-
 	UINT drawing_timer_;
 	UINT play_timer_;
 

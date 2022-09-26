@@ -22,8 +22,6 @@ private:
 	RECT client_area_;
 	RECT window_area_;
 
-    RECT list_box_area_;
-
     // »ý¼ºµÉ x, y ÁÂÇ¥
     int x_;
     int y_;
@@ -35,11 +33,15 @@ private:
     int list_box_width_;
     int list_box_height_;
 
+    RECT list_box_area_;
+
     vector<ListBoxItem> list_box_items_;
-    int item_select_ = 0;
+
     bool is_item_click_;
+
     fs::path current_path_ = "./Guests";
 
+    int list_item_select_ = 0;
     int list_box_item_height_ = 50;
 
     int scroll_bar_x_;

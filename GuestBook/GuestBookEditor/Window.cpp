@@ -65,12 +65,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
-        GetClientRect(hWnd, &client_area_);
-        window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
-
         quick_panel = make_unique<QuickPanel>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
-        canvas_ = make_unique<Canvas>(hWnd, window_area_.right - 100, 300);
+        canvas_ = make_unique<Canvas>(hWnd, 500, 500);
         file_manager = make_unique<FileManager>(hWnd);
     }
     break;
@@ -87,12 +84,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
-            canvas_->SaveCanvas();
+            canvas_->OpenSaveFile();
             break;
         case IDM_LOAD:
-            canvas_->LoadCanvas("");
-            timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
-            timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
+            canvas_->OpenLoadFile();
             break;
         case IDM_ABOUT:
             DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -107,9 +102,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_PAINT:
     {
-        GetClientRect(hWnd, &client_area_);
-        window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
-
         PAINTSTRUCT ps;
         HDC hdc, memDC;
         HBITMAP newBitmap, oldBitmap;
@@ -188,7 +180,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             if (file_manager->IsItemClick())
             {
-                canvas_->LoadCanvas(file_manager->GetListBoxItem()[file_manager->GetIndex()].file_path.string());
+                canvas_->LoadGBFile(file_manager->GetListBoxItem()[file_manager->GetIndex()].file_path.string());
                 timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
                 timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
             }
@@ -294,31 +286,6 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
 
 void Window::OnPaint(HDC hdc)
 {
-    /*Graphics graphics(hdc);
-
-    FontFamily arial_font(L"Arial");
-    Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
-    SolidBrush black_brush(Color(255, 0, 0, 0));
-
-    Region region(Rect(0, 0, 100, 50));
-    graphics.SetClip(&region, CombineModeReplace);
-
-    fs::path p("./Guests");
-    fs::directory_iterator iter(p);
-    int count = 0;
-    WCHAR header_word[1024];
-
-    while (iter != fs::end(iter))
-    {
-        const fs::directory_entry& entry = *iter;
-        auto a = entry.path().c_str();
-        wsprintf(header_word, a);
-        PointF header_font_position(10, 10 + (count * 13));
-        graphics.DrawString(header_word, -1, &font_style, header_font_position, &black_brush);
-        iter++;
-        count++;
-    }*/
-
     if (timeline_->IsPlaying() == false)
     {
         for (int i = 0; i < canvas_->GetPoints().size(); i++)

@@ -54,8 +54,9 @@ public:
 	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);
 	void Draw(HDC hdc);
 	void DrawLine(HDC hdc, int idx);
-	void SaveCanvas();
-	void LoadCanvas(string path);
+	void OpenSaveFile();
+	void OpenLoadFile();
+	void LoadGBFile(string path);
 
 	bool IsCanvasClick();
 

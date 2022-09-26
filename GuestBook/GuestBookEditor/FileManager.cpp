@@ -64,11 +64,11 @@ void FileManager::MouseDown(POINT mouse_position)
 				if (fs::is_directory(list_box_items_[i].file_path))
 				{
 					current_path_ = list_box_items_[i].file_path;
-					item_select_ = 0;
+					list_item_select_ = 0;
 					scroll_bar_thumb_percent_ = 0;
 					InvalidateRect(hWnd, &file_manager_area_, FALSE);
 				}
-				else
+				else if (fs::is_regular_file(list_box_items_[i].file_path))
 				{
 					// 해당 파일의 확장자가 .gb인지 확인
 					if (fs::path(list_box_items_[i].file_path).extension() == ".gb")
@@ -101,11 +101,14 @@ void FileManager::MouseDown(POINT mouse_position)
 		}
 	}
 
-	if (PtInRect(&scroll_bar_area_, mouse_position))
+	if ((list_box_items_.size() * list_box_item_height_) > list_box_height_)
 	{
-		SetCapture(hWnd);
-		ScrollBarControl(mouse_position);
-		is_scroll_bar_click_ = true;
+		if (PtInRect(&scroll_bar_area_, mouse_position))
+		{
+			SetCapture(hWnd);
+			ScrollBarControl(mouse_position);
+			is_scroll_bar_click_ = true;
+		}
 	}
 }
 
@@ -132,8 +135,8 @@ void FileManager::MouseMove(POINT mouse_position)
 			RECT area = { list_box_x_, list_box_y_ - (((list_box_items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((list_box_items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_) + list_box_item_height_ };
 			if (PtInRect(&area, mouse_position))
 			{
-				item_select_ = i;
-				InvalidateRect(hWnd, &list_box_area_, FALSE);
+				list_item_select_ = i;
+				InvalidateRect(hWnd, &file_manager_area_, FALSE);
 				break;
 			}
 		}
@@ -189,7 +192,7 @@ void FileManager::Draw(HDC hdc)
 
 	if (!list_box_items_.empty())
 	{
-		graphics.FillRectangle(&black_brush_, list_box_x_, list_box_y_ - (((list_box_items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (item_select_ * list_box_item_height_), list_box_width_, list_box_item_height_);
+		graphics.FillRectangle(&black_brush_, list_box_x_, list_box_y_ - (((list_box_items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_select_ * list_box_item_height_), list_box_width_, list_box_item_height_);
 	}
 
 	Image file_icon(L"Resources/FileIcon.png");
@@ -309,7 +312,7 @@ vector<FileManager::ListBoxItem> FileManager::GetListBoxItem()
 
 int FileManager::GetIndex()
 {
-	return item_select_;
+	return list_item_select_;
 }
 
 bool FileManager::IsItemClick()
