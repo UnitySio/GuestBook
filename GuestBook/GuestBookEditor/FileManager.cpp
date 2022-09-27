@@ -1,4 +1,5 @@
 #include "FileManager.h"
+#include "Window.h"
 
 FileManager::FileManager(HWND hWnd)
 {

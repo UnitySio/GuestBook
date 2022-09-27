@@ -15,6 +15,7 @@
 #include <tchar.h>
 
 #include "mmsystem.h"
+#include "shellapi.h"
 
 #include <memory>
 #include <mutex>

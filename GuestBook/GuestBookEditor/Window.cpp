@@ -32,7 +32,7 @@ BOOL Window::InitInstance(HINSTANCE hInstance, int nCmdShow)
     hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
     hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        0, 0, 1280, 720, nullptr, nullptr, hInstance, nullptr);
+        0, 0, 1600, 900, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -41,6 +41,8 @@ BOOL Window::InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
+
+    DragAcceptFiles(hWnd, TRUE);
 
     return TRUE;
 }
@@ -67,14 +69,14 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         quick_panel = make_unique<QuickPanel>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
-        canvas_ = make_unique<Canvas>(hWnd, 500, 500);
+        canvas_ = make_unique<Canvas>(hWnd, 1000, 500);
         file_manager = make_unique<FileManager>(hWnd);
 
         LoadGIF(L"Resources/PlayIcon.gif");
 
         GUID guid = FrameDimensionTime;
         image_->SelectActiveFrame(&guid, current_frame_);
-        //frame_timer_ = timeSetEvent(((UINT*)property_item_[0].value)[current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_ONESHOT);
+        frame_timer_ = timeSetEvent(((UINT*)property_item_[0].value)[current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_ONESHOT);
         ++current_frame_;
     }
     break;
@@ -224,6 +226,22 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             timeKillEvent(drawing_timer_);
             drawing_timer_ = NULL;
+        }
+    }
+    break;
+    case WM_DROPFILES:
+    {
+        HDROP hDrop = (HDROP)wParam;
+
+        WCHAR file_path[256] = L"";
+        
+        UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+
+        for (UINT i = 0; i < count; i++)
+        {
+            DragQueryFile(hDrop, i, file_path, 256);
+
+            fs::copy(file_path, file_manager->current_path_, fs::copy_options::recursive);
         }
     }
     break;

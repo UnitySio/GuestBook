@@ -1,4 +1,5 @@
 #include "Canvas.h"
+#include "Window.h"
 
 Canvas::Canvas(HWND hWnd, int width, int height)
 {
@@ -67,7 +68,7 @@ void Canvas::Draw(HDC hdc)
 	UpdateWindowArea();
 
 	// 윈도우 크기에 따른 위치 보정
-	x_ = (window_area_.right - width_ - 350) / 2;
+	x_ = (window_area_.right - width_ - 400) / 2;
 	y_ = (window_area_.bottom - height_ - 300) / 2;
 
 	Graphics graphics(hdc);
@@ -152,6 +153,8 @@ void Canvas::OpenLoadFile()
 	{
 		wsprintf(path, L"%s", OFN.lpstrFile);
 		LoadGBFile(path);
+		Window::GetInstance()->timer_ = Window::GetInstance()->canvas_->GetPoints()[Window::GetInstance()->canvas_->GetPoints().size() - 1].time;
+		Window::GetInstance()->timeline_->UpdateMaxTime(Window::GetInstance()->canvas_->GetPoints()[Window::GetInstance()->canvas_->GetPoints().size() - 1].time);
 	}
 }
 

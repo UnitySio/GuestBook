@@ -6,8 +6,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include "Window.h"
-
 namespace fs = filesystem;
 
 class FileManager
@@ -39,8 +37,6 @@ private:
 
     vector<ListBoxItem> list_box_items_;
 
-    fs::path current_path_ = "./Guests";
-
     int list_item_select_ = 0;
     int list_box_item_height_ = 50;
 
@@ -65,6 +61,8 @@ private:
 public:
     FileManager(HWND hWnd);
     ~FileManager() = default;
+
+    fs::path current_path_ = "./Guests";
 
     void MouseUp();
     void MouseDown(POINT mouse_position);
