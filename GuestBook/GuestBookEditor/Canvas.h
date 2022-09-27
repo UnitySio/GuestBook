@@ -57,6 +57,7 @@ public:
 	void OpenSaveFile();
 	void OpenLoadFile();
 	void LoadGBFile(string path);
+	void LoadGBFile(wchar_t* path);
 
 	bool IsCanvasClick();
 

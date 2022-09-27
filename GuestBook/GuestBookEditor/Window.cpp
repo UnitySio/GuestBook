@@ -69,6 +69,13 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         timeline_ = make_unique<Timeline>(hWnd);
         canvas_ = make_unique<Canvas>(hWnd, 500, 500);
         file_manager = make_unique<FileManager>(hWnd);
+
+        LoadGIF(L"Resources/PlayIcon.gif");
+
+        GUID guid = FrameDimensionTime;
+        image_->SelectActiveFrame(&guid, current_frame_);
+        //frame_timer_ = timeSetEvent(((UINT*)property_item_[0].value)[current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_ONESHOT);
+        ++current_frame_;
     }
     break;
     case WM_COMMAND:
@@ -269,6 +276,9 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
     HDC hdc;
     hdc = GetDC(window->hWnd);
 
+    TIMECAPS timecaps;
+    timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
+
     if (m_nTimerID == window->drawing_timer_)
     {
         window->timer_ += 0.001;
@@ -281,11 +291,29 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
         InvalidateRect(window->hWnd, NULL, FALSE);
     }
 
+    if (m_nTimerID == window->frame_timer_)
+    {
+        RECT area = { 0, 0, 50, 50 };
+
+        GUID guid = FrameDimensionTime;
+        window->image_->SelectActiveFrame(&guid, window->current_frame_);
+
+        window->frame_timer_ = timeSetEvent(((UINT*)window->property_item_[0].value)[window->current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)window, TIME_ONESHOT);
+        
+        window->current_frame_ = (++window->current_frame_) % (window->frame_count_);
+
+        InvalidateRect(window->hWnd, &area, FALSE);
+    }
+
     ReleaseDC(window->hWnd, hdc);
 }
 
 void Window::OnPaint(HDC hdc)
 {
+    Graphics graphics(hdc);
+
+    graphics.DrawImage(image_, 0, 0, 50, 50);
+
     if (timeline_->IsPlaying() == false)
     {
         for (int i = 0; i < canvas_->GetPoints().size(); i++)
@@ -308,6 +336,24 @@ void Window::OnPaint(HDC hdc)
             }
         }
     }
+}
+
+void Window::LoadGIF(LPCTSTR file_name)
+{
+    image_ = new Image(file_name);
+
+    UINT count = image_->GetFrameDimensionsCount();
+
+    dimension_ids_ = new GUID[count];
+    image_->GetFrameDimensionsList(dimension_ids_, count);
+
+    WCHAR guid[39];
+    StringFromGUID2(dimension_ids_[0], guid, 39);
+    frame_count_ = image_->GetFrameCount(&dimension_ids_[0]);
+
+    UINT size = image_->GetPropertyItemSize(PropertyTagFrameDelay);
+    property_item_ = (PropertyItem*)malloc(size);
+    image_->GetPropertyItem(PropertyTagFrameDelay, size, property_item_);
 }
 
 Window* Window::GetInstance()

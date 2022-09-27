@@ -102,6 +102,7 @@ void Canvas::DrawLine(HDC hdc, int idx)
 void Canvas::OpenSaveFile()
 {
 	WCHAR file_name[256] = L"";
+	
 	OPENFILENAME OFN;
 	memset(&OFN, 0, sizeof(OPENFILENAME));
 	OFN.lStructSize = sizeof(OPENFILENAME);
@@ -111,6 +112,7 @@ void Canvas::OpenSaveFile()
 	OFN.lpstrFile = file_name;
 	OFN.nMaxFile = 256;
 	OFN.lpstrInitialDir = L"C:\\";
+	OFN.Flags = OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
 
 	size_t size = points_.size();
 
@@ -133,6 +135,8 @@ void Canvas::OpenSaveFile()
 void Canvas::OpenLoadFile()
 {
 	WCHAR file_name[256] = L"";
+	WCHAR path[1024] = L"";
+
 	OPENFILENAME OFN;
 	memset(&OFN, 0, sizeof(OPENFILENAME));
 	OFN.lStructSize = sizeof(OPENFILENAME);
@@ -142,14 +146,12 @@ void Canvas::OpenLoadFile()
 	OFN.lpstrFile = file_name;
 	OFN.nMaxFile = 256;
 	OFN.lpstrInitialDir = L"C:\\";
+	OFN.Flags = OFN_NOCHANGEDIR;
 
 	if (GetOpenFileName(&OFN) != 0)
 	{
-		wstring str = OFN.lpstrFile;
-		string a;
-
-		str.assign(a.begin(), a.end());
-		LoadGBFile(a);
+		wsprintf(path, L"%s", OFN.lpstrFile);
+		LoadGBFile(path);
 	}
 }
 
@@ -157,6 +159,22 @@ void Canvas::LoadGBFile(string path)
 {
 	size_t size = 0;
 	
+	ifstream load(path, ios::binary);
+	if (load.is_open())
+	{
+		load.read((char*)&size, 4);
+		points_.resize(size);
+		load.read((char*)&points_[0], size * sizeof(PointInfo));
+		load.close();
+	}
+
+	InvalidateRect(hWnd, &canvas_area_, FALSE);
+}
+
+void Canvas::LoadGBFile(wchar_t* path)
+{
+	size_t size = 0;
+
 	ifstream load(path, ios::binary);
 	if (load.is_open())
 	{

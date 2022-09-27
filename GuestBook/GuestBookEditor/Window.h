@@ -21,6 +21,14 @@ private:
 	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
 	void OnPaint(HDC hdc);
+	void LoadGIF(LPCTSTR file_name);
+
+	Image* image_;
+	GUID* dimension_ids_;
+	UINT frame_count_;
+	PropertyItem* property_item_;
+	UINT current_frame_;
+	UINT frame_timer_;
 
 	// ΩÃ±€≈Ê
 	static unique_ptr<Window> instance_;
