@@ -184,13 +184,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
             file_manager->MouseDown(mouse_position);
-
-            if (file_manager->IsItemClick())
-            {
-                canvas_->LoadGBFile(file_manager->GetListBoxItem()[file_manager->GetIndex()].file_path.string());
-                timer_ = canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time;
-                timeline_->UpdateMaxTime(canvas_->GetPoints()[canvas_->GetPoints().size() - 1].time);
-            }
         }
     }
 

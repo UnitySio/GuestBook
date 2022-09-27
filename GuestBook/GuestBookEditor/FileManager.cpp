@@ -43,10 +43,9 @@ wchar_t* FileManager::ConvertBytes(uintmax_t bytes)
 
 void FileManager::MouseUp()
 {
-	if (is_item_click_ || is_scroll_bar_click_)
+	if (is_scroll_bar_click_)
 	{
 		ReleaseCapture();
-		is_item_click_ = false;
 		is_scroll_bar_click_ = false;
 	}
 }
@@ -73,7 +72,9 @@ void FileManager::MouseDown(POINT mouse_position)
 					// 해당 파일의 확장자가 .gb인지 확인
 					if (fs::path(list_box_items_[i].file_path).extension() == ".gb")
 					{
-						is_item_click_ = true;
+						Window::GetInstance()->canvas_->LoadGBFile(list_box_items_[list_item_select_].file_path.string());
+						Window::GetInstance()->timer_ = Window::GetInstance()->canvas_->GetPoints()[Window::GetInstance()->canvas_->GetPoints().size() - 1].time;
+						Window::GetInstance()->timeline_->UpdateMaxTime(Window::GetInstance()->canvas_->GetPoints()[Window::GetInstance()->canvas_->GetPoints().size() - 1].time);
 					}
 				}
 				break;
@@ -303,19 +304,4 @@ void FileManager::FileRefresh(fs::path path)
 
 		FileRefresh("./Guests");
 	}
-}
-
-vector<FileManager::ListBoxItem> FileManager::GetListBoxItem()
-{
-	return list_box_items_;
-}
-
-int FileManager::GetIndex()
-{
-	return list_item_select_;
-}
-
-bool FileManager::IsItemClick()
-{
-	return is_item_click_;
 }

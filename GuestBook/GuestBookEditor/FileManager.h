@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "Window.h"
+
 namespace fs = filesystem;
 
 class FileManager
@@ -36,8 +38,6 @@ private:
     RECT list_box_area_;
 
     vector<ListBoxItem> list_box_items_;
-
-    bool is_item_click_;
 
     fs::path current_path_ = "./Guests";
 
@@ -72,11 +72,5 @@ public:
     void Draw(HDC hdc);
 
     void FileRefresh(fs::path path);
-
-    vector<ListBoxItem> GetListBoxItem();
-    
-    int GetIndex();
-
-    bool IsItemClick();
 };
 

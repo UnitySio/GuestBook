@@ -37,12 +37,6 @@ private:
 	UINT drawing_timer_;
 	UINT play_timer_;
 
-	double timer_;
-
-	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
-	unique_ptr<Timeline> timeline_;
-	unique_ptr<Canvas> canvas_;
-
 	int current_x_;
 	int current_y_;
 public:
@@ -59,5 +53,11 @@ public:
 	BOOL InitInstance(HINSTANCE, int);
 
 	static Window* GetInstance();
+
+	double timer_;
+
+	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
+	unique_ptr<Timeline> timeline_;
+	unique_ptr<Canvas> canvas_;
 };
 
