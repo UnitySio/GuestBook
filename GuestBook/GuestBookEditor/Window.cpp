@@ -32,7 +32,7 @@ BOOL Window::InitInstance(HINSTANCE hInstance, int nCmdShow)
     hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
     hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        0, 0, 1280, 720, nullptr, nullptr, hInstance, nullptr);
+        0, 0, 1600, 900, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -41,6 +41,8 @@ BOOL Window::InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
+
+    DragAcceptFiles(hWnd, TRUE);
 
     return TRUE;
 }
@@ -54,6 +56,7 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static unique_ptr<QuickPanel> quick_panel;
+    static unique_ptr<FileManager> file_manager;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -64,12 +67,17 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
-        GetClientRect(hWnd, &client_area_);
-        window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
-
         quick_panel = make_unique<QuickPanel>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
-        canvas_ = make_unique<Canvas>(hWnd, window_area_.right - 100, 300);
+        canvas_ = make_unique<Canvas>(hWnd, 1000, 500);
+        file_manager = make_unique<FileManager>(hWnd);
+
+        LoadGIF(L"Resources/PlayIcon.gif");
+
+        GUID guid = FrameDimensionTime;
+        image_->SelectActiveFrame(&guid, current_frame_);
+        frame_timer_ = timeSetEvent(((UINT*)property_item_[0].value)[current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_ONESHOT);
+        ++current_frame_;
     }
     break;
     case WM_COMMAND:
@@ -79,10 +87,16 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wmId)
         {
         case IDM_NEW_FILE:
+            canvas_->Reset();
+            timer_ = 0;
+            timeline_->UpdateMaxTime(0);
+            InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
+            canvas_->OpenSaveFile();
             break;
         case IDM_LOAD:
+            canvas_->OpenLoadFile();
             break;
         case IDM_ABOUT:
             DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -97,9 +111,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_PAINT:
     {
-        GetClientRect(hWnd, &client_area_);
-        window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
-
         PAINTSTRUCT ps;
         HDC hdc, memDC;
         HBITMAP newBitmap, oldBitmap;
@@ -116,6 +127,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         canvas_->Draw(hdc);
         OnPaint(hdc);
         timeline_->Draw(hdc);
+        file_manager->Draw(hdc);
         quick_panel->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
@@ -152,9 +164,11 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
+
         quick_panel->MouseUp();
         timeline_->MouseUp();
         canvas_->MouseUp();
+        file_manager->MouseUp();
 
         timeKillEvent(drawing_timer_);
         drawing_timer_ = NULL;
@@ -171,8 +185,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
+            file_manager->MouseDown(mouse_position);
         }
     }
+
     break;
     case WM_LBUTTONDBLCLK:
     {
@@ -192,6 +208,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         quick_panel->MouseMove(mouse_position);
         timeline_->MouseMove(mouse_position);
+        file_manager->MouseMove(mouse_position);
 
         canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, quick_panel->GetRGB());
 
@@ -210,6 +227,44 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             timeKillEvent(drawing_timer_);
             drawing_timer_ = NULL;
         }
+    }
+    break;
+    case WM_DROPFILES:
+    {
+        HDROP hDrop = (HDROP)wParam;
+
+        WCHAR drag_file_path[256] = L"";
+        WCHAR drag_file_name[256] = L"";
+        WCHAR file_path[256] = L"";
+
+        UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+
+        for (UINT i = 0; i < count; i++)
+        {
+            DragQueryFile(hDrop, i, drag_file_path, 256);
+
+            if (fs::is_directory(drag_file_path))
+            {
+                for (int j = 0; j < wcslen(drag_file_path); j++)
+                {
+                    if (drag_file_path[j] == L'\\')
+                    {
+                        wsprintf(drag_file_name, L"%s", drag_file_path + j + 1);
+                    }
+                }
+
+                wsprintf(file_path, L"%s\\%s", file_manager->current_path_, drag_file_name);
+                fs::create_directory(file_path);
+            }
+            else if (fs::is_regular_file(drag_file_path))
+            {
+                wsprintf(file_path, L"%s", file_manager->current_path_);
+            }
+
+            fs::copy(drag_file_path, file_path, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+        }
+
+        DragFinish(hDrop);
     }
     break;
     case WM_DESTROY:
@@ -254,6 +309,9 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
     HDC hdc;
     hdc = GetDC(window->hWnd);
 
+    TIMECAPS timecaps;
+    timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
+
     if (m_nTimerID == window->drawing_timer_)
     {
         window->timer_ += 0.001;
@@ -266,14 +324,35 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
         InvalidateRect(window->hWnd, NULL, FALSE);
     }
 
+    if (m_nTimerID == window->frame_timer_)
+    {
+        RECT area = { 0, 0, 100, 100 };
+
+        GUID guid = FrameDimensionTime;
+        window->image_->SelectActiveFrame(&guid, window->current_frame_);
+
+        window->frame_timer_ = timeSetEvent(((UINT*)window->property_item_[0].value)[window->current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)window, TIME_ONESHOT);
+        
+        window->current_frame_ = (++window->current_frame_) % (window->frame_count_);
+
+        InvalidateRect(window->hWnd, &area, FALSE);
+    }
+
     ReleaseDC(window->hWnd, hdc);
 }
 
 void Window::OnPaint(HDC hdc)
 {
+    Graphics graphics(hdc);
+
+    graphics.DrawImage(image_, 0, 0, 100, 100);
+
     if (timeline_->IsPlaying() == false)
     {
-        canvas_->UpdateDraw(hdc);
+        for (int i = 0; i < canvas_->GetPoints().size(); i++)
+        {
+            canvas_->DrawLine(hdc, i);
+        }
     }
     else
     {
@@ -284,24 +363,35 @@ void Window::OnPaint(HDC hdc)
 
         for (int i = 0; i < canvas_->GetPoints().size(); i++)
         {
-            if ((int)trunc(canvas_->GetPoints()[i].time * 1000) > timeline_->GetTime())
+            if ((int)trunc(canvas_->GetPoints()[i].time * 1000) <= timeline_->GetTime())
             {
-                break;
+                canvas_->DrawLine(hdc, i);
             }
-
-            HPEN n = CreatePen(PS_SOLID, canvas_->GetPoints()[i].width, canvas_->GetPoints()[i].color);
-            HPEN o = (HPEN)SelectObject(hdc, n);
-            MoveToEx(hdc, canvas_->GetPoints()[i].start_x + canvas_->GetX(), canvas_->GetPoints()[i].start_y, NULL);
-            LineTo(hdc, canvas_->GetPoints()[i].end_x + canvas_->GetX(), canvas_->GetPoints()[i].end_y);
-            SelectObject(hdc, o);
-            DeleteObject(n);
         }
     }
 }
 
+void Window::LoadGIF(LPCTSTR file_name)
+{
+    image_ = new Image(file_name);
+
+    UINT count = image_->GetFrameDimensionsCount();
+
+    dimension_ids_ = new GUID[count];
+    image_->GetFrameDimensionsList(dimension_ids_, count);
+
+    WCHAR guid[39];
+    StringFromGUID2(dimension_ids_[0], guid, 39);
+    frame_count_ = image_->GetFrameCount(&dimension_ids_[0]);
+
+    UINT size = image_->GetPropertyItemSize(PropertyTagFrameDelay);
+    property_item_ = (PropertyItem*)malloc(size);
+    image_->GetPropertyItem(PropertyTagFrameDelay, size, property_item_);
+}
+
 Window* Window::GetInstance()
 {
-    call_once(flag_, []()
+    call_once(flag_, []() // 람다식
         {
             instance_.reset(new Window);
         });

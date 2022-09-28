@@ -33,7 +33,7 @@ private:
     void ProgressControl(POINT mouse_position);
 public:
     Timeline(HWND hWnd);
-    ~Timeline();
+    ~Timeline() = default;
 
     void MouseUp();
     void MouseDown(POINT mouse_position);
@@ -45,6 +45,11 @@ public:
 
     int GetTime();
     int GetMaxTime();
+
+    int GetWidth();
+    int GetHeight();
+    int GetX();
+    int GetY();
 
     bool IsPlaying();
 };

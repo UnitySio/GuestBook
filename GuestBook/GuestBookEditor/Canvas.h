@@ -3,6 +3,10 @@
 #include "framework.h"
 
 #include <vector>
+#include <filesystem>
+#include <fstream>
+
+namespace fs = filesystem;
 
 class Canvas
 {
@@ -41,17 +45,22 @@ private:
 	void UpdateWindowArea();
 public:
 	Canvas(HWND hWnd, int width, int height);
-	~Canvas();
+	~Canvas() = default;
+
+	void Reset();
 
 	void MouseUp();
 	void MouseDown(POINT mouse_position);
 	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);
 	void Draw(HDC hdc);
-	void UpdateDraw(HDC hdc);
+	void DrawLine(HDC hdc, int idx);
+	void OpenSaveFile();
+	void OpenLoadFile();
+	void LoadGBFile(string path);
+	void LoadGBFile(wchar_t* path);
 
 	bool IsCanvasClick();
 
-	int GetX();
 	vector<PointInfo> GetPoints();
 };
 

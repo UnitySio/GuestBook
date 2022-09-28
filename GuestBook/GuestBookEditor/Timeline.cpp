@@ -6,11 +6,6 @@ Timeline::Timeline(HWND hWnd)
 	UpdateWindowArea();
 }
 
-Timeline::~Timeline()
-{
-
-}
-
 void Timeline::UpdateWindowArea()
 {
 	GetClientRect(hWnd, &client_area_);
@@ -19,15 +14,18 @@ void Timeline::UpdateWindowArea()
 
 void Timeline::MouseUp()
 {
-	ReleaseCapture();
-	is_progress_click_ = false;
+	if (is_progress_click_)
+	{
+		ReleaseCapture();
+		is_progress_click_ = false;
+	}
 }
 
 void Timeline::MouseDown(POINT mouse_position)
 {
-	SetCapture(hWnd);
 	if (PtInRect(&timeline_area_, mouse_position))
 	{
+		SetCapture(hWnd);
 		ProgressControl(mouse_position);
 		is_progress_click_ = true;
 	}
@@ -35,10 +33,11 @@ void Timeline::MouseDown(POINT mouse_position)
 
 void Timeline::MouseMove(POINT mouse_position)
 {
-	if (PtInRect(&window_area_, mouse_position) == false)
+	if (!PtInRect(&window_area_, mouse_position))
 	{
 		MouseUp();
 	}
+
 	if (is_progress_click_)
 	{
 		ProgressControl(mouse_position);
@@ -89,17 +88,15 @@ void Timeline::Draw(HDC hdc)
 	SolidBrush background_brush(Color(255, 33, 35, 39));
 
 	FontFamily arial_font(L"Arial");
-	Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	// 타임라인
 	x_ = 0;
-	y_ = window_area_.bottom - 230;
+	y_ = window_area_.bottom - 300;
 	width_ = window_area_.right;
 	height_ = window_area_.bottom - y_;
 
-
-	graphics.FillRectangle(&background_brush, x_, y_, 200, 30);
-	graphics.FillRectangle(&background_brush, x_, y_ + 30, width_, height_ - 30);
+	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
 	WCHAR header_word[1024];
 	_stprintf_s(header_word, L"타임라인 %.3lf초 / %.3lf초", time_, max_time_);
@@ -145,6 +142,26 @@ int Timeline::GetTime()
 int Timeline::GetMaxTime()
 {
 	return (int)trunc(max_time_ * 1000);
+}
+
+int Timeline::GetWidth()
+{
+	return width_;
+}
+
+int Timeline::GetHeight()
+{
+	return height_;
+}
+
+int Timeline::GetX()
+{
+	return x_;
+}
+
+int Timeline::GetY()
+{
+	return y_;
 }
 
 bool Timeline::IsPlaying()

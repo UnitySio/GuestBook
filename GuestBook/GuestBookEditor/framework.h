@@ -15,12 +15,14 @@
 #include <tchar.h>
 
 #include "mmsystem.h"
+#include "shellapi.h"
 
 #include <memory>
 #include <mutex>
 #include <Ole2.h>
 #include <gdiplus.h>
 #include <cmath>
+#include <commdlg.h>
 
 using namespace std;
 using namespace Gdiplus;
