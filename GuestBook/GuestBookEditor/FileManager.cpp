@@ -5,6 +5,7 @@ FileManager::FileManager(HWND hWnd)
 {
 	this->hWnd = hWnd;
 	UpdateWindowArea();
+	wsprintf(current_path_, L"%s\\Guests", fs::current_path().c_str());
 }
 
 void FileManager::UpdateWindowArea()
@@ -63,7 +64,7 @@ void FileManager::MouseDown(POINT mouse_position)
 				SetCapture(hWnd);
 				if (fs::is_directory(list_box_items_[i].file_path))
 				{
-					current_path_ = list_box_items_[i].file_path;
+					wsprintf(current_path_, L"%s", list_box_items_[i].file_path.c_str());
 					list_item_select_ = 0;
 					scroll_bar_thumb_percent_ = 0;
 					InvalidateRect(hWnd, &file_manager_area_, FALSE);
@@ -274,6 +275,8 @@ void FileManager::Draw(HDC hdc)
 void FileManager::FileRefresh(fs::path path)
 {
 	fs::path p(path);
+	WCHAR root_path[256];
+	wsprintf(root_path, L"%s\\Guests", fs::current_path().c_str());
 	
 	// 해당 경로가 존재하는지 확인
 	if (fs::exists(p) && fs::is_directory(p))
@@ -283,9 +286,9 @@ void FileManager::FileRefresh(fs::path path)
 		list_box_items_.clear();
 
 		// 현재 폴더가 Geusts가 아닐 경우 상위 폴더와 최상위 폴더 표시
-		if (p != "./Guests")
+		if (p != root_path)
 		{
-			list_box_items_.push_back({ ".", "./Guests", NULL });
+			list_box_items_.push_back({ ".", root_path, NULL });
 			list_box_items_.push_back({ "..", p.parent_path(), NULL });
 		}
 
@@ -298,11 +301,11 @@ void FileManager::FileRefresh(fs::path path)
 	}
 	else
 	{
-		if (!fs::exists("./Guests") && !fs::is_directory("./Guests"))
+		if (!fs::exists(root_path) && !fs::is_directory(root_path))
 		{
-			fs::create_directory("./Guests");
+			fs::create_directory(root_path);
 		}
 
-		FileRefresh("./Guests");
+		FileRefresh(root_path);
 	}
 }

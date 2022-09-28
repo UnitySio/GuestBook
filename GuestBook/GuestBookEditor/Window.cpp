@@ -233,16 +233,38 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         HDROP hDrop = (HDROP)wParam;
 
+        WCHAR drag_file_path[256] = L"";
+        WCHAR drag_file_name[256] = L"";
         WCHAR file_path[256] = L"";
-        
+
         UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
 
         for (UINT i = 0; i < count; i++)
         {
-            DragQueryFile(hDrop, i, file_path, 256);
+            DragQueryFile(hDrop, i, drag_file_path, 256);
 
-            fs::copy(file_path, file_manager->current_path_, fs::copy_options::recursive);
+            if (fs::is_directory(drag_file_path))
+            {
+                for (int j = 0; j < wcslen(drag_file_path); j++)
+                {
+                    if (drag_file_path[j] == L'\\')
+                    {
+                        wsprintf(drag_file_name, L"%s", drag_file_path + j + 1);
+                    }
+                }
+
+                wsprintf(file_path, L"%s\\%s", file_manager->current_path_, drag_file_name);
+                fs::create_directory(file_path);
+            }
+            else if (fs::is_regular_file(drag_file_path))
+            {
+                wsprintf(file_path, L"%s", file_manager->current_path_);
+            }
+
+            fs::copy(drag_file_path, file_path, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
         }
+
+        DragFinish(hDrop);
     }
     break;
     case WM_DESTROY:
@@ -304,7 +326,7 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
 
     if (m_nTimerID == window->frame_timer_)
     {
-        RECT area = { 0, 0, 50, 50 };
+        RECT area = { 0, 0, 100, 100 };
 
         GUID guid = FrameDimensionTime;
         window->image_->SelectActiveFrame(&guid, window->current_frame_);
@@ -323,7 +345,7 @@ void Window::OnPaint(HDC hdc)
 {
     Graphics graphics(hdc);
 
-    graphics.DrawImage(image_, 0, 0, 50, 50);
+    graphics.DrawImage(image_, 0, 0, 100, 100);
 
     if (timeline_->IsPlaying() == false)
     {

@@ -62,7 +62,7 @@ public:
     FileManager(HWND hWnd);
     ~FileManager() = default;
 
-    fs::path current_path_ = "./Guests";
+    WCHAR current_path_[256];
 
     void MouseUp();
     void MouseDown(POINT mouse_position);
