@@ -34,11 +34,20 @@ private:
 	static unique_ptr<Window> instance_;
 	static once_flag flag_;
 
+	double timer_;
+
+	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
+	unique_ptr<Timeline> timeline_;
+	unique_ptr<Canvas> canvas_;
+	unique_ptr<FileManager> file_manager_;
+
 	UINT drawing_timer_;
 	UINT play_timer_;
 
 	int current_x_;
 	int current_y_;
+
+	bool is_dragging_;
 public:
 	Window() = default;
 	~Window() = default;
@@ -53,11 +62,10 @@ public:
 	BOOL InitInstance(HINSTANCE, int);
 
 	static Window* GetInstance();
-
-	double timer_;
-
-	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
-	unique_ptr<Timeline> timeline_;
-	unique_ptr<Canvas> canvas_;
+	
+	void SetTimer(int time);
+	Timeline* GetTimeline();
+	Canvas* GetCanvas();
+	FileManager* GetFileManager();
 };
 

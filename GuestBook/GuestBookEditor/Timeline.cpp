@@ -36,6 +36,7 @@ void Timeline::MouseMove(POINT mouse_position)
 	if (!PtInRect(&window_area_, mouse_position))
 	{
 		MouseUp();
+		return;
 	}
 
 	if (is_progress_click_)

@@ -56,7 +56,6 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static unique_ptr<QuickPanel> quick_panel;
-    static unique_ptr<FileManager> file_manager;
 
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
@@ -70,7 +69,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         quick_panel = make_unique<QuickPanel>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
         canvas_ = make_unique<Canvas>(hWnd, 1000, 500);
-        file_manager = make_unique<FileManager>(hWnd);
+        file_manager_ = make_unique<FileManager>(hWnd);
 
         LoadGIF(L"Resources/PlayIcon.gif");
 
@@ -127,7 +126,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         canvas_->Draw(hdc);
         OnPaint(hdc);
         timeline_->Draw(hdc);
-        file_manager->Draw(hdc);
+        file_manager_->Draw(hdc);
         quick_panel->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
@@ -166,9 +165,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseUp();
-        timeline_->MouseUp();
+        //timeline_->MouseUp();
         canvas_->MouseUp();
-        file_manager->MouseUp();
+        file_manager_->MouseUp();
 
         timeKillEvent(drawing_timer_);
         drawing_timer_ = NULL;
@@ -183,9 +182,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         if (!quick_panel->IsOpen() and !timeline_->IsPlaying())
         {
-            timeline_->MouseDown(mouse_position);
+            //timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
-            file_manager->MouseDown(mouse_position);
+            file_manager_->MouseDown(mouse_position);
         }
     }
 
@@ -198,6 +197,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (!timeline_->IsPlaying())
         {
             quick_panel->Open(mouse_position);
+            file_manager_->MouseDoubleDown(mouse_position);
         }
     }
     break;
@@ -207,8 +207,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         quick_panel->MouseMove(mouse_position);
-        timeline_->MouseMove(mouse_position);
-        file_manager->MouseMove(mouse_position);
+        //timeline_->MouseMove(mouse_position);
+        file_manager_->MouseMove(mouse_position);
 
         canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, quick_panel->GetRGB());
 
@@ -253,12 +253,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     }
                 }
 
-                wsprintf(file_path, L"%s\\%s", file_manager->current_path_, drag_file_name);
+                wsprintf(file_path, L"%s\\%s", file_manager_->GetCurrentPath(), drag_file_name);
                 fs::create_directory(file_path);
             }
             else if (fs::is_regular_file(drag_file_path))
             {
-                wsprintf(file_path, L"%s", file_manager->current_path_);
+                wsprintf(file_path, L"%s", file_manager_->GetCurrentPath());
             }
 
             fs::copy(drag_file_path, file_path, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
@@ -389,6 +389,11 @@ void Window::LoadGIF(LPCTSTR file_name)
     image_->GetPropertyItem(PropertyTagFrameDelay, size, property_item_);
 }
 
+void Window::SetTimer(int time)
+{
+    timer_ = time;
+}
+
 Window* Window::GetInstance()
 {
     call_once(flag_, []() // ¶÷´Ù½Ä
@@ -397,4 +402,19 @@ Window* Window::GetInstance()
         });
 
     return instance_.get();
+}
+
+Timeline* Window::GetTimeline()
+{
+    return timeline_.get();
+}
+
+Canvas* Window::GetCanvas()
+{
+    return canvas_.get();
+}
+
+FileManager* Window::GetFileManager()
+{
+    return file_manager_.get();
 }

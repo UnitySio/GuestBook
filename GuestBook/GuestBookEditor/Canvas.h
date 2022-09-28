@@ -56,11 +56,11 @@ public:
 	void DrawLine(HDC hdc, int idx);
 	void OpenSaveFile();
 	void OpenLoadFile();
-	void LoadGBFile(string path);
-	void LoadGBFile(wchar_t* path);
+	void LoadGBFile(fs::path path);
 
 	bool IsCanvasClick();
 
+	RECT* GetCanvasArea();
 	vector<PointInfo> GetPoints();
 };
 

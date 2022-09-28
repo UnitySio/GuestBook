@@ -112,7 +112,7 @@ void Canvas::OpenSaveFile()
 	OFN.lpstrDefExt = L"gb";
 	OFN.lpstrFile = file_name;
 	OFN.nMaxFile = 256;
-	OFN.lpstrInitialDir = L"C:\\";
+	OFN.lpstrInitialDir = Window::GetInstance()->GetFileManager()->GetRootPath();
 	OFN.Flags = OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
 
 	size_t size = points_.size();
@@ -146,42 +146,26 @@ void Canvas::OpenLoadFile()
 	OFN.lpstrDefExt = L"gb";
 	OFN.lpstrFile = file_name;
 	OFN.nMaxFile = 256;
-	OFN.lpstrInitialDir = L"C:\\";
+	OFN.lpstrInitialDir = Window::GetInstance()->GetFileManager()->GetRootPath();
 	OFN.Flags = OFN_NOCHANGEDIR;
 
 	if (GetOpenFileName(&OFN) != 0)
 	{
 		wsprintf(path, L"%s", OFN.lpstrFile);
 		LoadGBFile(path);
-		Window::GetInstance()->timer_ = Window::GetInstance()->canvas_->GetPoints()[Window::GetInstance()->canvas_->GetPoints().size() - 1].time;
-		Window::GetInstance()->timeline_->UpdateMaxTime(Window::GetInstance()->canvas_->GetPoints()[Window::GetInstance()->canvas_->GetPoints().size() - 1].time);
+		Window::GetInstance()->SetTimer(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
+		Window::GetInstance()->GetTimeline()->UpdateMaxTime(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
 	}
 }
 
-void Canvas::LoadGBFile(string path)
-{
-	size_t size = 0;
-	
-	ifstream load(path, ios::binary);
-	if (load.is_open())
-	{
-		load.read((char*)&size, 4);
-		points_.resize(size);
-		load.read((char*)&points_[0], size * sizeof(PointInfo));
-		load.close();
-	}
-
-	InvalidateRect(hWnd, &canvas_area_, FALSE);
-}
-
-void Canvas::LoadGBFile(wchar_t* path)
+void Canvas::LoadGBFile(fs::path path)
 {
 	size_t size = 0;
 
 	ifstream load(path, ios::binary);
 	if (load.is_open())
 	{
-		load.read((char*)&size, 4);
+		load.read((CHAR*)&size, 4);
 		points_.resize(size);
 		load.read((char*)&points_[0], size * sizeof(PointInfo));
 		load.close();
@@ -193,6 +177,11 @@ void Canvas::LoadGBFile(wchar_t* path)
 bool Canvas::IsCanvasClick()
 {
 	return is_canvas_click_;
+}
+
+RECT* Canvas::GetCanvasArea()
+{
+	return &canvas_area_;
 }
 
 vector<Canvas::PointInfo> Canvas::GetPoints()

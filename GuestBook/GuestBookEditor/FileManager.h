@@ -11,7 +11,7 @@ namespace fs = filesystem;
 class FileManager
 {
 private:
-    struct ListBoxItem
+    struct Item
     {
         fs::path file_name;
         fs::path file_path;
@@ -35,8 +35,9 @@ private:
 
     RECT list_box_area_;
 
-    vector<ListBoxItem> list_box_items_;
+    vector<Item> items_;
 
+    int list_item_hover_ = 0;
     int list_item_select_ = 0;
     int list_box_item_height_ = 50;
 
@@ -44,6 +45,9 @@ private:
     int scroll_bar_y_;
     int scroll_bar_width_;
     int scroll_bar_height_;
+
+    WCHAR root_path_[256];
+    WCHAR current_path_[256];
 
     bool is_scroll_bar_click_;
 
@@ -57,18 +61,20 @@ private:
     void UpdateWindowArea();
     void ScrollBarControl(POINT mouse_position);
 
-    wchar_t* ConvertBytes(uintmax_t bytes); // 단위 변환
+    WCHAR* ConvertBytes(uintmax_t bytes); // 단위 변환
 public:
     FileManager(HWND hWnd);
     ~FileManager() = default;
 
-    WCHAR current_path_[256];
-
     void MouseUp();
     void MouseDown(POINT mouse_position);
+    void MouseDoubleDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
     void Draw(HDC hdc);
 
     void FileRefresh(fs::path path);
+
+    WCHAR* GetRootPath();
+    WCHAR* GetCurrentPath();
 };
 

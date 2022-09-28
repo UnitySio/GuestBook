@@ -1,4 +1,5 @@
 ﻿#include "QuickPanel.h"
+#include "Window.h"
 
 QuickPanel::QuickPanel(HWND hWnd)
 {
@@ -62,6 +63,7 @@ void QuickPanel::MouseMove(POINT mouse_position)
         if (!PtInRect(&window_area_, mouse_position))
         {
             MouseUp();
+            return;
         }
         
         if (is_palette_click_)
@@ -100,28 +102,31 @@ void QuickPanel::PenSizeSliderControl(POINT mouse_position)
 
 void QuickPanel::Open(POINT mouse_position)
 {
-    if (is_quick_panel_open_ == false)
+    if (PtInRect(Window::GetInstance()->GetCanvas()->GetCanvasArea(), mouse_position))
     {
-        x_ = mouse_position.x;
-        y_ = mouse_position.y;
-
-        // 윈도우 크기에 따른 위치 보정
-        if (x_ > window_area_.right - width_)
+        if (is_quick_panel_open_ == false)
         {
-            x_ -= width_;
+            x_ = mouse_position.x;
+            y_ = mouse_position.y;
+
+            // 윈도우 크기에 따른 위치 보정
+            if (x_ > window_area_.right - width_)
+            {
+                x_ -= width_;
+            }
+
+            if (y_ > window_area_.bottom - height_)
+            {
+                y_ -= height_;
+            }
+
+            quick_panel_area_ = { x_, y_, x_ + width_, y_ + height_ };
         }
 
-        if (y_ > window_area_.bottom - height_)
-        {
-            y_ -= height_;
-        }
+        is_quick_panel_open_ = !is_quick_panel_open_;
 
-        quick_panel_area_ = { x_, y_, x_ + width_, y_ + height_ };
+        InvalidateRect(hWnd, &quick_panel_area_, FALSE);
     }
-    
-    is_quick_panel_open_ = !is_quick_panel_open_;
-
-    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
 }
 
 void QuickPanel::Draw(HDC hdc)
