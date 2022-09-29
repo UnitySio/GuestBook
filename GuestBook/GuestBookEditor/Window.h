@@ -46,8 +46,6 @@ private:
 
 	int current_x_;
 	int current_y_;
-
-	bool is_dragging_;
 public:
 	Window() = default;
 	~Window() = default;

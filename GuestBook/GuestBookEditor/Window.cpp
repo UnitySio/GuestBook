@@ -71,12 +71,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         canvas_ = make_unique<Canvas>(hWnd, 1000, 500);
         file_manager_ = make_unique<FileManager>(hWnd);
 
-        LoadGIF(L"Resources/PlayIcon.gif");
+        /*LoadGIF(L"Resources/PlayIcon.gif");
 
         GUID guid = FrameDimensionTime;
         image_->SelectActiveFrame(&guid, current_frame_);
         frame_timer_ = timeSetEvent(((UINT*)property_item_[0].value)[current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_ONESHOT);
-        ++current_frame_;
+        ++current_frame_;*/
     }
     break;
     case WM_COMMAND:
@@ -229,6 +229,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
     }
     break;
+    case WM_MOUSEWHEEL:
+    {
+        file_manager_->MouseWheel((float)((short)HIWORD(wParam)) / WHEEL_DELTA);
+        InvalidateRect(hWnd, NULL, FALSE);
+    }
+    break;
     case WM_DROPFILES:
     {
         HDROP hDrop = (HDROP)wParam;
@@ -345,9 +351,9 @@ void Window::OnPaint(HDC hdc)
 {
     Graphics graphics(hdc);
 
-    graphics.DrawImage(image_, 0, 0, 100, 100);
+    //graphics.DrawImage(image_, 0, 0, 100, 100);
 
-    if (timeline_->IsPlaying() == false)
+    if (!timeline_->IsPlaying())
     {
         for (int i = 0; i < canvas_->GetPoints().size(); i++)
         {

@@ -12,7 +12,7 @@ private:
     int x_;
     int y_;
     int width_;
-    int height_;
+    int height_ = 300;
 
     // ¿µ¿ª
     RECT timeline_area_;
@@ -23,8 +23,8 @@ private:
     int progress_width_;
     int progress_height_;
 
-    double time_ = 0;
-    double max_time_ = 0;
+    double time_;
+    double max_time_;
 
     bool is_progress_click_;
     bool is_playing_;
@@ -45,11 +45,6 @@ public:
 
     int GetTime();
     int GetMaxTime();
-
-    int GetWidth();
-    int GetHeight();
-    int GetX();
-    int GetY();
 
     bool IsPlaying();
 };

@@ -70,6 +70,7 @@ public:
     void MouseDown(POINT mouse_position);
     void MouseDoubleDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
+    void MouseWheel(float direction);
     void Draw(HDC hdc);
 
     void FileRefresh(fs::path path);

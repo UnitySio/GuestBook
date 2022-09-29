@@ -92,10 +92,10 @@ void Timeline::Draw(HDC hdc)
 	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	// 타임라인
-	x_ = 0;
-	y_ = window_area_.bottom - 300;
 	width_ = window_area_.right;
-	height_ = window_area_.bottom - y_;
+	height_ = 300;
+	x_ = 0;
+	y_ = window_area_.bottom - height_;
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
@@ -118,7 +118,7 @@ void Timeline::Draw(HDC hdc)
 		Point(progress_x_ + (time_ / max_time_) * progress_width_, progress_y_ + progress_height_),
 		Point(progress_x_ + (time_ / max_time_) * progress_width_ + 10, progress_y_) };
 
-	
+
 	graphics.FillPolygon(&yellow_brush, points, 3);
 	graphics.DrawLine(&yellow_pen, progress_x_ + (time_ / max_time_) * progress_width_, progress_y_ + progress_height_, progress_x_ + (time_ / max_time_) * progress_width_, y_ + height_);
 }
@@ -143,26 +143,6 @@ int Timeline::GetTime()
 int Timeline::GetMaxTime()
 {
 	return (int)trunc(max_time_ * 1000);
-}
-
-int Timeline::GetWidth()
-{
-	return width_;
-}
-
-int Timeline::GetHeight()
-{
-	return height_;
-}
-
-int Timeline::GetX()
-{
-	return x_;
-}
-
-int Timeline::GetY()
-{
-	return y_;
 }
 
 bool Timeline::IsPlaying()
