@@ -28,7 +28,7 @@ private:
 
     bool is_progress_click_;
     bool is_playing_;
-    
+
     void UpdateWindowArea();
     void ProgressControl(POINT mouse_position);
 public:
@@ -43,9 +43,10 @@ public:
     void Draw(HDC hdc);
     void Play();
 
+    int GetWidth();
+    int GetHeight();
     int GetTime();
     int GetMaxTime();
 
-    bool IsPlaying();
+    bool OnPlay();
 };
-

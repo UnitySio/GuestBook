@@ -128,7 +128,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Button.h" />
     <ClInclude Include="Canvas.h" />
+    <ClInclude Include="Control.h" />
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GuestBookEditor.h" />
@@ -139,7 +141,9 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="Canvas.cpp" />
+    <ClCompile Include="Control.cpp" />
     <ClCompile Include="FileManager.cpp" />
     <ClCompile Include="GuestBookEditor.cpp" />
     <ClCompile Include="QuickPanel.cpp" />

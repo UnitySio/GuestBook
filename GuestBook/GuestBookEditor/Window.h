@@ -6,6 +6,8 @@
 #include "Timeline.h"
 #include "Canvas.h"
 #include "FileManager.h"
+#include "Control.h"
+#include "Button.h"
 
 #define MAX_LOADSTRING 100
 
@@ -21,14 +23,6 @@ private:
 	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
 	void OnPaint(HDC hdc);
-	void LoadGIF(LPCTSTR file_name);
-
-	Image* image_;
-	GUID* dimension_ids_;
-	UINT frame_count_;
-	PropertyItem* property_item_;
-	UINT current_frame_;
-	UINT frame_timer_;
 
 	// 싱글톤
 	static unique_ptr<Window> instance_;
@@ -37,9 +31,11 @@ private:
 	double timer_;
 
 	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
+	unique_ptr<Control> control_;
 	unique_ptr<Timeline> timeline_;
-	unique_ptr<Canvas> canvas_;
 	unique_ptr<FileManager> file_manager_;
+	unique_ptr<Canvas> canvas_;
+	unique_ptr<QuickPanel> quick_panel_;
 
 	UINT drawing_timer_;
 	UINT play_timer_;
@@ -51,7 +47,7 @@ public:
 	~Window() = default;
 
 	Window(const Window&) = delete;
-	Window &operator=(const Window&) = delete;
+	Window& operator=(const Window&) = delete;
 
 	WCHAR szTitle[MAX_LOADSTRING]; // 제목 표시줄 텍스트입니다.
 	WCHAR szWindowClass[MAX_LOADSTRING]; // 기본 창 클래스 이름입니다.
@@ -60,10 +56,13 @@ public:
 	BOOL InitInstance(HINSTANCE, int);
 
 	static Window* GetInstance();
-	
+
 	void SetTimer(int time);
+
+	Control* GetControl();
 	Timeline* GetTimeline();
-	Canvas* GetCanvas();
 	FileManager* GetFileManager();
+	Canvas* GetCanvas();
+	QuickPanel* GetQuickPanel();
 };
 

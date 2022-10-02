@@ -18,15 +18,15 @@ private:
         uintmax_t file_size;
     };
 
-	HWND hWnd;
-	RECT client_area_;
-	RECT window_area_;
+    HWND hWnd;
+    RECT client_area_;
+    RECT window_area_;
 
     // 생성될 x, y 좌표
     int x_;
     int y_;
-    int width_ = 300;
-    int height_ = 300;
+    int width_;
+    int height_;
 
     int list_box_x_;
     int list_box_y_;
@@ -37,9 +37,8 @@ private:
 
     vector<Item> items_;
 
-    int list_item_hover_ = 0;
-    int list_item_select_ = 0;
-    int list_box_item_height_ = 50;
+    int list_item_select_;
+    int list_item_height_;
 
     int scroll_bar_x_;
     int scroll_bar_y_;
@@ -53,15 +52,15 @@ private:
 
     RECT scroll_bar_area_;
     RECT file_manager_area_;
-    
+
     double scroll_bar_thumb_ratio_;
     double scroll_bar_thumb_percent_;
     double scroll_bar_thumb_height_;
-    
+
     void UpdateWindowArea();
     void ScrollBarControl(POINT mouse_position);
 
-    WCHAR* ConvertBytes(uintmax_t bytes); // 단위 변환
+    LPCWSTR ConvertBytes(uintmax_t bytes); // 단위 변환
 public:
     FileManager(HWND hWnd);
     ~FileManager() = default;
@@ -75,7 +74,10 @@ public:
 
     void FileRefresh(fs::path path);
 
-    WCHAR* GetRootPath();
-    WCHAR* GetCurrentPath();
+    LPCWSTR GetRootPath();
+    LPCWSTR GetCurrentPath();
+
+    int GetWidth();
+    int GetHeight();
 };
 

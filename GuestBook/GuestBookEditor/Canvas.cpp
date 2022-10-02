@@ -1,12 +1,15 @@
 #include "Canvas.h"
 #include "Window.h"
 
-Canvas::Canvas(HWND hWnd, int width, int height)
+Canvas::Canvas(HWND hWnd)
 {
 	this->hWnd = hWnd;
-	width_ = width;
-	height_ = height;
 	UpdateWindowArea();
+
+	x_ = 0;
+	y_ = Window::GetInstance()->GetControl()->GetHeight();
+	width_ = window_area_.right - Window::GetInstance()->GetFileManager()->GetWidth();
+	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 }
 
 void Canvas::UpdateWindowArea()
@@ -54,7 +57,7 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 		HPEN o = (HPEN)SelectObject(hdc, n);
 		MoveToEx(hdc, current_x, current_y, NULL);
 		LineTo(hdc, mouse_position.x, mouse_position.y);
-		points_.push_back({ current_x - x_, current_y - y_, mouse_position.x - x_, mouse_position.y - y_, width, time, color });
+		points_.push_back({ current_x - canvas_x_, current_y - canvas_y_, mouse_position.x - canvas_x_, mouse_position.y - canvas_y_, width, time, color });
 		SelectObject(hdc, o);
 		DeleteObject(n);
 		ReleaseDC(hWnd, hdc);
@@ -67,35 +70,125 @@ void Canvas::Draw(HDC hdc)
 {
 	UpdateWindowArea();
 
-	// 윈도우 크기에 따른 위치 보정
-	x_ = (window_area_.right - width_ - 400) / 2;
-	y_ = (window_area_.bottom - height_ - 300) / 2;
-
 	Graphics graphics(hdc);
 
 	// 배경 제거
 	SetBkMode(hdc, TRANSPARENT);
 
-	FontFamily arial_font(L"Arial");
-	Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+	Image edit_icon(L"Resources/EditIcon.png");
 
-	Pen outline_pen(Color(255, 33, 35, 39));
-
+	SolidBrush background_brush(Color(255, 219, 219, 219));
+	SolidBrush background_brush2(Color(255, 238, 238, 238));
+	SolidBrush white_brush(Color(255, 255, 255, 255));
 	SolidBrush black_brush(Color(255, 0, 0, 0));
-	SolidBrush background_brush(Color(255, 255, 255, 255));
+
+	Pen contour_pen(Color(255, 185, 185, 185));
+
+	FontFamily arial_font(L"Arial");
+	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
+
+	y_ = Window::GetInstance()->GetControl()->GetHeight();
+	width_ = window_area_.right - Window::GetInstance()->GetFileManager()->GetWidth();
+	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
-	graphics.DrawRectangle(&outline_pen, x_ - 1, y_ - 1, width_ + 1, height_ + 1);
-	
-	canvas_area_ = { x_, y_, x_ + width_, y_ + height_ };
+
+	graphics.FillRectangle(&background_brush2, x_, y_ + 60, width_, height_ - 90);
+
+	Region region(Rect(x_, y_ + 60, width_, height_ - 90));
+
+	// 클리핑 마스크 시작
+	graphics.SetClip(&region, CombineModeReplace);
+
+	// 윈도우 크기에 따른 위치 보정
+	canvas_width_ = 1000;
+	canvas_height_ = 500;
+	canvas_x_ = ((x_ + width_) - canvas_width_) / 2;
+	canvas_y_ = (((y_ + height_) + 90) - canvas_height_) / 2;
+
+	graphics.FillRectangle(&white_brush, canvas_x_, canvas_y_, canvas_width_, canvas_height_);
+
+	canvas_area_ = { canvas_x_, canvas_y_, canvas_x_ + canvas_width_, canvas_y_ + canvas_height_ };
+
+	if (!Window::GetInstance()->GetTimeline()->OnPlay())
+	{
+		for (int i = 0; i < points_.size(); i++)
+		{
+			DrawLine(hdc, i);
+		}
+	}
+	else
+	{
+		/*아래와 같은 방식으로 계속해서 다시 그리는 방식을 선택한 이유는
+		순차적인 탐색을 하면서 조금씩 조금씩 그리는 경우 비용이 비싸며,
+		현재 사용하고 있는 타이머의 구조상 재시간안에 모두 실행할 수 없어
+		문제가 발생하기 때문에 아래와 같은 방식을 사용하였다.*/
+
+		for (int i = 0; i < points_.size(); i++)
+		{
+			if ((int)trunc(points_[i].time * 1000) > Window::GetInstance()->GetTimeline()->GetTime())
+			{
+				break;
+			}
+
+			DrawLine(hdc, i);
+		}
+	}
+
+	// 클리핑 마스크 종료
+	graphics.ResetClip();
+
+	/*기존 GDI 그래픽 라이브러리에서는 클리핑을 사용할 수 없기 때문에
+	다시 한번 더 그리도록 했다.*/
+	graphics.FillRectangle(&background_brush, x_, y_, width_, 30);
+
+	// 상단바
+	Point background_points[] = {
+		Point(x_, y_),
+		Point(x_, y_ + 60),
+		Point(x_ + width_, y_ + 60),
+		Point(x_ + width_, y_ + 30),
+		Point(x_ + 90, y_ + 30),
+		Point(x_ + 90, y_) };
+
+	Point contour_points[] = {
+		Point(x_, y_),
+		Point(x_, y_ + 59),
+		Point(x_ + width_ - 1, y_ + 59),
+		Point(x_ + width_ - 1, y_ + 30),
+		Point(x_ + 90, y_ + 30),
+		Point(x_ + 90, y_) };
+
+	graphics.FillPolygon(&background_brush2, background_points, 6);
+	graphics.DrawPolygon(&contour_pen, contour_points, 6);
+
+	graphics.DrawImage(&edit_icon, x_ + 10, y_ + 5, 20, 20);
+
+	StringFormat string_format;
+	string_format.SetLineAlignment(StringAlignmentCenter);
+
+	PointF header_font_position(x_ + 35, y_ + 15);
+	graphics.DrawString(L"캔버스", -1, &font_style, header_font_position, &string_format, &black_brush);
+
+	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
+
+	// 하단바
+	graphics.FillRectangle(&background_brush2, x_, y_ + height_ - 30, width_, 30);
+	graphics.DrawRectangle(&contour_pen, x_, y_ + height_ - 30, width_ - 1, 29);
+
+	WCHAR pen_size_word[1024];
+	wsprintf(pen_size_word, L"팬 크기: %d", Window::GetInstance()->GetQuickPanel()->GetPenSize());
+
+	PointF pen_size_font_position(x_ + 5, y_ + height_ - 15);
+	graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &string_format, &black_brush);
 }
 
 void Canvas::DrawLine(HDC hdc, int idx)
 {
 	HPEN n = CreatePen(PS_SOLID, points_[idx].width, points_[idx].color);
 	HPEN o = (HPEN)SelectObject(hdc, n);
-	MoveToEx(hdc, points_[idx].start_x + x_, points_[idx].start_y + y_, NULL);
-	LineTo(hdc, points_[idx].end_x + x_, points_[idx].end_y + y_);
+	MoveToEx(hdc, points_[idx].start_x + canvas_x_, points_[idx].start_y + canvas_y_, NULL);
+	LineTo(hdc, points_[idx].end_x + canvas_x_, points_[idx].end_y + canvas_y_);
 	SelectObject(hdc, o);
 	DeleteObject(n);
 }
@@ -103,7 +196,7 @@ void Canvas::DrawLine(HDC hdc, int idx)
 void Canvas::OpenSaveFile()
 {
 	WCHAR file_name[256] = L"";
-	
+
 	OPENFILENAME OFN;
 	memset(&OFN, 0, sizeof(OPENFILENAME));
 	OFN.lStructSize = sizeof(OPENFILENAME);
@@ -153,8 +246,8 @@ void Canvas::OpenLoadFile()
 	{
 		wsprintf(path, L"%s", OFN.lpstrFile);
 		LoadGBFile(path);
-		Window::GetInstance()->SetTimer(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
-		Window::GetInstance()->GetTimeline()->UpdateMaxTime(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
+		Window::GetInstance()->SetTimer(points_[points_.size() - 1].time);
+		Window::GetInstance()->GetTimeline()->UpdateMaxTime(points_[points_.size() - 1].time);
 	}
 }
 
@@ -174,7 +267,7 @@ void Canvas::LoadGBFile(fs::path path)
 	InvalidateRect(hWnd, &canvas_area_, FALSE);
 }
 
-bool Canvas::IsCanvasClick()
+bool Canvas::OnCanvasClick()
 {
 	return is_canvas_click_;
 }
@@ -187,4 +280,14 @@ RECT* Canvas::GetCanvasArea()
 vector<Canvas::PointInfo> Canvas::GetPoints()
 {
 	return points_;
+}
+
+int Canvas::GetWidth()
+{
+	return width_;
+}
+
+int Canvas::GetHeight()
+{
+	return height_;
 }

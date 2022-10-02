@@ -5,9 +5,15 @@ QuickPanel::QuickPanel(HWND hWnd)
 {
     this->hWnd = hWnd;
     UpdateWindowArea();
+
+    close_button = make_unique<Button>(L"X", [=]
+        {
+            is_quick_panel_open_ = false;
+            InvalidateRect(hWnd, &quick_panel_area_, FALSE);
+        });
 }
 
-bool QuickPanel::IsOpen()
+bool QuickPanel::OnOpen()
 {
     return is_quick_panel_open_;
 }
@@ -53,6 +59,8 @@ void QuickPanel::MouseDown(POINT mouse_position)
             PenSizeSliderControl(mouse_position);
             is_pen_size_slider_click_ = true;
         }
+
+        close_button->MouseDown(mouse_position);
     }
 }
 
@@ -65,7 +73,7 @@ void QuickPanel::MouseMove(POINT mouse_position)
             MouseUp();
             return;
         }
-        
+
         if (is_palette_click_)
         {
             PaletteControl(mouse_position);
@@ -85,19 +93,19 @@ void QuickPanel::PaletteControl(POINT mouse_position)
 {
     s_ = min(max(((mouse_position.x - palette_x_) * 1.0f) / palette_width_, 0), 1.0f);
     v_ = min(max(((mouse_position.y - palette_y_) * 1.0f) / palette_height_, 0), 1.0f);
-    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
+    InvalidateRect(hWnd, NULL, FALSE);
 }
 
 void QuickPanel::HueSliderControl(POINT mouse_position)
 {
     h_ = min(max(((mouse_position.y - hue_slider_y_) * 360.0f) / hue_slider_height_, 0), 360.0f);
-    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
+    InvalidateRect(hWnd, NULL, FALSE);
 }
 
 void QuickPanel::PenSizeSliderControl(POINT mouse_position)
 {
     pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 30.0f) / pen_size_slider_width_, 0), 30.0f);
-    InvalidateRect(hWnd, &quick_panel_area_, FALSE);
+    InvalidateRect(hWnd, NULL, FALSE);
 }
 
 void QuickPanel::Open(POINT mouse_position)
@@ -286,6 +294,8 @@ void QuickPanel::Draw(HDC hdc)
             Point(hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175) };
 
         graphics.DrawCurve(&preivew_pen, preview_points, 4);
+
+        close_button->Draw(hdc, x_ + width_ - 30, y_, 30, 30);
     }
 }
 
@@ -362,7 +372,7 @@ Color QuickPanel::HSVToRGB(double h, double s, double v)
             break;
         }
     }
-    
+
     return Color(255, (BYTE)(r * 255), (BYTE)(g * 255), (BYTE)(b * 255));
 }
 

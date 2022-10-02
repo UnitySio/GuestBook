@@ -55,28 +55,20 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static unique_ptr<QuickPanel> quick_panel;
-
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
-    
+
     POINT mouse_position;
 
     switch (message)
     {
     case WM_CREATE:
     {
-        quick_panel = make_unique<QuickPanel>(hWnd);
+        control_ = make_unique<Control>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
-        canvas_ = make_unique<Canvas>(hWnd, 1000, 500);
         file_manager_ = make_unique<FileManager>(hWnd);
-
-        /*LoadGIF(L"Resources/PlayIcon.gif");
-
-        GUID guid = FrameDimensionTime;
-        image_->SelectActiveFrame(&guid, current_frame_);
-        frame_timer_ = timeSetEvent(((UINT*)property_item_[0].value)[current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_ONESHOT);
-        ++current_frame_;*/
+        canvas_ = make_unique<Canvas>(hWnd);
+        quick_panel_ = make_unique<QuickPanel>(hWnd);
     }
     break;
     case WM_COMMAND:
@@ -124,10 +116,11 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
         canvas_->Draw(hdc);
-        OnPaint(hdc);
-        timeline_->Draw(hdc);
         file_manager_->Draw(hdc);
-        quick_panel->Draw(hdc);
+        control_->Draw(hdc);
+        timeline_->Draw(hdc);
+        OnPaint(hdc);
+        quick_panel_->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
         BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
@@ -145,7 +138,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             timeline_->Play();
 
             if (play_timer_ == NULL)
-            
             {
                 play_timer_ = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
             }
@@ -164,8 +156,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        quick_panel->MouseUp();
-        //timeline_->MouseUp();
+        quick_panel_->MouseUp();
+        timeline_->MouseUp();
         canvas_->MouseUp();
         file_manager_->MouseUp();
 
@@ -178,11 +170,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        quick_panel->MouseDown(mouse_position);
+        quick_panel_->MouseDown(mouse_position);
 
-        if (!quick_panel->IsOpen() and !timeline_->IsPlaying())
+        if (!quick_panel_->OnOpen() and !timeline_->OnPlay())
         {
-            //timeline_->MouseDown(mouse_position);
+            control_->MouseDown(mouse_position);
+            timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
             file_manager_->MouseDown(mouse_position);
         }
@@ -194,10 +187,14 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        if (!timeline_->IsPlaying())
+        if (!timeline_->OnPlay())
         {
-            quick_panel->Open(mouse_position);
-            file_manager_->MouseDoubleDown(mouse_position);
+            quick_panel_->Open(mouse_position);
+
+            if (!quick_panel_->OnOpen())
+            {
+                file_manager_->MouseDoubleDown(mouse_position);
+            }
         }
     }
     break;
@@ -206,13 +203,13 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        quick_panel->MouseMove(mouse_position);
-        //timeline_->MouseMove(mouse_position);
+        timeline_->MouseMove(mouse_position);
         file_manager_->MouseMove(mouse_position);
+        canvas_->MouseMove(mouse_position, quick_panel_->GetPenSize(), timer_, quick_panel_->GetRGB());
+        quick_panel_->MouseMove(mouse_position);
 
-        canvas_->MouseMove(mouse_position, quick_panel->GetPenSize(), timer_, quick_panel->GetRGB());
 
-        if (canvas_->IsCanvasClick())
+        if (canvas_->OnCanvasClick())
         {
             if (drawing_timer_ == NULL)
             {
@@ -220,7 +217,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
 
             timeline_->UpdateMaxTime(timer_);
-
         }
         else
         {
@@ -274,11 +270,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
     case WM_DESTROY:
-        // 수동으로 메모리 해제 시 사용(일반적으로는 자동으로 메모리를 해제)
-        /*timeline_.reset();
-        canvas_.reset();
-        quick_panel.reset();*/
-
         PostQuitMessage(0);
         break;
     default:
@@ -315,9 +306,6 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
     HDC hdc;
     hdc = GetDC(window->hWnd);
 
-    TIMECAPS timecaps;
-    timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
-
     if (m_nTimerID == window->drawing_timer_)
     {
         window->timer_ += 0.001;
@@ -330,69 +318,12 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
         InvalidateRect(window->hWnd, NULL, FALSE);
     }
 
-    if (m_nTimerID == window->frame_timer_)
-    {
-        RECT area = { 0, 0, 100, 100 };
-
-        GUID guid = FrameDimensionTime;
-        window->image_->SelectActiveFrame(&guid, window->current_frame_);
-
-        window->frame_timer_ = timeSetEvent(((UINT*)window->property_item_[0].value)[window->current_frame_] * 5, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)window, TIME_ONESHOT);
-        
-        window->current_frame_ = (++window->current_frame_) % (window->frame_count_);
-
-        InvalidateRect(window->hWnd, &area, FALSE);
-    }
-
     ReleaseDC(window->hWnd, hdc);
 }
 
 void Window::OnPaint(HDC hdc)
 {
     Graphics graphics(hdc);
-
-    //graphics.DrawImage(image_, 0, 0, 100, 100);
-
-    if (!timeline_->IsPlaying())
-    {
-        for (int i = 0; i < canvas_->GetPoints().size(); i++)
-        {
-            canvas_->DrawLine(hdc, i);
-        }
-    }
-    else
-    {
-        /*아래와 같은 방식으로 계속해서 다시 그리는 방식을 선택한 이유는
-        순차적인 탐색을 하면서 조금씩 조금씩 그리는 경우 비용이 비싸며,
-        현재 사용하고 있는 타이머의 구조상 재시간안에 모두 실행할 수 없어
-        문제가 발생하기 때문에 아래와 같은 방식을 사용하였다.*/
-
-        for (int i = 0; i < canvas_->GetPoints().size(); i++)
-        {
-            if ((int)trunc(canvas_->GetPoints()[i].time * 1000) <= timeline_->GetTime())
-            {
-                canvas_->DrawLine(hdc, i);
-            }
-        }
-    }
-}
-
-void Window::LoadGIF(LPCTSTR file_name)
-{
-    image_ = new Image(file_name);
-
-    UINT count = image_->GetFrameDimensionsCount();
-
-    dimension_ids_ = new GUID[count];
-    image_->GetFrameDimensionsList(dimension_ids_, count);
-
-    WCHAR guid[39];
-    StringFromGUID2(dimension_ids_[0], guid, 39);
-    frame_count_ = image_->GetFrameCount(&dimension_ids_[0]);
-
-    UINT size = image_->GetPropertyItemSize(PropertyTagFrameDelay);
-    property_item_ = (PropertyItem*)malloc(size);
-    image_->GetPropertyItem(PropertyTagFrameDelay, size, property_item_);
 }
 
 void Window::SetTimer(int time)
@@ -410,9 +341,19 @@ Window* Window::GetInstance()
     return instance_.get();
 }
 
+Control* Window::GetControl()
+{
+    return control_.get();
+}
+
 Timeline* Window::GetTimeline()
 {
     return timeline_.get();
+}
+
+FileManager* Window::GetFileManager()
+{
+    return file_manager_.get();
 }
 
 Canvas* Window::GetCanvas()
@@ -420,7 +361,7 @@ Canvas* Window::GetCanvas()
     return canvas_.get();
 }
 
-FileManager* Window::GetFileManager()
+QuickPanel* Window::GetQuickPanel()
 {
-    return file_manager_.get();
+    return quick_panel_.get();
 }

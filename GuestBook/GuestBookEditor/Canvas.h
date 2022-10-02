@@ -29,9 +29,14 @@ private:
 	RECT window_area_;
 
 	int x_;
-	int y_ = 50;
+	int y_;
 	int width_;
 	int height_;
+
+	int canvas_x_;
+	int canvas_y_;
+	int canvas_width_;
+	int canvas_height_;
 
 	RECT canvas_area_;
 
@@ -44,7 +49,7 @@ private:
 
 	void UpdateWindowArea();
 public:
-	Canvas(HWND hWnd, int width, int height);
+	Canvas(HWND hWnd);
 	~Canvas() = default;
 
 	void Reset();
@@ -58,9 +63,12 @@ public:
 	void OpenLoadFile();
 	void LoadGBFile(fs::path path);
 
-	bool IsCanvasClick();
+	bool OnCanvasClick();
 
 	RECT* GetCanvasArea();
 	vector<PointInfo> GetPoints();
+
+	int GetWidth();
+	int GetHeight();
 };
 

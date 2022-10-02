@@ -7,6 +7,14 @@ FileManager::FileManager(HWND hWnd)
 	UpdateWindowArea();
 	wsprintf(root_path_, L"%s\\Guests", fs::current_path().c_str());
 	wsprintf(current_path_, L"%s", root_path_);
+
+	// 멤버 변수 초기화
+	list_item_height_ = 50;
+
+	width_ = 300;
+	x_ = window_area_.right - width_;
+	y_ = Window::GetInstance()->GetControl()->GetHeight();
+	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 }
 
 void FileManager::UpdateWindowArea()
@@ -21,7 +29,7 @@ void FileManager::ScrollBarControl(POINT mouse_position)
 	InvalidateRect(hWnd, &file_manager_area_, FALSE);
 }
 
-WCHAR* FileManager::ConvertBytes(uintmax_t bytes)
+LPCWSTR FileManager::ConvertBytes(uintmax_t bytes)
 {
 	const int byte = 1024;
 	wchar_t result[256] = L"0B";
@@ -59,7 +67,7 @@ void FileManager::MouseDown(POINT mouse_position)
 	{
 		for (int i = 0; i < items_.size(); i++)
 		{
-			RECT area = { list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_) + list_box_item_height_ };
+			RECT area = { list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
 			if (PtInRect(&area, mouse_position))
 			{
 				list_item_select_ = i;
@@ -68,11 +76,11 @@ void FileManager::MouseDown(POINT mouse_position)
 			}
 		}
 
-		for (int i = 0; i < items_.size(); i++)
+		/*for (int i = 0; i < items_.size(); i++)
 		{
 			WCHAR file_name_word[1024];
 			wsprintf(file_name_word, L"%s을(를) 삭제하시겠습니까?", items_[i].file_name.c_str());
-			RECT trash_item_area = { list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_) + list_box_item_height_ };
+			RECT trash_item_area = { list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
 			if (PtInRect(&trash_item_area, mouse_position))
 			{
 				if (MessageBox(hWnd, file_name_word, L"", MB_YESNO) == IDYES)
@@ -87,15 +95,14 @@ void FileManager::MouseDown(POINT mouse_position)
 					}
 
 					list_item_select_ = 0;
-					list_item_hover_ = 0;
 					InvalidateRect(hWnd, &file_manager_area_, FALSE);
 					break;
 				}
 			}
-		}
+		}*/
 	}
 
-	if ((items_.size() * list_box_item_height_) > list_box_height_)
+	if ((items_.size() * list_item_height_) > list_box_height_)
 	{
 		if (PtInRect(&scroll_bar_area_, mouse_position))
 		{
@@ -112,14 +119,13 @@ void FileManager::MouseDoubleDown(POINT mouse_position)
 	{
 		for (int i = 0; i < items_.size(); i++)
 		{
-			RECT item_area = { list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_), list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_) + list_box_item_height_ };
+			RECT item_area = { list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
 			if (PtInRect(&item_area, mouse_position))
 			{
 				if (fs::is_directory(items_[i].file_path))
 				{
 					wsprintf(current_path_, L"%s", items_[i].file_path.c_str());
 					list_item_select_ = 0;
-					list_item_hover_ = 0;
 					scroll_bar_thumb_percent_ = 0;
 					InvalidateRect(hWnd, &file_manager_area_, FALSE);
 				}
@@ -128,13 +134,13 @@ void FileManager::MouseDoubleDown(POINT mouse_position)
 					// 해당 파일의 확장자가 .gb인지 확인
 					if (fs::path(items_[i].file_path).extension() == ".gb")
 					{
-						Window::GetInstance()->GetCanvas()->LoadGBFile(items_[list_item_select_].file_path);
+						Window::GetInstance()->GetCanvas()->LoadGBFile(items_[i].file_path);
 						Window::GetInstance()->SetTimer(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
 						Window::GetInstance()->GetTimeline()->UpdateMaxTime(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
 					}
 					else
 					{
-						ShellExecute(NULL, L"open", items_[list_item_select_].file_path.c_str() , NULL, NULL, SW_SHOW);
+						ShellExecute(NULL, L"open", items_[i].file_path.c_str(), NULL, NULL, SW_SHOW);
 					}
 				}
 				break;
@@ -152,30 +158,16 @@ void FileManager::MouseMove(POINT mouse_position)
 			MouseUp();
 		}
 
-		if ((items_.size() * list_box_item_height_) > list_box_height_)
+		if ((items_.size() * list_item_height_) > list_box_height_)
 		{
 			ScrollBarControl(mouse_position);
-		}
-	}
-
-	if (PtInRect(&list_box_area_, mouse_position))
-	{
-		for (int i = 0; i < items_.size(); i++)
-		{
-			RECT area = { list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_box_item_height_) + list_box_item_height_ };
-			if (PtInRect(&area, mouse_position))
-			{
-				list_item_hover_ = i;
-				InvalidateRect(hWnd, &file_manager_area_, FALSE);
-				break;
-			}
 		}
 	}
 }
 
 void FileManager::MouseWheel(float direction)
 {
-	if ((items_.size() * list_box_item_height_) > list_box_height_)
+	if ((items_.size() * list_item_height_) > list_box_height_)
 	{
 		scroll_bar_thumb_percent_ = min(max(scroll_bar_thumb_percent_ - (direction / 10), 0), 1.0f);
 		InvalidateRect(hWnd, &file_manager_area_, FALSE);
@@ -188,47 +180,79 @@ void FileManager::Draw(HDC hdc)
 
 	Graphics graphics(hdc);
 
+	SetBkColor(hdc, TRANSPARENT);
+
+	Image file_icon(L"Resources/FileIcon.png");
+	Image gb_file_icon(L"Resources/ImageFileIcon.png");
+	Image folder_icon(L"Resources/FolderIcon.png");
+	Image opened_folder_icon(L"Resources/OpenedFolderIcon.png");
+	Image trash_icon(L"Resources/TrashIcon.png");
+
 	SolidBrush white_brush(Color(255, 255, 255, 255));
 	SolidBrush black_brush(Color(255, 0, 0, 0));
-	SolidBrush hover_brush(Color(100, 182, 220, 254));
-	SolidBrush select_brush(Color(200, 182, 220, 254));
-	SolidBrush gray_brush(Color(255, 100, 100, 100));
-	SolidBrush background_brush(Color(255, 33, 35, 39));
+	SolidBrush background_brush(Color(255, 219, 219, 219));
+	SolidBrush background_brush2(Color(255, 238, 238, 238));
+	SolidBrush scroll_bar_brush(Color(255, 230, 230, 230));
+	SolidBrush scroll_bar_thumb_brush(Color(255, 192, 192, 192));
 
 	Pen black_pen(Color(255, 0, 0, 0));
+	Pen contour_pen(Color(255, 185, 185, 185));
+
+	StringFormat string_format_line_center;
+	string_format_line_center.SetLineAlignment(StringAlignmentCenter);
 
 	FontFamily arial_font(L"Arial");
 	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	// 파일 매니저
-	width_ = 400;
-	height_ = window_area_.bottom - 300;
 	x_ = window_area_.right - width_;
-	y_ = 0;
+	y_ = Window::GetInstance()->GetControl()->GetHeight();
+	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 
 	file_manager_area_ = { x_, y_, x_ + width_, y_ + height_ };
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
-	PointF header_font_position(x_ + 10, y_ + 9);
-	graphics.DrawString(L"파일 관리자", -1, &font_style, header_font_position, &white_brush);
+	// 상단바
+	Point background_points[] = {
+		Point(x_, y_),
+		Point(x_, y_ + 60),
+		Point(x_ + width_, y_ + 60),
+		Point(x_ + width_, y_ + 30),
+		Point(x_ + 120, y_ + 30),
+		Point(x_ + 120, y_) };
+
+	Point contour_points[] = {
+		Point(x_, y_),
+		Point(x_, y_ + 59),
+		Point(x_ + width_ - 1, y_ + 59),
+		Point(x_ + width_ - 1, y_ + 30),
+		Point(x_ + 120, y_ + 30),
+		Point(x_ + 120, y_) };
+
+	graphics.FillPolygon(&background_brush2, background_points, 6);
+	graphics.DrawPolygon(&contour_pen, contour_points, 6);
+
+	graphics.DrawImage(&folder_icon, x_ + 10, y_ + 5, 20, 20);
+
+	PointF header_font_position(x_ + 35, y_ + 15);
+	graphics.DrawString(L"파일 관리자", -1, &font_style, header_font_position, &string_format_line_center, &black_brush);
+
+	graphics.FillRectangle(&background_brush2, x_, y_ + 60, width_, height_ - 90);
 
 	// 리스트 박스
-	list_box_width_ = 350;
-	list_box_height_ = height_ - 50;
-	list_box_x_ = x_ + 10;
-	list_box_y_ = y_ + 40;
+	list_box_width_ = width_ - 20;
+	list_box_height_ = height_ - 90;
+	list_box_x_ = x_;
+	list_box_y_ = y_ + 60;
 
 	list_box_area_ = { list_box_x_, list_box_y_, list_box_x_ + list_box_width_, list_box_y_ + list_box_height_ };
 
-	if ((items_.size() * list_box_item_height_) < list_box_height_ && scroll_bar_thumb_percent_ == 1.0f)
+	if ((items_.size() * list_item_height_) < list_box_height_ && scroll_bar_thumb_percent_ == 1.0f)
 	{
 		list_item_select_ = 0;
-		list_item_hover_ = 0;
 		scroll_bar_thumb_percent_ = 0;
 	}
-
-	graphics.FillRectangle(&white_brush, list_box_x_, list_box_y_, list_box_width_, list_box_height_);
 
 	Region region(Rect(list_box_x_, list_box_y_, list_box_width_, list_box_height_));
 
@@ -239,49 +263,40 @@ void FileManager::Draw(HDC hdc)
 
 	if (!items_.empty())
 	{
-		graphics.FillRectangle(&select_brush, list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_select_ * list_box_item_height_), list_box_width_, list_box_item_height_);
-		
-		if (list_item_select_ != list_item_hover_)
-		{
-			graphics.FillRectangle(&hover_brush, list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_hover_ * list_box_item_height_), list_box_width_, list_box_item_height_);
-		}
+		graphics.FillRectangle(&background_brush, list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_select_ * list_item_height_), list_box_width_, list_item_height_);
 	}
-
-	Image file_icon(L"Resources/FileIcon.png");
-	Image gb_file_icon(L"Resources/ImageFileIcon.png");
-	Image folder_icon(L"Resources/FolderIcon.png");
-	Image opened_folder_icon(L"Resources/OpenedFolderIcon.png");
-	Image trash_icon(L"Resources/TrashIcon.png");
 
 	WCHAR file_name_word[1024];
 	WCHAR file_size_word[1024];
-	StringFormat string_format;
-	string_format.SetAlignment(StringAlignmentFar);
+
+	StringFormat string_format_right_line_center;
+	string_format_right_line_center.SetAlignment(StringAlignmentFar);
+	string_format_right_line_center.SetLineAlignment(StringAlignmentCenter);
 
 	for (int i = 0; i < items_.size(); i++)
 	{
-		PointF file_name_font_position(list_box_x_ + 35, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 17 + (i * list_box_item_height_));
-		PointF file_size_font_position(list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 17 + (i * list_box_item_height_));
+		PointF file_name_font_position(list_box_x_ + 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_height_ / 2) + (i * list_item_height_));
+		PointF file_size_font_position(list_box_x_ + list_box_width_ - 5, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_height_ / 2) + (i * list_item_height_));
 		wsprintf(file_name_word, L"%s", items_[i].file_name.c_str());
 		wsprintf(file_size_word, L"%s", ConvertBytes(items_[i].file_size));
 
-		
+
 		if (fs::is_directory(items_[i].file_path))
 		{
 			if (fs::is_empty(items_[i].file_path))
 			{
-				graphics.DrawImage(&opened_folder_icon, list_box_x_ + 2.5, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_box_item_height_), 30, 30);
+				graphics.DrawImage(&opened_folder_icon, list_box_x_ + 2.5, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
 			}
 			else
 			{
-				graphics.DrawImage(&folder_icon, list_box_x_ + 2.5, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_box_item_height_), 30, 30);
+				graphics.DrawImage(&folder_icon, list_box_x_ + 2.5, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
 			}
 		}
 		else if (fs::is_regular_file(items_[i].file_path))
 		{
 			if (fs::path(items_[i].file_path).extension() == ".gb" || fs::path(items_[i].file_path).extension() == ".GB")
 			{
-				graphics.DrawImage(&gb_file_icon, list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_box_item_height_), 30, 30);
+				graphics.DrawImage(&gb_file_icon, list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
 			}
 			else if (fs::path(items_[i].file_path).extension() == ".bmp" || fs::path(items_[i].file_path).extension() == ".BMP" ||
 				fs::path(items_[i].file_path).extension() == ".jpg" || fs::path(items_[i].file_path).extension() == ".JPG" ||
@@ -290,50 +305,70 @@ void FileManager::Draw(HDC hdc)
 				fs::path(items_[i].file_path).extension() == ".gif" || fs::path(items_[i].file_path).extension() == ".GIF")
 			{
 				Image image_file_icon(items_[i].file_path.c_str());
-				graphics.DrawImage(&image_file_icon, list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_box_item_height_), 30, 30);
+				graphics.DrawImage(&image_file_icon, list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
 			}
 			else
 			{
-				graphics.DrawImage(&file_icon, list_box_x_, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_box_item_height_), 30, 30);
+				graphics.DrawImage(&file_icon, list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
 			}
 
-			graphics.DrawString(file_size_word, -1, &font_style, file_size_font_position, &string_format, &black_brush);
+			graphics.DrawString(file_size_word, -1, &font_style, file_size_font_position, &string_format_right_line_center, &black_brush);
 		}
 
-		graphics.DrawString(file_name_word, -1, &font_style, file_name_font_position, &black_brush);
+		graphics.DrawString(file_name_word, -1, &font_style, file_name_font_position, &string_format_line_center, &black_brush);
 
-		if (items_[i].file_path != root_path_ && items_[i].file_path != fs::path(current_path_).parent_path())
+		/*if (items_[i].file_path != root_path_ && items_[i].file_path != fs::path(current_path_).parent_path())
 		{
-			graphics.DrawImage(&trash_icon, list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_box_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_box_item_height_), 30, 30);
-		}
+			graphics.DrawImage(&trash_icon, list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
+		}*/
 	}
 
 	// 클리핑 마스크 종료
 	graphics.ResetClip();
 
 	// 스크롤바
-	scroll_bar_width_ = 30;
-	scroll_bar_height_ = height_ - 50;
-	scroll_bar_x_ = x_ + 360;
-	scroll_bar_y_ = y_ + 40;;
+	scroll_bar_width_ = 20;
+	scroll_bar_height_ = list_box_height_;
+	scroll_bar_x_ = list_box_x_ + list_box_width_;
+	scroll_bar_y_ = list_box_y_;
 
-	scroll_bar_thumb_ratio_ = (double)scroll_bar_height_ / (items_.size() * list_box_item_height_);
+	scroll_bar_thumb_ratio_ = (double)scroll_bar_height_ / (items_.size() * list_item_height_);
 
 	scroll_bar_area_ = { scroll_bar_x_, scroll_bar_y_, scroll_bar_x_ + scroll_bar_width_, scroll_bar_y_ + scroll_bar_height_ };
 
-	graphics.FillRectangle(&white_brush, scroll_bar_x_, scroll_bar_y_, scroll_bar_width_, scroll_bar_height_);
+	graphics.FillRectangle(&scroll_bar_brush, scroll_bar_x_, scroll_bar_y_, scroll_bar_width_, scroll_bar_height_);
 	// Scroll Bar Thumb
-	if ((items_.size() * list_box_item_height_) > list_box_height_)
+	if ((items_.size() * list_item_height_) > list_box_height_)
 	{
 		scroll_bar_thumb_height_ = scroll_bar_height_ * scroll_bar_thumb_ratio_;
-		graphics.FillRectangle(&gray_brush, scroll_bar_x_ + 5, scroll_bar_y_ + 5 + (scroll_bar_thumb_percent_ / 1.0f) * (scroll_bar_height_ - scroll_bar_thumb_height_), scroll_bar_width_ - 10, round(scroll_bar_thumb_height_) - 10);
+		graphics.FillRectangle(&scroll_bar_thumb_brush, scroll_bar_x_ + 5, scroll_bar_y_ + 5 + (scroll_bar_thumb_percent_ / 1.0f) * (scroll_bar_height_ - scroll_bar_thumb_height_), scroll_bar_width_ - 10, round(scroll_bar_thumb_height_) - 10);
 	}
+
+	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
+
+	// 하단바
+	graphics.FillRectangle(&background_brush2, x_, y_ + height_ - 30, width_, 30);
+	graphics.DrawRectangle(&contour_pen, x_, y_ + height_ - 30, width_ - 1, 29);
+
+	Region bottom_region(Rect(x_ + 1, y_ + height_ - 31, width_ - 1, 28));
+
+	// 클리핑 마스크 시작
+	graphics.SetClip(&bottom_region, CombineModeReplace);
+
+	WCHAR path_word[1024];
+	wsprintf(path_word, L"%s/%s", fs::path(items_[list_item_select_].file_path).parent_path().filename().c_str(), items_[list_item_select_].file_name.c_str());
+
+	PointF path_font_position(x_ + 5, y_ + height_ - 15);
+	graphics.DrawString(path_word, -1, &font_style, path_font_position, &string_format_line_center, &black_brush);
+
+	// 클리핑 마스크 종료
+	graphics.ResetClip();
 }
 
 void FileManager::FileRefresh(fs::path path)
 {
 	fs::path p(path);
-	
+
 	// 해당 경로가 존재하는지 확인
 	if (fs::exists(p) && fs::is_directory(p))
 	{
@@ -366,12 +401,22 @@ void FileManager::FileRefresh(fs::path path)
 	}
 }
 
-WCHAR* FileManager::GetRootPath()
+LPCWSTR FileManager::GetRootPath()
 {
 	return root_path_;
 }
 
-WCHAR* FileManager::GetCurrentPath()
+LPCWSTR FileManager::GetCurrentPath()
 {
 	return current_path_;
+}
+
+int FileManager::GetWidth()
+{
+	return width_;
+}
+
+int FileManager::GetHeight()
+{
+	return height_;
 }

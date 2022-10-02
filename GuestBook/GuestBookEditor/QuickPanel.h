@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "framework.h"
+#include "Button.h"
 
 class QuickPanel
 {
@@ -14,7 +15,7 @@ private:
     int y_;
     int width_ = 420; // 280
     int height_ = 300;
-    
+
     double h_; // 색상(Hue)
     double s_ = 1; // 채도(Saturation)
     double v_; // 명도(Value)
@@ -49,13 +50,15 @@ private:
     int color_preview_y_;
     int color_preview_width_ = 30;
     int color_preview_height_ = 30;
-    
+
     Color current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);;
-    
+
     bool is_quick_panel_open_;
     bool is_palette_click_;
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
+
+    unique_ptr<Button> close_button;
 
     void UpdateWindowArea();
     void PaletteControl(POINT mouse_position);
@@ -64,8 +67,8 @@ private:
 public:
     QuickPanel(HWND hWnd);
     ~QuickPanel() = default;
-    
-    bool IsOpen();
+
+    bool OnOpen();
 
     void MouseUp();
     void MouseDown(POINT mouse_position);
