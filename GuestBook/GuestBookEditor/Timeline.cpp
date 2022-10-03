@@ -166,11 +166,18 @@ void Timeline::Draw(HDC hdc)
 
 	timeline_area_ = { x_, y_, x_ + width_, y_ + height_ };
 
+	graphics.FillRectangle(&background_brush2, x_, y_ + 59, width_, 30);
+	graphics.DrawRectangle(&contour_pen, x_, y_ + 59, width_ - 1, 29);
+
+	StringFormat string_format_center;
+	string_format_center.SetAlignment(StringAlignmentCenter);
+	string_format_center.SetLineAlignment(StringAlignmentCenter);
+
 	// 키 프레임
 	list_box_x_ = x_;
-	list_box_y_ = y_ + 60;
+	list_box_y_ = y_ + 90;
 	list_box_width_ = width_ - 20;
-	list_box_height_ = height_ - 90;
+	list_box_height_ = height_ - 120;
 
 	list_box_area_ = { list_box_x_, list_box_y_, list_box_x_ + list_box_width_, list_box_y_ + list_box_height_ };
 
@@ -182,10 +189,6 @@ void Timeline::Draw(HDC hdc)
 	Color key_frame_color(255, 255, 255, 255);
 	SolidBrush key_frame_brush(key_frame_color);
 	WCHAR number_word[1024];
-
-	StringFormat string_format_center;
-	string_format_center.SetAlignment(StringAlignmentCenter);
-	string_format_center.SetLineAlignment(StringAlignmentCenter);
 
 	for (size_t i = 0; i < Window::GetInstance()->GetCanvas()->GetLines().size(); i++)
 	{
@@ -210,6 +213,16 @@ void Timeline::Draw(HDC hdc)
 	// 클리핑 마스크 종료
 	graphics.ResetClip();
 
+	WCHAR word[1024];
+	PointF key_frame_font_position(x_, y_ + 75);
+	for (double i = 0; i < max_time_; i += 0.5f)
+	{
+		graphics.DrawLine(&black_pen, list_box_x_ + 30 + (i / max_time_) * (list_box_width_ - 30), y_ + 83, list_box_x_ + 30 + (i / max_time_) * (list_box_width_ - 30), y_ + 94);
+		key_frame_font_position.X = list_box_x_ + 30 + (i / max_time_) * (list_box_width_ - 30);
+		_stprintf_s(word, L"%.1lf", i);
+		graphics.DrawString(word, -1, &font_style, key_frame_font_position, &string_format_center, &black_brush);
+	}
+
 	// 스크롤바
 	scroll_bar_width_ = 20;
 	scroll_bar_height_ = list_box_height_;
@@ -229,7 +242,7 @@ void Timeline::Draw(HDC hdc)
 		graphics.FillRectangle(&scroll_bar_thumb_brush, scroll_bar_x_ + 5, scroll_bar_y_ + 5 + (scroll_bar_thumb_percent_ / 1.0f) * (scroll_bar_height_ - scroll_bar_thumb_height_), scroll_bar_width_ - 10, round(scroll_bar_thumb_height_) - 10);
 	}
 
-	if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) < list_box_height_ && scroll_bar_thumb_percent_ == 1.0f)
+	if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) < list_box_height_ && scroll_bar_thumb_percent_ != 0)
 	{
 		scroll_bar_thumb_percent_ = 0;
 	}
@@ -241,7 +254,7 @@ void Timeline::Draw(HDC hdc)
 	graphics.DrawRectangle(&contour_pen, x_, y_ + height_ - 30, width_ - 1, 29);
 
 	WCHAR timer_word[1024];
-	_stprintf_s(timer_word, L"%.3lf초 / %.3lf초", time_, max_time_);
+	_stprintf_s(timer_word, L"%.3lf / %.3lf", time_, max_time_);
 
 	PointF timer_font_position(x_ + 5, y_ + height_ - 15);
 	graphics.DrawString(timer_word, -1, &font_style, timer_font_position, &string_format, &black_brush);

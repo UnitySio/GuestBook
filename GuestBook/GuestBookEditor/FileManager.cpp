@@ -231,14 +231,14 @@ void FileManager::Draw(HDC hdc)
 	graphics.FillRectangle(&background_brush2, x_, y_ + 60, width_, height_ - 90);
 
 	// 리스트 박스
-	list_box_width_ = width_ - 20;
-	list_box_height_ = height_ - 90;
 	list_box_x_ = x_;
 	list_box_y_ = y_ + 60;
+	list_box_width_ = width_ - 20;
+	list_box_height_ = height_ - 90;
 
 	list_box_area_ = { list_box_x_, list_box_y_, list_box_x_ + list_box_width_, list_box_y_ + list_box_height_ };
 
-	if ((items_.size() * list_item_height_) < list_box_height_ && scroll_bar_thumb_percent_ == 1.0f)
+	if ((items_.size() * list_item_height_) < list_box_height_ && scroll_bar_thumb_percent_ != 0)
 	{
 		list_item_select_ = 0;
 		scroll_bar_thumb_percent_ = 0;
