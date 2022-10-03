@@ -4,23 +4,16 @@
 Canvas::Canvas(HWND hWnd)
 {
 	this->hWnd = hWnd;
-	UpdateWindowArea();
 
 	x_ = 0;
 	y_ = Window::GetInstance()->GetControl()->GetHeight();
-	width_ = window_area_.right - Window::GetInstance()->GetFileManager()->GetWidth();
-	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
+	width_ = Window::GetInstance()->GetWindowArea().right - Window::GetInstance()->GetFileManager()->GetWidth();
+	height_ = (Window::GetInstance()->GetWindowArea().bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 }
 
-void Canvas::UpdateWindowArea()
+void Canvas::CanvasReset()
 {
-	GetClientRect(hWnd, &client_area_);
-	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
-}
-
-void Canvas::Reset()
-{
-	points_.clear();
+	lines_.clear();
 }
 
 void Canvas::MouseUp()
@@ -28,6 +21,14 @@ void Canvas::MouseUp()
 	if (is_canvas_click_)
 	{
 		is_canvas_click_ = false;
+		RECT timeline_area = Window::GetInstance()->GetTimeline()->GetTimelineArea();
+
+		if (line_.size() != 0)
+		{
+			lines_.push_back(line_);
+			line_.clear();
+			InvalidateRect(hWnd, &timeline_area, FALSE);
+		}
 	}
 }
 
@@ -36,8 +37,8 @@ void Canvas::MouseDown(POINT mouse_position)
 	if (PtInRect(&canvas_area_, mouse_position))
 	{
 		is_canvas_click_ = true;
-		current_x = mouse_position.x;
-		current_y = mouse_position.y;
+		mouse_current_x_ = mouse_position.x;
+		mouse_current_y_ = mouse_position.y;
 	}
 }
 
@@ -55,21 +56,19 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 		hdc = GetDC(hWnd);
 		HPEN n = CreatePen(PS_SOLID, width, color);
 		HPEN o = (HPEN)SelectObject(hdc, n);
-		MoveToEx(hdc, current_x, current_y, NULL);
+		MoveToEx(hdc, mouse_current_x_, mouse_current_y_, NULL);
 		LineTo(hdc, mouse_position.x, mouse_position.y);
-		points_.push_back({ current_x - canvas_x_, current_y - canvas_y_, mouse_position.x - canvas_x_, mouse_position.y - canvas_y_, width, time, color });
+		line_.push_back({ mouse_current_x_ - canvas_x_, mouse_current_y_ - canvas_y_, mouse_position.x - canvas_x_, mouse_position.y - canvas_y_, width, time, color });
 		SelectObject(hdc, o);
 		DeleteObject(n);
 		ReleaseDC(hWnd, hdc);
-		current_x = mouse_position.x;
-		current_y = mouse_position.y;
+		mouse_current_x_ = mouse_position.x;
+		mouse_current_y_ = mouse_position.y;
 	}
 }
 
 void Canvas::Draw(HDC hdc)
 {
-	UpdateWindowArea();
-
 	Graphics graphics(hdc);
 
 	// 배경 제거
@@ -88,8 +87,8 @@ void Canvas::Draw(HDC hdc)
 	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	y_ = Window::GetInstance()->GetControl()->GetHeight();
-	width_ = window_area_.right - Window::GetInstance()->GetFileManager()->GetWidth();
-	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
+	width_ = Window::GetInstance()->GetWindowArea().right - Window::GetInstance()->GetFileManager()->GetWidth();
+	height_ = (Window::GetInstance()->GetWindowArea().bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
@@ -112,9 +111,12 @@ void Canvas::Draw(HDC hdc)
 
 	if (!Window::GetInstance()->GetTimeline()->OnPlay())
 	{
-		for (int i = 0; i < points_.size(); i++)
+		for (size_t i = 0; i < lines_.size(); i++)
 		{
-			DrawLine(hdc, i);
+			for (size_t j = 0; j < lines_[i].size(); j++)
+			{
+				DrawLine(hdc, i, j);
+			}
 		}
 	}
 	else
@@ -124,14 +126,17 @@ void Canvas::Draw(HDC hdc)
 		현재 사용하고 있는 타이머의 구조상 재시간안에 모두 실행할 수 없어
 		문제가 발생하기 때문에 아래와 같은 방식을 사용하였다.*/
 
-		for (int i = 0; i < points_.size(); i++)
+		for (size_t i = 0; i < lines_.size(); i++)
 		{
-			if ((int)trunc(points_[i].time * 1000) > Window::GetInstance()->GetTimeline()->GetTime())
+			for (size_t j = 0; j < lines_[i].size(); j++)
 			{
-				break;
-			}
+				if ((int)trunc(lines_[i][j].time * 1000) > Window::GetInstance()->GetTimeline()->GetTime())
+				{
+					break;
+				}
 
-			DrawLine(hdc, i);
+				DrawLine(hdc, i, j);
+			}
 		}
 	}
 
@@ -183,12 +188,12 @@ void Canvas::Draw(HDC hdc)
 	graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &string_format, &black_brush);
 }
 
-void Canvas::DrawLine(HDC hdc, int idx)
+void Canvas::DrawLine(HDC hdc, size_t lines_idx, size_t line_idx)
 {
-	HPEN n = CreatePen(PS_SOLID, points_[idx].width, points_[idx].color);
+	HPEN n = CreatePen(PS_SOLID, lines_[lines_idx][line_idx].width, lines_[lines_idx][line_idx].color);
 	HPEN o = (HPEN)SelectObject(hdc, n);
-	MoveToEx(hdc, points_[idx].start_x + canvas_x_, points_[idx].start_y + canvas_y_, NULL);
-	LineTo(hdc, points_[idx].end_x + canvas_x_, points_[idx].end_y + canvas_y_);
+	MoveToEx(hdc, lines_[lines_idx][line_idx].start_x + canvas_x_, lines_[lines_idx][line_idx].start_y + canvas_y_, NULL);
+	LineTo(hdc, lines_[lines_idx][line_idx].end_x + canvas_x_, lines_[lines_idx][line_idx].end_y + canvas_y_);
 	SelectObject(hdc, o);
 	DeleteObject(n);
 }
@@ -208,7 +213,7 @@ void Canvas::OpenSaveFile()
 	OFN.lpstrInitialDir = Window::GetInstance()->GetFileManager()->GetRootPath();
 	OFN.Flags = OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
 
-	size_t size = points_.size();
+	size_t size = lines_.size();
 
 	if (GetSaveFileName(&OFN) != 0)
 	{
@@ -218,7 +223,15 @@ void Canvas::OpenSaveFile()
 			if (size != 0)
 			{
 				save.write((const char*)&size, 4);
-				save.write((const char*)&points_[0], size * sizeof(PointInfo));
+
+				for (size_t i = 0; i < lines_.size(); i++)
+				{
+					size_t line_size = lines_[i].size();
+
+					save.write((const char*)&line_size, 4);
+					save.write((const char*)&lines_[i][0], line_size * sizeof(PointInfo));
+				}
+
 			}
 
 			save.close();
@@ -245,24 +258,34 @@ void Canvas::OpenLoadFile()
 	if (GetOpenFileName(&OFN) != 0)
 	{
 		wsprintf(path, L"%s", OFN.lpstrFile);
-		LoadGBFile(path);
-		Window::GetInstance()->SetTimer(points_[points_.size() - 1].time);
-		Window::GetInstance()->GetTimeline()->UpdateMaxTime(points_[points_.size() - 1].time);
+		LoadFile(path);
 	}
 }
 
-void Canvas::LoadGBFile(fs::path path)
+void Canvas::LoadFile(fs::path path)
 {
 	size_t size = 0;
 
 	ifstream load(path, ios::binary);
 	if (load.is_open())
 	{
-		load.read((CHAR*)&size, 4);
-		points_.resize(size);
-		load.read((char*)&points_[0], size * sizeof(PointInfo));
+		load.read((char*)&size, 4);
+		lines_.resize(size);
+
+		for (size_t i = 0; i < lines_.size(); i++)
+		{
+			size_t line_size = 0;
+			load.read((char*)&line_size, 4);
+
+			lines_[i].resize(line_size);
+			load.read((char*)&lines_[i][0], line_size * sizeof(PointInfo));
+		}
+
 		load.close();
 	}
+
+	Window::GetInstance()->SetTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+	Window::GetInstance()->GetTimeline()->UpdateMaxTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
 
 	InvalidateRect(hWnd, &canvas_area_, FALSE);
 }
@@ -272,14 +295,9 @@ bool Canvas::OnCanvasClick()
 	return is_canvas_click_;
 }
 
-RECT* Canvas::GetCanvasArea()
+RECT Canvas::GetCanvasArea()
 {
-	return &canvas_area_;
-}
-
-vector<Canvas::PointInfo> Canvas::GetPoints()
-{
-	return points_;
+	return canvas_area_;
 }
 
 int Canvas::GetWidth()
@@ -290,4 +308,27 @@ int Canvas::GetWidth()
 int Canvas::GetHeight()
 {
 	return height_;
+}
+
+vector<vector<Canvas::PointInfo>> Canvas::GetLines()
+{
+	return lines_;
+}
+
+void Canvas::Undo()
+{
+	// 개발 중
+	if (lines_.size() > 0)
+	{
+		lines_.pop_back();
+		Window::GetInstance()->SetTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+		Window::GetInstance()->GetTimeline()->UpdateMaxTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+
+		InvalidateRect(hWnd, NULL, FALSE);
+	}
+}
+
+void Canvas::Redo()
+{
+
 }

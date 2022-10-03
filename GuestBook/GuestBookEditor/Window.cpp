@@ -64,6 +64,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
+        UpdateWindowArea();
+
         control_ = make_unique<Control>(hWnd);
         timeline_ = make_unique<Timeline>(hWnd);
         file_manager_ = make_unique<FileManager>(hWnd);
@@ -78,7 +80,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wmId)
         {
         case IDM_NEW_FILE:
-            canvas_->Reset();
+            canvas_->CanvasReset();
             timer_ = 0;
             timeline_->UpdateMaxTime(0);
             InvalidateRect(hWnd, NULL, FALSE);
@@ -115,6 +117,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
+        UpdateWindowArea();
+
         canvas_->Draw(hdc);
         file_manager_->Draw(hdc);
         control_->Draw(hdc);
@@ -134,7 +138,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         switch (wParam)
         {
-        case VK_LEFT:
+        case VK_UP:
             timeline_->Play();
 
             if (play_timer_ == NULL)
@@ -147,6 +151,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 play_timer_ = NULL;
                 InvalidateRect(hWnd, NULL, FALSE);
             }
+            break;
+        case VK_LEFT:
+            canvas_->Undo();
+            break;
+        case VK_RIGHT:
+            canvas_->Redo();
             break;
         }
     }
@@ -208,7 +218,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         canvas_->MouseMove(mouse_position, quick_panel_->GetPenSize(), timer_, quick_panel_->GetRGB());
         quick_panel_->MouseMove(mouse_position);
 
-
         if (canvas_->OnCanvasClick())
         {
             if (drawing_timer_ == NULL)
@@ -227,8 +236,11 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_MOUSEWHEEL:
     {
-        file_manager_->MouseWheel((float)((short)HIWORD(wParam)) / WHEEL_DELTA);
-        InvalidateRect(hWnd, NULL, FALSE);
+        mouse_position.x = LOWORD(lParam);
+        mouse_position.y = HIWORD(lParam);
+
+        file_manager_->MouseWheel(mouse_position, (float)((short)HIWORD(wParam)) / WHEEL_DELTA);
+        timeline_->MouseWheel(mouse_position, (float)((short)HIWORD(wParam)) / WHEEL_DELTA);
     }
     break;
     case WM_DROPFILES:
@@ -300,7 +312,6 @@ INT_PTR CALLBACK Window::About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 
 void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
-    RECT area = { 0, 0, 500, 30 };
     Window* window = (Window*)dwUser;
 
     HDC hdc;
@@ -309,13 +320,11 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
     if (m_nTimerID == window->drawing_timer_)
     {
         window->timer_ += 0.001;
-        InvalidateRect(window->hWnd, &area, FALSE);
     }
 
     if (m_nTimerID == window->play_timer_)
     {
         window->timeline_->AddTime(0.001);
-        InvalidateRect(window->hWnd, NULL, FALSE);
     }
 
     ReleaseDC(window->hWnd, hdc);
@@ -326,19 +335,30 @@ void Window::OnPaint(HDC hdc)
     Graphics graphics(hdc);
 }
 
-void Window::SetTimer(int time)
+void Window::UpdateWindowArea()
 {
-    timer_ = time;
+    GetClientRect(hWnd, &client_area_);
+    window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
 Window* Window::GetInstance()
 {
-    call_once(flag_, []() // 람다식
+    call_once(flag_, [] // 람다식
         {
             instance_.reset(new Window);
         });
 
     return instance_.get();
+}
+
+void Window::SetTime(double time)
+{
+    timer_ = time;
+}
+
+RECT Window::GetWindowArea()
+{
+    return window_area_;
 }
 
 Control* Window::GetControl()

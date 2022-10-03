@@ -17,6 +17,9 @@ private:
 	HINSTANCE hInst; // 현재 인스턴스
 	HWND hWnd;
 
+	RECT client_area_;
+	RECT window_area_;
+
 	static LRESULT CALLBACK StaticWndProc(HWND, UINT, WPARAM, LPARAM);
 	LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 	static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
@@ -40,8 +43,10 @@ private:
 	UINT drawing_timer_;
 	UINT play_timer_;
 
-	int current_x_;
-	int current_y_;
+	int mouse_current_x_;
+	int mouse_current_y_;
+
+	void UpdateWindowArea();
 public:
 	Window() = default;
 	~Window() = default;
@@ -57,7 +62,9 @@ public:
 
 	static Window* GetInstance();
 
-	void SetTimer(int time);
+	void SetTime(double time);
+
+	RECT GetWindowArea();
 
 	Control* GetControl();
 	Timeline* GetTimeline();

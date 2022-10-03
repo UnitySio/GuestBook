@@ -25,8 +25,6 @@ private:
 	};
 
 	HWND hWnd;
-	RECT client_area_;
-	RECT window_area_;
 
 	int x_;
 	int y_;
@@ -42,33 +40,36 @@ private:
 
 	bool is_canvas_click_;
 
-	vector<PointInfo> points_;
+	vector<vector<PointInfo>> lines_;
+	vector<PointInfo> line_;
 
-	int current_x;
-	int current_y;
-
-	void UpdateWindowArea();
+	int mouse_current_x_;
+	int mouse_current_y_;
 public:
 	Canvas(HWND hWnd);
 	~Canvas() = default;
 
-	void Reset();
+	void CanvasReset();
 
 	void MouseUp();
 	void MouseDown(POINT mouse_position);
 	void MouseMove(POINT mouse_position, int width, double time, COLORREF color);
 	void Draw(HDC hdc);
-	void DrawLine(HDC hdc, int idx);
+	void DrawLine(HDC hdc, size_t lines_idx, size_t line_idx);
 	void OpenSaveFile();
 	void OpenLoadFile();
-	void LoadGBFile(fs::path path);
+	void LoadFile(fs::path path);
 
 	bool OnCanvasClick();
 
-	RECT* GetCanvasArea();
-	vector<PointInfo> GetPoints();
+	RECT GetCanvasArea();
 
 	int GetWidth();
 	int GetHeight();
+
+	vector<vector<PointInfo>> GetLines();
+
+	void Undo();
+	void Redo();
 };
 

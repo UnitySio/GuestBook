@@ -7,8 +7,6 @@ class QuickPanel
 {
 private:
     HWND hWnd;
-    RECT client_area_;
-    RECT window_area_;
 
     // 생성될 x, y 좌표
     int x_;
@@ -30,28 +28,28 @@ private:
     // 팔레트
     int palette_x_;
     int palette_y_;
-    int palette_width_ = 200;
-    int palette_height_ = 200;
+    int palette_width_;
+    int palette_height_;
 
     // 색상 슬라이더
     int hue_slider_x_;
     int hue_slider_y_;
-    int hue_slider_width_ = 30;
-    int hue_slider_height_ = 200;
+    int hue_slider_width_;
+    int hue_slider_height_;
 
     // 팬 크기 슬라이더
     int pen_size_slider_x_;
     int pen_size_slider_y_;
-    int pen_size_slider_width_ = 200;
-    int pen_size_slider_height_ = 30;
+    int pen_size_slider_width_;
+    int pen_size_slider_height_;
 
     // 색상 미리보기
     int color_preview_x_;
     int color_preview_y_;
-    int color_preview_width_ = 30;
-    int color_preview_height_ = 30;
+    int color_preview_width_;
+    int color_preview_height_;
 
-    Color current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);;
+    Color current_color_;
 
     bool is_quick_panel_open_;
     bool is_palette_click_;
@@ -60,7 +58,6 @@ private:
 
     unique_ptr<Button> close_button;
 
-    void UpdateWindowArea();
     void PaletteControl(POINT mouse_position);
     void HueSliderControl(POINT mouse_position);
     void PenSizeSliderControl(POINT mouse_position);

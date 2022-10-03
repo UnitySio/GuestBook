@@ -19,8 +19,6 @@ private:
     };
 
     HWND hWnd;
-    RECT client_area_;
-    RECT window_area_;
 
     // 생성될 x, y 좌표
     int x_;
@@ -57,7 +55,6 @@ private:
     double scroll_bar_thumb_percent_;
     double scroll_bar_thumb_height_;
 
-    void UpdateWindowArea();
     void ScrollBarControl(POINT mouse_position);
 
     LPCWSTR ConvertBytes(uintmax_t bytes); // 단위 변환
@@ -69,7 +66,7 @@ public:
     void MouseDown(POINT mouse_position);
     void MouseDoubleDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
-    void MouseWheel(float direction);
+    void MouseWheel(POINT mouse_position, float direction);
     void Draw(HDC hdc);
 
     void FileRefresh(fs::path path);

@@ -1,58 +1,87 @@
 #include "Timeline.h"
+#include "Window.h"
 
 Timeline::Timeline(HWND hWnd)
 {
 	this->hWnd = hWnd;
-	UpdateWindowArea();
 
 	x_ = 0;
 	height_ = 300;
-	width_ = window_area_.right;
-	y_ = window_area_.bottom - height_;
+	width_ = Window::GetInstance()->GetWindowArea().right;
+	y_ = Window::GetInstance()->GetWindowArea().bottom - height_;
 }
 
-void Timeline::UpdateWindowArea()
+void Timeline::ScrollBarControl(POINT mouse_position)
 {
-	GetClientRect(hWnd, &client_area_);
-	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
+	scroll_bar_thumb_percent_ = min(max(((mouse_position.y - (scroll_bar_y_ + (scroll_bar_thumb_height_ / 2))) * 1.0f) / (scroll_bar_height_ - scroll_bar_thumb_height_), 0), 1.0f);
+	InvalidateRect(hWnd, &timeline_area_, FALSE);
 }
 
 void Timeline::MouseUp()
 {
-	if (is_progress_click_)
+	if (is_list_box_click_ || is_scroll_bar_click_)
 	{
 		ReleaseCapture();
-		is_progress_click_ = false;
+		is_list_box_click_ = false;
+		is_scroll_bar_click_ = false;
 	}
 }
 
 void Timeline::MouseDown(POINT mouse_position)
 {
-	if (PtInRect(&timeline_area_, mouse_position))
+	if (PtInRect(&list_box_area_, mouse_position))
 	{
 		SetCapture(hWnd);
-		ProgressControl(mouse_position);
-		is_progress_click_ = true;
+		KeyFrameControl(mouse_position);
+		is_list_box_click_ = true;
+	}
+
+	if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) > list_box_height_)
+	{
+		if (PtInRect(&scroll_bar_area_, mouse_position))
+		{
+			SetCapture(hWnd);
+			ScrollBarControl(mouse_position);
+			is_scroll_bar_click_ = true;
+		}
 	}
 }
 
 void Timeline::MouseMove(POINT mouse_position)
 {
-	if (!PtInRect(&window_area_, mouse_position))
+	RECT window_area = Window::GetInstance()->GetWindowArea();
+	if (!PtInRect(&window_area, mouse_position))
 	{
 		MouseUp();
 		return;
 	}
 
-	if (is_progress_click_)
+	if (is_list_box_click_)
 	{
-		ProgressControl(mouse_position);
+		KeyFrameControl(mouse_position);
+	}
+
+	if (is_scroll_bar_click_)
+	{
+		ScrollBarControl(mouse_position);
 	}
 }
 
-void Timeline::ProgressControl(POINT mouse_position)
+void Timeline::MouseWheel(POINT mouse_position, float direction)
 {
-	time_ = min(max(((mouse_position.x - progress_x_) * max_time_) / progress_width_, 0), max_time_);
+	if (PtInRect(&list_box_area_, mouse_position))
+	{
+		if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) > list_box_height_)
+		{
+			scroll_bar_thumb_percent_ = min(max(scroll_bar_thumb_percent_ - (direction / 10), 0), 1.0f);
+			InvalidateRect(hWnd, &timeline_area_, FALSE);
+		}
+	}
+}
+
+void Timeline::KeyFrameControl(POINT mouse_position)
+{
+	time_ = min(max(((mouse_position.x - (list_box_x_ + 30)) * max_time_) / (list_box_width_ - 30), 0), max_time_);
 	InvalidateRect(hWnd, NULL, FALSE);
 }
 
@@ -63,10 +92,9 @@ void Timeline::AddTime(double time)
 	if (time_ > max_time_)
 	{
 		time_ = 0;
-		//InvalidateRect(hWnd, NULL, FALSE);
 	}
 
-	//InvalidateRect(hWnd, &timeline_area_, FALSE);
+	InvalidateRect(hWnd, NULL, FALSE);
 }
 
 void Timeline::UpdateMaxTime(double time)
@@ -77,8 +105,6 @@ void Timeline::UpdateMaxTime(double time)
 
 void Timeline::Draw(HDC hdc)
 {
-	UpdateWindowArea();
-
 	Graphics graphics(hdc);
 
 	// 배경 제거
@@ -92,9 +118,12 @@ void Timeline::Draw(HDC hdc)
 	Pen contour_pen(Color(255, 185, 185, 185));
 
 	SolidBrush black_brush(Color(255, 0, 0, 0));
-	SolidBrush yellow_brush(Color(255, 197, 193, 26));
+	SolidBrush area_brush(Color(100, 255, 0, 0));
 	SolidBrush background_brush(Color(255, 219, 219, 219));
 	SolidBrush background_brush2(Color(255, 238, 238, 238));
+	SolidBrush background_brush3(Color(255, 224, 224, 224));
+	SolidBrush scroll_bar_brush(Color(255, 230, 230, 230));
+	SolidBrush scroll_bar_thumb_brush(Color(255, 192, 192, 192));
 
 	StringFormat string_format;
 	string_format.SetLineAlignment(StringAlignmentCenter);
@@ -103,8 +132,8 @@ void Timeline::Draw(HDC hdc)
 	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	// 타임라인
-	width_ = window_area_.right;
-	y_ = window_area_.bottom - height_;
+	width_ = Window::GetInstance()->GetWindowArea().right;
+	y_ = Window::GetInstance()->GetWindowArea().bottom - height_;
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
@@ -137,13 +166,73 @@ void Timeline::Draw(HDC hdc)
 
 	timeline_area_ = { x_, y_, x_ + width_, y_ + height_ };
 
-	// 프로그래스
-	progress_x_ = x_;
-	progress_y_ = y_ + 45;
-	progress_width_ = width_;
-	progress_height_ = 15;
+	// 키 프레임
+	list_box_x_ = x_;
+	list_box_y_ = y_ + 60;
+	list_box_width_ = width_ - 20;
+	list_box_height_ = height_ - 90;
 
-	graphics.DrawLine(&red_pen, progress_x_ + (time_ / max_time_) * progress_width_, progress_y_ + progress_height_, progress_x_ + (time_ / max_time_) * progress_width_, y_ + height_);
+	list_box_area_ = { list_box_x_, list_box_y_, list_box_x_ + list_box_width_, list_box_y_ + list_box_height_ };
+
+	Region region(Rect(list_box_x_, list_box_y_, list_box_width_, list_box_height_));
+
+	// 클리핑 마스크 시작
+	graphics.SetClip(&region, CombineModeReplace);
+
+	Color key_frame_color(255, 255, 255, 255);
+	SolidBrush key_frame_brush(key_frame_color);
+	WCHAR number_word[1024];
+
+	StringFormat string_format_center;
+	string_format_center.SetAlignment(StringAlignmentCenter);
+	string_format_center.SetLineAlignment(StringAlignmentCenter);
+
+	for (size_t i = 0; i < Window::GetInstance()->GetCanvas()->GetLines().size(); i++)
+	{
+		if ((i % 2) != 0)
+		{
+			graphics.FillRectangle(&background_brush3, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), list_box_width_, 30);
+		}
+		
+		key_frame_color.SetFromCOLORREF(Window::GetInstance()->GetCanvas()->GetLines()[i][0].color);
+		key_frame_brush.SetColor(key_frame_color);
+
+		graphics.FillRectangle(&key_frame_brush, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 30) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), 30);
+		
+		wsprintf(number_word, L"%d", i + 1);
+
+		PointF number_font_position(list_box_x_ + 15, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + 15 + (i * 30));
+		graphics.DrawString(number_word, -1, &font_style, number_font_position, &string_format_center, &black_brush);
+	}
+
+	graphics.DrawLine(&red_pen, list_box_x_ + 30 + (time_ / max_time_) * (list_box_width_ - 30), list_box_y_, list_box_x_ + 30 + (time_ / max_time_) * (list_box_width_ - 30), list_box_y_ + list_box_height_);
+	
+	// 클리핑 마스크 종료
+	graphics.ResetClip();
+
+	// 스크롤바
+	scroll_bar_width_ = 20;
+	scroll_bar_height_ = list_box_height_;
+	scroll_bar_x_ = list_box_x_ + list_box_width_;
+	scroll_bar_y_ = list_box_y_;
+
+	scroll_bar_thumb_ratio_ = (double)scroll_bar_height_ / (Window::GetInstance()->GetCanvas()->GetLines().size() * 30);
+
+	scroll_bar_area_ = { scroll_bar_x_, scroll_bar_y_, scroll_bar_x_ + scroll_bar_width_, scroll_bar_y_ + scroll_bar_height_ };
+
+	graphics.FillRectangle(&scroll_bar_brush, scroll_bar_x_, scroll_bar_y_, scroll_bar_width_, scroll_bar_height_);
+
+	// Scroll Bar Thumb
+	if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) > list_box_height_)
+	{
+		scroll_bar_thumb_height_ = scroll_bar_height_ * scroll_bar_thumb_ratio_;
+		graphics.FillRectangle(&scroll_bar_thumb_brush, scroll_bar_x_ + 5, scroll_bar_y_ + 5 + (scroll_bar_thumb_percent_ / 1.0f) * (scroll_bar_height_ - scroll_bar_thumb_height_), scroll_bar_width_ - 10, round(scroll_bar_thumb_height_) - 10);
+	}
+
+	if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) < list_box_height_ && scroll_bar_thumb_percent_ == 1.0f)
+	{
+		scroll_bar_thumb_percent_ = 0;
+	}
 
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
@@ -168,6 +257,11 @@ void Timeline::Play()
 	is_playing_ = !is_playing_;
 
 	InvalidateRect(hWnd, NULL, FALSE);
+}
+
+RECT Timeline::GetTimelineArea()
+{
+	return timeline_area_;
 }
 
 int Timeline::GetWidth()

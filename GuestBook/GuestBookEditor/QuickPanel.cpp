@@ -4,7 +4,19 @@
 QuickPanel::QuickPanel(HWND hWnd)
 {
     this->hWnd = hWnd;
-    UpdateWindowArea();
+
+    width_ = 420;
+    height_ = 300;
+    s_ = 1;
+    palette_width_ = 200;
+    palette_height_ = 200;
+    hue_slider_width_ = 30;
+    hue_slider_height_ = 200;
+    pen_size_slider_width_ = 200;
+    pen_size_slider_height_ = 30;
+    color_preview_width_ = 30;
+    color_preview_height_ = 30;
+    current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
     close_button = make_unique<Button>(L"X", [=]
         {
@@ -16,12 +28,6 @@ QuickPanel::QuickPanel(HWND hWnd)
 bool QuickPanel::OnOpen()
 {
     return is_quick_panel_open_;
-}
-
-void QuickPanel::UpdateWindowArea()
-{
-    GetClientRect(hWnd, &client_area_);
-    window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
 }
 
 
@@ -68,7 +74,8 @@ void QuickPanel::MouseMove(POINT mouse_position)
 {
     if (is_quick_panel_open_)
     {
-        if (!PtInRect(&window_area_, mouse_position))
+        RECT window_area = Window::GetInstance()->GetWindowArea();
+        if (!PtInRect(&window_area, mouse_position))
         {
             MouseUp();
             return;
@@ -110,7 +117,8 @@ void QuickPanel::PenSizeSliderControl(POINT mouse_position)
 
 void QuickPanel::Open(POINT mouse_position)
 {
-    if (PtInRect(Window::GetInstance()->GetCanvas()->GetCanvasArea(), mouse_position))
+    RECT canvas_area = Window::GetInstance()->GetCanvas()->GetCanvasArea();
+    if (PtInRect(&canvas_area, mouse_position))
     {
         if (is_quick_panel_open_ == false)
         {
@@ -118,12 +126,12 @@ void QuickPanel::Open(POINT mouse_position)
             y_ = mouse_position.y;
 
             // 윈도우 크기에 따른 위치 보정
-            if (x_ > window_area_.right - width_)
+            if (x_ > Window::GetInstance()->GetWindowArea().right - width_)
             {
                 x_ -= width_;
             }
 
-            if (y_ > window_area_.bottom - height_)
+            if (y_ > Window::GetInstance()->GetWindowArea().bottom - height_)
             {
                 y_ -= height_;
             }
@@ -141,8 +149,6 @@ void QuickPanel::Draw(HDC hdc)
 {
     if (is_quick_panel_open_)
     {
-        UpdateWindowArea();
-
         Graphics graphics(hdc);
 
         // 배경 제거

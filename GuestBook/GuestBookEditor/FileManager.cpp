@@ -4,7 +4,6 @@
 FileManager::FileManager(HWND hWnd)
 {
 	this->hWnd = hWnd;
-	UpdateWindowArea();
 	wsprintf(root_path_, L"%s\\Guests", fs::current_path().c_str());
 	wsprintf(current_path_, L"%s", root_path_);
 
@@ -12,15 +11,9 @@ FileManager::FileManager(HWND hWnd)
 	list_item_height_ = 50;
 
 	width_ = 300;
-	x_ = window_area_.right - width_;
+	x_ = Window::GetInstance()->GetWindowArea().right - width_;
 	y_ = Window::GetInstance()->GetControl()->GetHeight();
-	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
-}
-
-void FileManager::UpdateWindowArea()
-{
-	GetClientRect(hWnd, &client_area_);
-	window_area_ = { 0, 0, client_area_.right - client_area_.left, client_area_.bottom - client_area_.top };
+	height_ = (Window::GetInstance()->GetWindowArea().bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 }
 
 void FileManager::ScrollBarControl(POINT mouse_position)
@@ -65,10 +58,10 @@ void FileManager::MouseDown(POINT mouse_position)
 {
 	if (PtInRect(&list_box_area_, mouse_position))
 	{
-		for (int i = 0; i < items_.size(); i++)
+		for (size_t i = 0; i < items_.size(); i++)
 		{
-			RECT area = { list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
-			if (PtInRect(&area, mouse_position))
+			RECT list_item_area = { list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
+			if (PtInRect(&list_item_area, mouse_position))
 			{
 				list_item_select_ = i;
 				InvalidateRect(hWnd, &file_manager_area_, FALSE);
@@ -117,10 +110,10 @@ void FileManager::MouseDoubleDown(POINT mouse_position)
 {
 	if (PtInRect(&list_box_area_, mouse_position))
 	{
-		for (int i = 0; i < items_.size(); i++)
+		for (size_t i = 0; i < items_.size(); i++)
 		{
-			RECT item_area = { list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
-			if (PtInRect(&item_area, mouse_position))
+			RECT list_item_area = { list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_), list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (i * list_item_height_) + list_item_height_ };
+			if (PtInRect(&list_item_area, mouse_position))
 			{
 				if (fs::is_directory(items_[i].file_path))
 				{
@@ -134,9 +127,7 @@ void FileManager::MouseDoubleDown(POINT mouse_position)
 					// 해당 파일의 확장자가 .gb인지 확인
 					if (fs::path(items_[i].file_path).extension() == ".gb")
 					{
-						Window::GetInstance()->GetCanvas()->LoadGBFile(items_[i].file_path);
-						Window::GetInstance()->SetTimer(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
-						Window::GetInstance()->GetTimeline()->UpdateMaxTime(Window::GetInstance()->GetCanvas()->GetPoints()[Window::GetInstance()->GetCanvas()->GetPoints().size() - 1].time);
+						Window::GetInstance()->GetCanvas()->LoadFile(items_[i].file_path);
 					}
 					else
 					{
@@ -153,31 +144,30 @@ void FileManager::MouseMove(POINT mouse_position)
 {
 	if (is_scroll_bar_click_)
 	{
-		if (!PtInRect(&window_area_, mouse_position))
+		RECT window_area = Window::GetInstance()->GetWindowArea();
+		if (!PtInRect(&window_area, mouse_position))
 		{
 			MouseUp();
 		}
 
-		if ((items_.size() * list_item_height_) > list_box_height_)
-		{
-			ScrollBarControl(mouse_position);
-		}
+		ScrollBarControl(mouse_position);
 	}
 }
 
-void FileManager::MouseWheel(float direction)
+void FileManager::MouseWheel(POINT mouse_position, float direction)
 {
-	if ((items_.size() * list_item_height_) > list_box_height_)
+	if (PtInRect(&list_box_area_, mouse_position))
 	{
-		scroll_bar_thumb_percent_ = min(max(scroll_bar_thumb_percent_ - (direction / 10), 0), 1.0f);
-		InvalidateRect(hWnd, &file_manager_area_, FALSE);
+		if ((items_.size() * list_item_height_) > list_box_height_)
+		{
+			scroll_bar_thumb_percent_ = min(max(scroll_bar_thumb_percent_ - (direction / 10), 0), 1.0f);
+			InvalidateRect(hWnd, &file_manager_area_, FALSE);
+		}
 	}
 }
 
 void FileManager::Draw(HDC hdc)
 {
-	UpdateWindowArea();
-
 	Graphics graphics(hdc);
 
 	SetBkColor(hdc, TRANSPARENT);
@@ -205,9 +195,9 @@ void FileManager::Draw(HDC hdc)
 	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
 
 	// 파일 매니저
-	x_ = window_area_.right - width_;
+	x_ = Window::GetInstance()->GetWindowArea().right - width_;
 	y_ = Window::GetInstance()->GetControl()->GetHeight();
-	height_ = (window_area_.bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
+	height_ = (Window::GetInstance()->GetWindowArea().bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
 
 	file_manager_area_ = { x_, y_, x_ + width_, y_ + height_ };
 
@@ -273,7 +263,7 @@ void FileManager::Draw(HDC hdc)
 	string_format_right_line_center.SetAlignment(StringAlignmentFar);
 	string_format_right_line_center.SetLineAlignment(StringAlignmentCenter);
 
-	for (int i = 0; i < items_.size(); i++)
+	for (size_t i = 0; i < items_.size(); i++)
 	{
 		PointF file_name_font_position(list_box_x_ + 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_height_ / 2) + (i * list_item_height_));
 		PointF file_size_font_position(list_box_x_ + list_box_width_ - 5, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_height_ / 2) + (i * list_item_height_));
@@ -337,6 +327,7 @@ void FileManager::Draw(HDC hdc)
 	scroll_bar_area_ = { scroll_bar_x_, scroll_bar_y_, scroll_bar_x_ + scroll_bar_width_, scroll_bar_y_ + scroll_bar_height_ };
 
 	graphics.FillRectangle(&scroll_bar_brush, scroll_bar_x_, scroll_bar_y_, scroll_bar_width_, scroll_bar_height_);
+	
 	// Scroll Bar Thumb
 	if ((items_.size() * list_item_height_) > list_box_height_)
 	{
