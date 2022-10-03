@@ -156,19 +156,26 @@ void QuickPanel::Draw(HDC hdc)
 
         Pen black_pen(Color(255, 0, 0, 0));
         Pen white_pen(Color(255, 255, 255, 255));
+        Pen contour_pen(Color(255, 185, 185, 185));
+        Pen thumb_contour_pen(Color(255, 149, 149, 149));
 
         SolidBrush white_brush(Color(255, 255, 255, 255));
         SolidBrush black_brush(Color(255, 0, 0, 0));
         SolidBrush white_alpha_brush(Color(50, 255, 255, 255));
-        SolidBrush background_brush(Color(255, 33, 35, 39));
+        SolidBrush background_brush(Color(255, 238, 238, 238));
 
         graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
+
+        graphics.FillRectangle(&white_brush, x_, y_, width_, 30);
+
+        StringFormat string_format;
+        string_format.SetLineAlignment(StringAlignmentCenter);
 
         FontFamily arial_font(L"Arial");
         Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
 
-        PointF header_font_position(x_ + 20, y_ + 13);
-        graphics.DrawString(L"빠른 패널", -1, &font_style, header_font_position, &white_brush);
+        PointF header_font_position(x_ + 20, y_ + 15);
+        graphics.DrawString(L"", -1, &font_style, header_font_position, &string_format, &black_brush);
 
         // 팔레트
         palette_x_ = x_ + 20;
@@ -219,6 +226,7 @@ void QuickPanel::Draw(HDC hdc)
             Point(hue_slider_x_ - 5, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5) };
 
         graphics.FillPolygon(&white_brush, left_points, 3);
+        graphics.DrawPolygon(&thumb_contour_pen, left_points, 3);
 
         Point right_points[] = {
             Point(hue_slider_x_ + hue_slider_width_, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_),
@@ -226,6 +234,7 @@ void QuickPanel::Draw(HDC hdc)
             Point(hue_slider_x_ + hue_slider_width_ + 5, hue_slider_y_ + (h_ / 360.0f) * hue_slider_height_ - 5) };
 
         graphics.FillPolygon(&white_brush, right_points, 3);
+        graphics.DrawPolygon(&thumb_contour_pen, right_points, 3);
 
         // 팬 크기 슬라이더
         pen_size_slider_x_ = palette_x_;
@@ -245,6 +254,7 @@ void QuickPanel::Draw(HDC hdc)
             Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ - 5) };
 
         graphics.FillPolygon(&white_brush, top_points, 3);
+        graphics.DrawPolygon(&thumb_contour_pen, top_points, 3);
 
         graphics.DrawLine(&white_pen, pen_size_slider_x_, pen_size_slider_y_ + 5, pen_size_slider_x_ + 10, pen_size_slider_y_ + 5);
 
@@ -254,12 +264,13 @@ void QuickPanel::Draw(HDC hdc)
             Point(pen_size_slider_x_ + (pen_size_ / 30.0f) * pen_size_slider_width_ + 5, pen_size_slider_y_ + pen_size_slider_height_ + 5) };
 
         graphics.FillPolygon(&white_brush, bottom_points, 3);
+        graphics.DrawPolygon(&thumb_contour_pen, bottom_points, 3);
 
         WCHAR pen_size_word[1024];
         wsprintf(pen_size_word, L"%dpx", (int)trunc(pen_size_));
 
-        PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 7);
-        graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &black_brush);
+        PointF pen_size_font_position(pen_size_slider_x_ + 5, pen_size_slider_y_ + 15);
+        graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &string_format, &black_brush);
 
         current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
@@ -278,16 +289,16 @@ void QuickPanel::Draw(HDC hdc)
         wsprintf(rgb_word, L"RGB: %d, %d, %d", GetR(), GetG(), GetB());
 
         PointF rgb_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_);
-        graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &white_brush);
+        graphics.DrawString(rgb_word, -1, &font_style, rgb_font_position, &black_brush);
 
         WCHAR hex_word[1024];
         wsprintf(hex_word, L"HEX: #%02x%02x%02x", GetR(), GetG(), GetB());
 
         PointF hex_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 13);
-        graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &white_brush);
+        graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &black_brush);
 
         PointF preview_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 90);
-        graphics.DrawString(L"미리보기", -1, &font_style, preview_font_position, &white_brush);
+        graphics.DrawString(L"미리보기", -1, &font_style, preview_font_position, &black_brush);
 
         graphics.FillRectangle(&white_brush, hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 110, 130, 130);
 
@@ -300,6 +311,8 @@ void QuickPanel::Draw(HDC hdc)
             Point(hue_slider_x_ + hue_slider_width_ + 120, hue_slider_y_ + 175) };
 
         graphics.DrawCurve(&preivew_pen, preview_points, 4);
+
+        graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
         close_button->Draw(hdc, x_ + width_ - 30, y_, 30, 30);
     }
