@@ -12,14 +12,9 @@
 #define IDI_SMALL                       108
 #define IDC_GUESTBOOKEDITOR             109
 #define IDR_MAINFRAME                   128
-#define ID_32771                        32771
-#define ID_32772                        32772
-#define ID_32773                        32773
-#define IDM_NEW_FILE                    32774
-#define IDM_SAVE                        32775
-#define IDM_LOAD                        32776
-#define ID_32787                        32787
-#define ID_32788                        32788
+#define IDM_NEW_FILE                    32771
+#define IDM_SAVE                        32772
+#define IDM_LOAD                        32773
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

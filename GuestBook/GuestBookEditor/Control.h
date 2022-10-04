@@ -13,7 +13,10 @@ private:
 	int width_;
 	int height_;
 
-	//unique_ptr<Button> button_play_;
+	unique_ptr<Button> button_undo_;
+	unique_ptr<Button> button_redo_;
+	unique_ptr<Button> button_color_;
+	unique_ptr<Button> button_play_;
 public:
 	Control(HWND hWnd);
 	~Control() = default;

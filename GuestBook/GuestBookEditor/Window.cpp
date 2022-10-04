@@ -330,11 +330,6 @@ Window* Window::GetInstance()
     return instance_.get();
 }
 
-HWND Window::GetHWND()
-{
-    return hWnd;
-}
-
 void Window::SetTime(double time)
 {
     timer_ = time;

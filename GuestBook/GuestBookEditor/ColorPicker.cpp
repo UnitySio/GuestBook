@@ -20,7 +20,7 @@ ColorPicker::ColorPicker(HWND hWnd)
     color_preview_height_ = 30;
     current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
-    close_button_ = make_unique<Button>([=]
+    close_button_ = make_unique<Button>(hWnd, [=]
         {
             is_color_picker_open_ = false;
             InvalidateRect(hWnd, &color_picker_area_, FALSE);

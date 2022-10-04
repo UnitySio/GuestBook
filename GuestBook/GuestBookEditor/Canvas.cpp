@@ -311,15 +311,23 @@ vector<vector<Canvas::PointInfo>> Canvas::GetLines()
 
 void Canvas::Undo()
 {
-	// °³¹ß Áß
 	if (lines_.size() > 0)
 	{
 		lines_.pop_back();
+	}
+
+	if (lines_.size() != 0)
+	{
 		Window::GetInstance()->SetTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
 		Window::GetInstance()->GetTimeline()->UpdateMaxTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
-
-		InvalidateRect(hWnd, NULL, FALSE);
 	}
+	else
+	{
+		Window::GetInstance()->SetTime(0);
+		Window::GetInstance()->GetTimeline()->UpdateMaxTime(0);
+	}
+
+	InvalidateRect(hWnd, NULL, FALSE);
 }
 
 void Canvas::Redo()

@@ -61,8 +61,6 @@ public:
 
 	static Window* GetInstance();
 
-	HWND GetHWND();
-
 	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
 	void SetTime(double time);

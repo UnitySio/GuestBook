@@ -1,13 +1,17 @@
 #include "Button.h"
+#include "Window.h"
 
-Button::Button(function<void()> callback)
+Button::Button(HWND hWnd, function<void()> callback)
 {
+	this->hWnd = hWnd;
+
 	callback_ = callback;
 
 	is_interactable_ = true;
 
 	background_color_ = Color(255, 238, 238, 238);
 	contour_color_ = Color(255, 185, 185, 185);
+	shadow_color_ = Color(255, 132, 132, 132);
 	text_color_ = Color(255, 0, 0, 0);
 }
 
@@ -30,6 +34,7 @@ void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 	SolidBrush interactable_brush(Color(100, 255, 255, 255));
 	SolidBrush background_brush(background_color_);
 	SolidBrush text_brush(text_color_);
+	SolidBrush shadow_brush(shadow_color_);
 
 	Pen contour_pen(contour_color_);
 
@@ -47,7 +52,19 @@ void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 
 	button_area_ = { x_, y_, x_ + width_, y_ + height_ };
 
+	LinearGradientBrush inner_shadow_top(
+		Point(x_, y_),
+		Point(x_, y_ + 5),
+		shadow_color_,
+		Color(0, 255, 255, 255));
+
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
+
+	if (is_shadow_)
+	{
+		graphics.FillRectangle(&inner_shadow_top, x_, y_, width_, 5);
+	}
+
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
 	Region region(Rect(x_, y_, width_, height_));
@@ -55,10 +72,15 @@ void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 	// 클리핑 마스크 시작
 	graphics.SetClip(&region, CombineModeReplace);
 
+	if (image_ != nullptr)
+	{
+		graphics.DrawImage(image_, x_ + ((width - image_width_) / 2), y_ + ((height - image_height_) / 2), image_width_, image_height_);
+	}
+
 	WCHAR text_word[1024];
 	wsprintf(text_word, L"%s", text);
 	PointF text_font_position(x_ + (width_ / 2), y_ + (height_ / 2));
-	
+
 	graphics.DrawString(text_word, -1, &font_style, text_font_position, &string_format, &text_brush);
 
 	// 클리핑 마스크 종료
@@ -74,6 +96,12 @@ void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 void Button::SetInteractable(bool value)
 {
 	is_interactable_ = value;
+	InvalidateRect(hWnd, &button_area_, FALSE);
+}
+
+void Button::SetShadow(bool value)
+{
+	is_shadow_ = value;
 }
 
 void Button::SetBackgroundColor(Color color)
@@ -86,7 +114,19 @@ void Button::SetContourColor(Color color)
 	contour_color_ = color;
 }
 
+void Button::SetShadowColor(Color color)
+{
+	shadow_color_ = color;
+}
+
 void Button::SetTextColor(Color color)
 {
 	text_color_ = color;
+}
+
+void Button::SetImage(Image* image, int width, int height)
+{
+	image_ = image;
+	image_width_ = width;
+	image_height_ = height;
 }
