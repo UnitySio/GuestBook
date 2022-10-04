@@ -173,7 +173,7 @@ void Canvas::Draw(HDC hdc)
 	string_format.SetLineAlignment(StringAlignmentCenter);
 
 	PointF header_font_position(x_ + 35, y_ + 15);
-	graphics.DrawString(L"Äµ¹ö½º", -1, &font_style, header_font_position, &string_format, &black_brush);
+	graphics.DrawString(L"Canvas", -1, &font_style, header_font_position, &string_format, &black_brush);
 
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 

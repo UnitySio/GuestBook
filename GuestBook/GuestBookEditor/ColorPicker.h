@@ -56,7 +56,7 @@ private:
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
 
-    unique_ptr<Button> close_button;
+    unique_ptr<Button> close_button_;
 
     void PaletteControl(POINT mouse_position);
     void HueSliderControl(POINT mouse_position);

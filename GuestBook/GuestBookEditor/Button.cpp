@@ -1,13 +1,14 @@
 #include "Button.h"
 
-Button::Button(LPCWSTR text, function<void()> callback)
+Button::Button(function<void()> callback)
 {
-	wsprintf(text_, L"%s", text);
 	callback_ = callback;
 
 	is_interactable_ = true;
 
 	background_color_ = Color(255, 238, 238, 238);
+	contour_color_ = Color(255, 185, 185, 185);
+	text_color_ = Color(255, 0, 0, 0);
 }
 
 void Button::MouseDown(POINT mouse_position)
@@ -21,15 +22,16 @@ void Button::MouseDown(POINT mouse_position)
 	}
 }
 
-void Button::Draw(HDC hdc, int x, int y, int width, int height, function<void(Graphics& graphics, int x, int y, int width, int height)> callback)
+void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 {
 	Graphics graphics(hdc);
 
 	SolidBrush black_brush(Color(255, 0, 0, 0));
-	SolidBrush white100_brush(Color(100, 255, 255, 255));
+	SolidBrush interactable_brush(Color(100, 255, 255, 255));
 	SolidBrush background_brush(background_color_);
+	SolidBrush text_brush(text_color_);
 
-	Pen contour_pen(Color(255, 185, 185, 185));
+	Pen contour_pen(contour_color_);
 
 	FontFamily arial_font(L"Arial");
 	Font font_style(&arial_font, 12, FontStyleBold, UnitPixel);
@@ -48,26 +50,24 @@ void Button::Draw(HDC hdc, int x, int y, int width, int height, function<void(Gr
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-	PointF text_font_position(x_ + (width_ / 2), y_ + (height_ / 2));
-
 	Region region(Rect(x_, y_, width_, height_));
 
 	// 클리핑 마스크 시작
 	graphics.SetClip(&region, CombineModeReplace);
 
-	if (callback != nullptr)
-	{
-		callback(graphics, x, y, width, height);
-	}
-
-	graphics.DrawString(text_, -1, &font_style, text_font_position, &string_format, &black_brush);
+	WCHAR text_word[1024];
+	wsprintf(text_word, L"%s", text);
+	PointF text_font_position(x_ + (width_ / 2), y_ + (height_ / 2));
+	
+	graphics.DrawString(text_word, -1, &font_style, text_font_position, &string_format, &text_brush);
 
 	// 클리핑 마스크 종료
 	graphics.ResetClip();
 
+	// 비활성화 했을 경우
 	if (!is_interactable_)
 	{
-		graphics.FillRectangle(&white100_brush, x_, y_, width_, height_);
+		graphics.FillRectangle(&interactable_brush, x_, y_, width_, height_);
 	}
 }
 
@@ -76,7 +76,17 @@ void Button::SetInteractable(bool value)
 	is_interactable_ = value;
 }
 
-void Button::SetText(LPCWSTR text)
+void Button::SetBackgroundColor(Color color)
 {
-	wsprintf(text_, L"%s", text);
+	background_color_ = color;
+}
+
+void Button::SetContourColor(Color color)
+{
+	contour_color_ = color;
+}
+
+void Button::SetTextColor(Color color)
+{
+	text_color_ = color;
 }

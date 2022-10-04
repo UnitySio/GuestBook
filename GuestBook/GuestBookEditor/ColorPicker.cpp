@@ -20,7 +20,7 @@ ColorPicker::ColorPicker(HWND hWnd)
     color_preview_height_ = 30;
     current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
-    close_button = make_unique<Button>(L"X", [=]
+    close_button_ = make_unique<Button>([=]
         {
             is_color_picker_open_ = false;
             InvalidateRect(hWnd, &color_picker_area_, FALSE);
@@ -68,7 +68,7 @@ void ColorPicker::MouseDown(POINT mouse_position)
             is_pen_size_slider_click_ = true;
         }
 
-        close_button->MouseDown(mouse_position);
+        close_button_->MouseDown(mouse_position);
     }
 }
 
@@ -156,7 +156,7 @@ void ColorPicker::Draw(HDC hdc)
         string_format.SetLineAlignment(StringAlignmentCenter);
 
         FontFamily arial_font(L"Arial");
-        Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
+        Font font_style(&arial_font, 12, FontStyleBold  , UnitPixel);
 
         PointF header_font_position(x_ + 20, y_ + 15);
         graphics.DrawString(L"Color Picker", -1, &font_style, header_font_position, &string_format, &black_brush);
@@ -298,7 +298,11 @@ void ColorPicker::Draw(HDC hdc)
 
         graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-        close_button->Draw(hdc, x_ + width_ - 30, y_, 30, 30);
+        Color background_color(255, 255, 0, 0);
+        Color text_color(255, 255, 255, 255);
+        close_button_->SetBackgroundColor(background_color);
+        close_button_->SetTextColor(text_color);
+        close_button_->Draw(hdc, L"✕", x_ + width_ - 30, y_, 30, 30);
     }
 }
 

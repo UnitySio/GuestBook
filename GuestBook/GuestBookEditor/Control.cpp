@@ -10,36 +10,28 @@ Control::Control(HWND hWnd)
 	width_ = Window::GetInstance()->GetWindowArea().right;
 	height_ = 60;
 
-	undo_button_ = make_unique<Button>(L"", [=]
+	/*button_play_ = make_unique<Button>(L"", []
 		{
-			MessageBox(hWnd, L"Undo", L"Notification", MB_OK);
-		});
+			TIMECAPS timecaps;
+			timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
 
-	redo_button_ = make_unique<Button>(L"", [=]
-		{
-			MessageBox(hWnd, L"Redo", L"Notification", MB_OK);
-		});
+			Window::GetInstance()->GetTimeline()->Play();
 
-	color_button_ = make_unique<Button>(L"0", [=]
-		{
-			if (!Window::GetInstance()->GetTimeline()->OnPlay())
+			if (Window::GetInstance()->GetPlayTimer() == NULL)
 			{
-				Window::GetInstance()->GetColorPicker()->Open();
+				Window::GetInstance()->SetPlayTimer(timeSetEvent(1, timecaps.wPeriodMax, Window::GetInstance()->TimerProc, (DWORD_PTR)Window::GetInstance(), TIME_PERIODIC));
 			}
-		});
-
-	play_button_ = make_unique<Button>(L"", [=]
-		{
-			MessageBox(hWnd, L"Play", L"Notification", MB_OK);
-		});
+			else
+			{
+				timeKillEvent(Window::GetInstance()->GetPlayTimer());
+				Window::GetInstance()->SetPlayTimer(NULL);
+			}
+		});*/
 }
 
 void Control::MouseDown(POINT mouse_position)
 {
-	undo_button_->MouseDown(mouse_position);
-	redo_button_->MouseDown(mouse_position);
-	color_button_->MouseDown(mouse_position);
-	play_button_->MouseDown(mouse_position);
+	//button_play_->MouseDown(mouse_position);
 }
 
 void Control::Draw(HDC hdc)
@@ -56,37 +48,20 @@ void Control::Draw(HDC hdc)
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-	undo_button_->Draw(hdc, 5, 5, 50, 50, [](Graphics& graphics, int x, int y, int width, int height)
+	/*button_play_->Draw(hdc, x_ + ((Window::GetInstance()->GetWindowArea().right - 50) / 2), 5, 50, 50, [](Graphics& graphics, int x, int y, int width, int height)
 		{
-			Image image(L"Resources/UndoIcon.png");
-			graphics.DrawImage(&image, x + ((width - 30) / 2), y + ((height - 30) / 2), 30, 30);
-		});
+			Image play_icon(L"Resources/PlayIcon.png");
+			Image stop_icon(L"Resources/StopIcon.png");
 
-	redo_button_->Draw(hdc, 60, 5, 50, 50, [](Graphics& graphics, int x, int y, int width, int height)
-		{
-			Image image(L"Resources/RedoIcon.png");
-			graphics.DrawImage(&image, x + ((width - 30) / 2), y + ((height - 30) / 2), 30, 30);
-		});
-
-	color_button_->Draw(hdc, 115, 5, 50, 50, [](Graphics& graphics, int x, int y, int width, int height)
-		{
-			Color color;
-			color.SetFromCOLORREF(Window::GetInstance()->GetColorPicker()->GetRGB());
-
-			SolidBrush color_brush(color);
-
-			graphics.FillRectangle(&color_brush, x + ((width - 30) / 2), y + ((width - 30) / 2), 30, 30);
-		});
-
-	WCHAR pen_size_word[1024];
-	wsprintf(pen_size_word, L"%d", Window::GetInstance()->GetColorPicker()->GetPenSize());
-	color_button_->SetText(pen_size_word);
-
-	play_button_->Draw(hdc, (Window::GetInstance()->GetWindowArea().right - 50) / 2, 5, 50, 50, [](Graphics& graphics, int x, int y, int width, int height)
-		{
-			Image image(L"Resources/PlayIcon.png");
-			graphics.DrawImage(&image, x + ((width - 48) / 2), y + ((height - 48) / 2), 48, 48);
-		});
+			if (Window::GetInstance()->GetTimeline()->OnPlay())
+			{
+				graphics.DrawImage(&stop_icon, x + ((width - 48) / 2), y + ((height - 48) / 2), 48, 48);
+			}
+			else
+			{
+				graphics.DrawImage(&play_icon, x + ((width - 48) / 2), y + ((height - 48) / 2), 48, 48);
+			}
+		});*/
 }
 
 int Control::GetWidth()

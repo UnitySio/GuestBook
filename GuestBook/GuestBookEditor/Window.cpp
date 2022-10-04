@@ -134,33 +134,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         EndPaint(hWnd, &ps);
     }
     break;
-    case WM_KEYDOWN:
-    {
-        switch (wParam)
-        {
-        case VK_UP:
-            timeline_->Play();
-
-            if (play_timer_ == NULL)
-            {
-                play_timer_ = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
-            }
-            else
-            {
-                timeKillEvent(play_timer_);
-                play_timer_ = NULL;
-                InvalidateRect(hWnd, NULL, FALSE);
-            }
-            break;
-        case VK_LEFT:
-            canvas_->Undo();
-            break;
-        case VK_RIGHT:
-            canvas_->Redo();
-            break;
-        }
-    }
-    break;
     case WM_LBUTTONUP:
     {
         mouse_position.x = LOWORD(lParam);
@@ -181,10 +154,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.y = HIWORD(lParam);
 
         color_picker_->MouseDown(mouse_position);
+        control_->MouseDown(mouse_position);
 
         if (!color_picker_->OnOpen() and !timeline_->OnPlay())
         {
-            control_->MouseDown(mouse_position);
             timeline_->MouseDown(mouse_position);
             canvas_->MouseDown(mouse_position);
             file_manager_->MouseDown(mouse_position);
@@ -203,6 +176,14 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 file_manager_->MouseDoubleDown(mouse_position);
             }
+        }
+    }
+    break;
+    case WM_RBUTTONDOWN:
+    {
+        if (!timeline_->OnPlay())
+        {
+            color_picker_->Open();
         }
     }
     break;
@@ -349,6 +330,11 @@ Window* Window::GetInstance()
     return instance_.get();
 }
 
+HWND Window::GetHWND()
+{
+    return hWnd;
+}
+
 void Window::SetTime(double time)
 {
     timer_ = time;
@@ -382,4 +368,14 @@ Canvas* Window::GetCanvas()
 ColorPicker* Window::GetColorPicker()
 {
     return color_picker_.get();
+}
+
+void Window::SetPlayTimer(UINT timer)
+{
+    play_timer_ = timer;
+}
+
+UINT Window::GetPlayTimer()
+{
+    return play_timer_;
 }

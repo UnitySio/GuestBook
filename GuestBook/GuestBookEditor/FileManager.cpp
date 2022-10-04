@@ -226,7 +226,7 @@ void FileManager::Draw(HDC hdc)
 	graphics.DrawImage(&folder_icon, x_ + 10, y_ + 5, 20, 20);
 
 	PointF header_font_position(x_ + 35, y_ + 15);
-	graphics.DrawString(L"파일 관리자", -1, &font_style, header_font_position, &string_format_line_center, &black_brush);
+	graphics.DrawString(L"File Manager", -1, &font_style, header_font_position, &string_format_line_center, &black_brush);
 
 	graphics.FillRectangle(&background_brush2, x_, y_ + 60, width_, height_ - 90);
 

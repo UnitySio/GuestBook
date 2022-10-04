@@ -160,7 +160,7 @@ void Timeline::Draw(HDC hdc)
 	graphics.DrawImage(&clock_icon, x_ + 10, y_ + 5, 20, 20);
 
 	PointF header_font_position(x_ + 35, y_ + 15);
-	graphics.DrawString(L"타임라인", -1, &font_style, header_font_position, &string_format, &black_brush);
+	graphics.DrawString(L"Timeline", -1, &font_style, header_font_position, &string_format, &black_brush);
 
 	graphics.FillRectangle(&background_brush2, x_, y_ + 60, width_, height_ - 90);
 
@@ -219,7 +219,7 @@ void Timeline::Draw(HDC hdc)
 	{
 		graphics.DrawLine(&black_pen, list_box_x_ + 30 + (i / max_time_) * (list_box_width_ - 30), y_ + 83, list_box_x_ + 30 + (i / max_time_) * (list_box_width_ - 30), y_ + 94);
 		key_frame_font_position.X = list_box_x_ + 30 + (i / max_time_) * (list_box_width_ - 30);
-		_stprintf_s(word, L"%.1lf", i);
+		_stprintf_s(word, L"%.1lfs", i);
 		graphics.DrawString(word, -1, &font_style, key_frame_font_position, &string_format_center, &black_brush);
 	}
 
@@ -254,7 +254,7 @@ void Timeline::Draw(HDC hdc)
 	graphics.DrawRectangle(&contour_pen, x_, y_ + height_ - 30, width_ - 1, 29);
 
 	WCHAR timer_word[1024];
-	_stprintf_s(timer_word, L"%.3lf / %.3lf", time_, max_time_);
+	_stprintf_s(timer_word, L"%.3lfs / %.3lfs", time_, max_time_);
 
 	PointF timer_font_position(x_ + 5, y_ + height_ - 15);
 	graphics.DrawString(timer_word, -1, &font_style, timer_font_position, &string_format, &black_brush);

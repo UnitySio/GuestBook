@@ -23,7 +23,6 @@ private:
 	static LRESULT CALLBACK StaticWndProc(HWND, UINT, WPARAM, LPARAM);
 	LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 	static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
-	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
 	void OnPaint(HDC hdc);
 
@@ -62,6 +61,10 @@ public:
 
 	static Window* GetInstance();
 
+	HWND GetHWND();
+
+	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
+
 	void SetTime(double time);
 
 	RECT GetWindowArea();
@@ -71,5 +74,8 @@ public:
 	FileManager* GetFileManager();
 	Canvas* GetCanvas();
 	ColorPicker* GetColorPicker();
+
+	void SetPlayTimer(UINT timer);
+	UINT GetPlayTimer();
 };
 

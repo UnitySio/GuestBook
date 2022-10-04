@@ -13,20 +13,24 @@ private:
 
 	RECT button_area_;
 
-	WCHAR text_[1024];
 	function<void()> callback_;
 
 	Color background_color_;
+	Color contour_color_;
+	Color text_color_;
 
 	bool is_interactable_;
 public:
-	Button(LPCWSTR text, function<void()> callback);
+	Button(function<void()> callback);
 	~Button() = default;
 
 	void MouseDown(POINT mouse_position);
-	void Draw(HDC hdc, int x, int y, int width, int height, function<void(Graphics& graphics, int x, int y, int width, int height)> callback = nullptr);
+	void MouseMove(POINT mouse_position);
+	void Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height);
 
 	void SetInteractable(bool value);
-	void SetText(LPCWSTR text);
+	void SetBackgroundColor(Color color);
+	void SetContourColor(Color color);
+	void SetTextColor(Color color);
 };
 
