@@ -2,7 +2,7 @@
 
 #include "resource.h"
 #include "framework.h"
-#include "QuickPanel.h"
+#include "ColorPicker.h"
 #include "Timeline.h"
 #include "Canvas.h"
 #include "FileManager.h"
@@ -38,7 +38,7 @@ private:
 	unique_ptr<Timeline> timeline_;
 	unique_ptr<FileManager> file_manager_;
 	unique_ptr<Canvas> canvas_;
-	unique_ptr<QuickPanel> quick_panel_;
+	unique_ptr<ColorPicker> color_picker_;
 
 	UINT drawing_timer_;
 	UINT play_timer_;
@@ -70,6 +70,6 @@ public:
 	Timeline* GetTimeline();
 	FileManager* GetFileManager();
 	Canvas* GetCanvas();
-	QuickPanel* GetQuickPanel();
+	ColorPicker* GetColorPicker();
 };
 

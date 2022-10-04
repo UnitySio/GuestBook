@@ -24,9 +24,9 @@ public:
 	~Button() = default;
 
 	void MouseDown(POINT mouse_position);
-	void Draw(HDC hdc, int x, int y, int width, int height);
+	void Draw(HDC hdc, int x, int y, int width, int height, function<void(Graphics& graphics, int x, int y, int width, int height)> callback = nullptr);
 
 	void SetInteractable(bool value);
-	void SetBackground(Color color);
+	void SetText(LPCWSTR text);
 };
 

@@ -27,7 +27,7 @@
     <ClInclude Include="GuestBookEditor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="QuickPanel.h">
+    <ClInclude Include="ColorPicker.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Timeline.h">
@@ -53,7 +53,7 @@
     <ClCompile Include="GuestBookEditor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="QuickPanel.cpp">
+    <ClCompile Include="ColorPicker.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Timeline.cpp">

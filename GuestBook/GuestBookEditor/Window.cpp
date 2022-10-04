@@ -70,7 +70,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         timeline_ = make_unique<Timeline>(hWnd);
         file_manager_ = make_unique<FileManager>(hWnd);
         canvas_ = make_unique<Canvas>(hWnd);
-        quick_panel_ = make_unique<QuickPanel>(hWnd);
+        color_picker_ = make_unique<ColorPicker>(hWnd);
     }
     break;
     case WM_COMMAND:
@@ -124,7 +124,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         control_->Draw(hdc);
         timeline_->Draw(hdc);
         OnPaint(hdc);
-        quick_panel_->Draw(hdc);
+        color_picker_->Draw(hdc);
 
         GetClientRect(hWnd, &buffer);
         BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
@@ -166,7 +166,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        quick_panel_->MouseUp();
+        color_picker_->MouseUp();
         timeline_->MouseUp();
         canvas_->MouseUp();
         file_manager_->MouseUp();
@@ -180,9 +180,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
 
-        quick_panel_->MouseDown(mouse_position);
+        color_picker_->MouseDown(mouse_position);
 
-        if (!quick_panel_->OnOpen() and !timeline_->OnPlay())
+        if (!color_picker_->OnOpen() and !timeline_->OnPlay())
         {
             control_->MouseDown(mouse_position);
             timeline_->MouseDown(mouse_position);
@@ -199,9 +199,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         if (!timeline_->OnPlay())
         {
-            quick_panel_->Open(mouse_position);
-
-            if (!quick_panel_->OnOpen())
+            if (!color_picker_->OnOpen())
             {
                 file_manager_->MouseDoubleDown(mouse_position);
             }
@@ -215,8 +213,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         timeline_->MouseMove(mouse_position);
         file_manager_->MouseMove(mouse_position);
-        canvas_->MouseMove(mouse_position, quick_panel_->GetPenSize(), timer_, quick_panel_->GetRGB());
-        quick_panel_->MouseMove(mouse_position);
+        canvas_->MouseMove(mouse_position, color_picker_->GetPenSize(), timer_, color_picker_->GetRGB());
+        color_picker_->MouseMove(mouse_position);
 
         if (canvas_->OnCanvasClick())
         {
@@ -381,7 +379,7 @@ Canvas* Window::GetCanvas()
     return canvas_.get();
 }
 
-QuickPanel* Window::GetQuickPanel()
+ColorPicker* Window::GetColorPicker()
 {
-    return quick_panel_.get();
+    return color_picker_.get();
 }

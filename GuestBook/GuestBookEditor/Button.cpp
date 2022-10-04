@@ -21,7 +21,7 @@ void Button::MouseDown(POINT mouse_position)
 	}
 }
 
-void Button::Draw(HDC hdc, int x, int y, int width, int height)
+void Button::Draw(HDC hdc, int x, int y, int width, int height, function<void(Graphics& graphics, int x, int y, int width, int height)> callback)
 {
 	Graphics graphics(hdc);
 
@@ -50,11 +50,15 @@ void Button::Draw(HDC hdc, int x, int y, int width, int height)
 
 	PointF text_font_position(x_ + (width_ / 2), y_ + (height_ / 2));
 
-
 	Region region(Rect(x_, y_, width_, height_));
 
 	// 클리핑 마스크 시작
 	graphics.SetClip(&region, CombineModeReplace);
+
+	if (callback != nullptr)
+	{
+		callback(graphics, x, y, width, height);
+	}
 
 	graphics.DrawString(text_, -1, &font_style, text_font_position, &string_format, &black_brush);
 
@@ -72,7 +76,7 @@ void Button::SetInteractable(bool value)
 	is_interactable_ = value;
 }
 
-void Button::SetBackground(Color color)
+void Button::SetText(LPCWSTR text)
 {
-	background_color_ = color;
+	wsprintf(text_, L"%s", text);
 }

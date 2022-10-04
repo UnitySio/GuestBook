@@ -180,12 +180,6 @@ void Canvas::Draw(HDC hdc)
 	// 하단바
 	graphics.FillRectangle(&background_brush2, x_, y_ + height_ - 30, width_, 30);
 	graphics.DrawRectangle(&contour_pen, x_, y_ + height_ - 30, width_ - 1, 29);
-
-	WCHAR pen_size_word[1024];
-	wsprintf(pen_size_word, L"팬 크기: %d", Window::GetInstance()->GetQuickPanel()->GetPenSize());
-
-	PointF pen_size_font_position(x_ + 5, y_ + height_ - 15);
-	graphics.DrawString(pen_size_word, -1, &font_style, pen_size_font_position, &string_format, &black_brush);
 }
 
 void Canvas::DrawLine(HDC hdc, size_t lines_idx, size_t line_idx)

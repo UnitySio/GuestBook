@@ -202,7 +202,7 @@ void Timeline::Draw(HDC hdc)
 
 		graphics.FillRectangle(&key_frame_brush, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 30) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), 30);
 		
-		wsprintf(number_word, L"%d", i + 1);
+		wsprintf(number_word, L"%d", (i + 1));
 
 		PointF number_font_position(list_box_x_ + 15, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + 15 + (i * 30));
 		graphics.DrawString(number_word, -1, &font_style, number_font_position, &string_format_center, &black_brush);

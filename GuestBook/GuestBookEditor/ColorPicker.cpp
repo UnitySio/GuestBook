@@ -1,12 +1,14 @@
-﻿#include "QuickPanel.h"
+﻿#include "ColorPicker.h"
 #include "Window.h"
 
-QuickPanel::QuickPanel(HWND hWnd)
+ColorPicker::ColorPicker(HWND hWnd)
 {
     this->hWnd = hWnd;
 
     width_ = 420;
     height_ = 300;
+    x_ = (Window::GetInstance()->GetWindowArea().right - width_) / 2;
+    y_ = (Window::GetInstance()->GetWindowArea().bottom - height_) / 2;
     s_ = 1;
     palette_width_ = 200;
     palette_height_ = 200;
@@ -20,20 +22,20 @@ QuickPanel::QuickPanel(HWND hWnd)
 
     close_button = make_unique<Button>(L"X", [=]
         {
-            is_quick_panel_open_ = false;
-            InvalidateRect(hWnd, &quick_panel_area_, FALSE);
+            is_color_picker_open_ = false;
+            InvalidateRect(hWnd, &color_picker_area_, FALSE);
         });
 }
 
-bool QuickPanel::OnOpen()
+bool ColorPicker::OnOpen()
 {
-    return is_quick_panel_open_;
+    return is_color_picker_open_;
 }
 
 
-void QuickPanel::MouseUp()
+void ColorPicker::MouseUp()
 {
-    if (is_quick_panel_open_)
+    if (is_color_picker_open_)
     {
         if (is_palette_click_ || is_hue_slider_click_ || is_pen_size_slider_click_)
         {
@@ -45,9 +47,9 @@ void QuickPanel::MouseUp()
     }
 }
 
-void QuickPanel::MouseDown(POINT mouse_position)
+void ColorPicker::MouseDown(POINT mouse_position)
 {
-    if (is_quick_panel_open_)
+    if (is_color_picker_open_)
     {
         SetCapture(hWnd);
         if (PtInRect(&palette_area_, mouse_position))
@@ -70,9 +72,9 @@ void QuickPanel::MouseDown(POINT mouse_position)
     }
 }
 
-void QuickPanel::MouseMove(POINT mouse_position)
+void ColorPicker::MouseMove(POINT mouse_position)
 {
-    if (is_quick_panel_open_)
+    if (is_color_picker_open_)
     {
         RECT window_area = Window::GetInstance()->GetWindowArea();
         if (!PtInRect(&window_area, mouse_position))
@@ -96,58 +98,40 @@ void QuickPanel::MouseMove(POINT mouse_position)
     }
 }
 
-void QuickPanel::PaletteControl(POINT mouse_position)
+void ColorPicker::PaletteControl(POINT mouse_position)
 {
     s_ = min(max(((mouse_position.x - palette_x_) * 1.0f) / palette_width_, 0), 1.0f);
     v_ = min(max(((mouse_position.y - palette_y_) * 1.0f) / palette_height_, 0), 1.0f);
     InvalidateRect(hWnd, NULL, FALSE);
 }
 
-void QuickPanel::HueSliderControl(POINT mouse_position)
+void ColorPicker::HueSliderControl(POINT mouse_position)
 {
     h_ = min(max(((mouse_position.y - hue_slider_y_) * 360.0f) / hue_slider_height_, 0), 360.0f);
     InvalidateRect(hWnd, NULL, FALSE);
 }
 
-void QuickPanel::PenSizeSliderControl(POINT mouse_position)
+void ColorPicker::PenSizeSliderControl(POINT mouse_position)
 {
     pen_size_ = min(max(((mouse_position.x - pen_size_slider_x_) * 30.0f) / pen_size_slider_width_, 0), 30.0f);
     InvalidateRect(hWnd, NULL, FALSE);
 }
 
-void QuickPanel::Open(POINT mouse_position)
+void ColorPicker::Open()
 {
-    RECT canvas_area = Window::GetInstance()->GetCanvas()->GetCanvasArea();
-    if (PtInRect(&canvas_area, mouse_position))
-    {
-        if (is_quick_panel_open_ == false)
-        {
-            x_ = mouse_position.x;
-            y_ = mouse_position.y;
+    is_color_picker_open_ = !is_color_picker_open_;
 
-            // 윈도우 크기에 따른 위치 보정
-            if (x_ > Window::GetInstance()->GetWindowArea().right - width_)
-            {
-                x_ -= width_;
-            }
-
-            if (y_ > Window::GetInstance()->GetWindowArea().bottom - height_)
-            {
-                y_ -= height_;
-            }
-
-            quick_panel_area_ = { x_, y_, x_ + width_, y_ + height_ };
-        }
-
-        is_quick_panel_open_ = !is_quick_panel_open_;
-
-        InvalidateRect(hWnd, &quick_panel_area_, FALSE);
-    }
+    InvalidateRect(hWnd, &color_picker_area_, FALSE);
 }
 
-void QuickPanel::Draw(HDC hdc)
+void ColorPicker::Draw(HDC hdc)
 {
-    if (is_quick_panel_open_)
+    x_ = (Window::GetInstance()->GetWindowArea().right - width_) / 2;
+    y_ = (Window::GetInstance()->GetWindowArea().bottom - height_) / 2;
+
+    color_picker_area_ = { x_, y_, x_ + width_, y_ + height_ };
+
+    if (is_color_picker_open_)
     {
         Graphics graphics(hdc);
 
@@ -175,7 +159,7 @@ void QuickPanel::Draw(HDC hdc)
         Font font_style(&arial_font, 12, FontStyleRegular, UnitPixel);
 
         PointF header_font_position(x_ + 20, y_ + 15);
-        graphics.DrawString(L"", -1, &font_style, header_font_position, &string_format, &black_brush);
+        graphics.DrawString(L"Color Picker", -1, &font_style, header_font_position, &string_format, &black_brush);
 
         // 팔레트
         palette_x_ = x_ + 20;
@@ -298,7 +282,7 @@ void QuickPanel::Draw(HDC hdc)
         graphics.DrawString(hex_word, -1, &font_style, hex_font_position, &black_brush);
 
         PointF preview_font_position(hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 90);
-        graphics.DrawString(L"미리보기", -1, &font_style, preview_font_position, &black_brush);
+        graphics.DrawString(L"Preview", -1, &font_style, preview_font_position, &black_brush);
 
         graphics.FillRectangle(&white_brush, hue_slider_x_ + hue_slider_width_ + 10, hue_slider_y_ + 110, 130, 130);
 
@@ -318,13 +302,13 @@ void QuickPanel::Draw(HDC hdc)
     }
 }
 
-int QuickPanel::GetPenSize()
+int ColorPicker::GetPenSize()
 {
     return (int)trunc(pen_size_);
 }
 
 // HSV 값을 RGB 값으로 변환
-Color QuickPanel::HSVToRGB(double h, double s, double v)
+Color ColorPicker::HSVToRGB(double h, double s, double v)
 {
     double r = 0;
     double g = 0;
@@ -395,22 +379,22 @@ Color QuickPanel::HSVToRGB(double h, double s, double v)
     return Color(255, (BYTE)(r * 255), (BYTE)(g * 255), (BYTE)(b * 255));
 }
 
-BYTE QuickPanel::GetR()
+BYTE ColorPicker::GetR()
 {
     return current_color_.GetR();
 }
 
-BYTE QuickPanel::GetG()
+BYTE ColorPicker::GetG()
 {
     return current_color_.GetG();
 }
 
-BYTE QuickPanel::GetB()
+BYTE ColorPicker::GetB()
 {
     return current_color_.GetB();
 }
 
-COLORREF QuickPanel::GetRGB()
+COLORREF ColorPicker::GetRGB()
 {
     return RGB(GetR(), GetG(), GetB());
 }

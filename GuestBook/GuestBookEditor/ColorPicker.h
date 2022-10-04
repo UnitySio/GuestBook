@@ -3,7 +3,7 @@
 #include "framework.h"
 #include "Button.h"
 
-class QuickPanel
+class ColorPicker
 {
 private:
     HWND hWnd;
@@ -20,7 +20,7 @@ private:
     double pen_size_; // 팬 크기
 
     // 영역
-    RECT quick_panel_area_;
+    RECT color_picker_area_;
     RECT palette_area_;
     RECT hue_slider_area_;
     RECT pen_size_slider_area_;
@@ -51,7 +51,7 @@ private:
 
     Color current_color_;
 
-    bool is_quick_panel_open_;
+    bool is_color_picker_open_;
     bool is_palette_click_;
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
@@ -62,15 +62,15 @@ private:
     void HueSliderControl(POINT mouse_position);
     void PenSizeSliderControl(POINT mouse_position);
 public:
-    QuickPanel(HWND hWnd);
-    ~QuickPanel() = default;
+    ColorPicker(HWND hWnd);
+    ~ColorPicker() = default;
 
     bool OnOpen();
 
     void MouseUp();
     void MouseDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
-    void Open(POINT mouse_position);
+    void Open();
     void Draw(HDC hdc);
 
     int GetPenSize();
