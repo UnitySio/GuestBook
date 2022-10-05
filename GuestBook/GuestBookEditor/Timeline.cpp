@@ -100,12 +100,6 @@ void Timeline::AddTime(double time)
 	InvalidateRect(hWnd, NULL, FALSE);
 }
 
-void Timeline::UpdateMaxTime(double time)
-{
-	max_time_ = time;
-	InvalidateRect(hWnd, &timeline_area_, FALSE);
-}
-
 void Timeline::Draw(HDC hdc)
 {
 	Graphics graphics(hdc);
@@ -142,8 +136,8 @@ void Timeline::Draw(HDC hdc)
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 
-	Image minimize_icon(L"Resources/MinimizeIcon.png");
-	graphics.DrawImage(&minimize_icon, x_ + width_ - 25, y_ + 5, 20, 20);
+	Image menu_icon(L"Resources/MenuIcon.png");
+	graphics.DrawImage(&menu_icon, x_ + width_ - 25, y_ + 5, 20, 20);
 
 	// »ó´Ü¹Ù
 	Point background_points[] = {
@@ -197,6 +191,8 @@ void Timeline::Draw(HDC hdc)
 	Color key_frame_color(255, 255, 255, 255);
 	SolidBrush key_frame_color_brush(key_frame_color);
 	WCHAR number_word[1024];
+
+	max_time_ = Window::GetInstance()->GetDrawingTime();
 
 	for (size_t i = 0; i < Window::GetInstance()->GetCanvas()->GetLines().size(); i++)
 	{
@@ -309,7 +305,7 @@ int Timeline::GetHeight()
 	return height_;
 }
 
-int Timeline::GetTime()
+int Timeline::GetDrawingTime()
 {
 	return (int)trunc(time_ * 1000);
 }

@@ -52,14 +52,13 @@ public:
     void MouseMove(POINT mouse_position);
     void MouseWheel(POINT mouse_position, float direction);
     void AddTime(double time);
-    void UpdateMaxTime(double time);
     void Draw(HDC hdc);
     void Play();
     RECT GetTimelineArea();
 
     int GetWidth();
     int GetHeight();
-    int GetTime();
+    int GetDrawingTime();
     int GetMaxTime();
 
     bool OnPlay();

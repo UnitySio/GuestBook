@@ -23,6 +23,12 @@ void Canvas::MouseUp()
 		is_canvas_click_ = false;
 		RECT timeline_area = Window::GetInstance()->GetTimeline()->GetTimelineArea();
 
+		if (Window::GetInstance()->GetDrawingTimer() != NULL)
+		{
+			timeKillEvent(Window::GetInstance()->GetDrawingTimer());
+			Window::GetInstance()->SetDrawingTimer(NULL);
+		}
+
 		if (line_.size() != 0)
 		{
 			lines_.push_back(line_);
@@ -36,9 +42,17 @@ void Canvas::MouseDown(POINT mouse_position)
 {
 	if (PtInRect(&canvas_area_, mouse_position))
 	{
+		TIMECAPS timecaps;
+		timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
+
 		is_canvas_click_ = true;
 		mouse_current_x_ = mouse_position.x;
 		mouse_current_y_ = mouse_position.y;
+
+		if (Window::GetInstance()->GetDrawingTimer() == NULL)
+		{
+			Window::GetInstance()->SetDrawingTimer(timeSetEvent(1, timecaps.wPeriodMax, Window::GetInstance()->TimerProc, (DWORD_PTR)Window::GetInstance(), TIME_PERIODIC));
+		}
 	}
 }
 
@@ -130,7 +144,7 @@ void Canvas::Draw(HDC hdc)
 		{
 			for (size_t j = 0; j < lines_[i].size(); j++)
 			{
-				if ((int)trunc(lines_[i][j].time * 1000) > Window::GetInstance()->GetTimeline()->GetTime())
+				if ((int)trunc(lines_[i][j].time * 1000) > Window::GetInstance()->GetTimeline()->GetDrawingTime())
 				{
 					break;
 				}
@@ -208,6 +222,7 @@ void Canvas::OpenSaveFile()
 	OFN.Flags = OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT;
 
 	size_t size = lines_.size();
+	double drawing_time = Window::GetInstance()->GetDrawingTime();
 
 	if (GetSaveFileName(&OFN) != 0)
 	{
@@ -225,6 +240,8 @@ void Canvas::OpenSaveFile()
 					save.write((const char*)&line_size, 4);
 					save.write((const char*)&lines_[i][0], line_size * sizeof(PointInfo));
 				}
+
+				save.write(reinterpret_cast<const char*>(&drawing_time), sizeof(drawing_time));
 
 			}
 
@@ -259,6 +276,7 @@ void Canvas::OpenLoadFile()
 void Canvas::LoadFile(fs::path path)
 {
 	size_t size = 0;
+	double drawing_time = 0;
 
 	ifstream load(path, ios::binary);
 	if (load.is_open())
@@ -275,23 +293,14 @@ void Canvas::LoadFile(fs::path path)
 			load.read((char*)&lines_[i][0], line_size * sizeof(PointInfo));
 		}
 
+		load.read(reinterpret_cast<char*>(&drawing_time), sizeof(drawing_time));
+
 		load.close();
 	}
 
-	Window::GetInstance()->SetTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
-	Window::GetInstance()->GetTimeline()->UpdateMaxTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+	Window::GetInstance()->SetDrawingTime(drawing_time);
 
-	InvalidateRect(hWnd, &canvas_area_, FALSE);
-}
-
-bool Canvas::OnCanvasClick()
-{
-	return is_canvas_click_;
-}
-
-RECT Canvas::GetCanvasArea()
-{
-	return canvas_area_;
+	InvalidateRect(hWnd, NULL, FALSE);
 }
 
 int Canvas::GetWidth()
@@ -318,13 +327,11 @@ void Canvas::Undo()
 
 	if (lines_.size() != 0)
 	{
-		Window::GetInstance()->SetTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
-		Window::GetInstance()->GetTimeline()->UpdateMaxTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+		Window::GetInstance()->SetDrawingTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
 	}
 	else
 	{
-		Window::GetInstance()->SetTime(0);
-		Window::GetInstance()->GetTimeline()->UpdateMaxTime(0);
+		Window::GetInstance()->SetDrawingTime(0);
 	}
 
 	InvalidateRect(hWnd, NULL, FALSE);

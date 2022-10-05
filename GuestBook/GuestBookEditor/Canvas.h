@@ -60,10 +60,6 @@ public:
 	void OpenLoadFile();
 	void LoadFile(fs::path path);
 
-	bool OnCanvasClick();
-
-	RECT GetCanvasArea();
-
 	int GetWidth();
 	int GetHeight();
 

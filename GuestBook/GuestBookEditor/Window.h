@@ -30,7 +30,7 @@ private:
 	static unique_ptr<Window> instance_;
 	static once_flag flag_;
 
-	double timer_;
+	double drawing_time_;
 
 	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
 	unique_ptr<Control> control_;
@@ -63,7 +63,6 @@ public:
 
 	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
-	void SetTime(double time);
 
 	RECT GetWindowArea();
 
@@ -73,7 +72,12 @@ public:
 	Canvas* GetCanvas();
 	ColorPicker* GetColorPicker();
 
+	void SetDrawingTimer(UINT timer);
+	UINT GetDrawingTimer();
 	void SetPlayTimer(UINT timer);
 	UINT GetPlayTimer();
+
+	void SetDrawingTime(double time);
+	double GetDrawingTime();
 };
 

@@ -81,8 +81,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
         case IDM_NEW_FILE:
             canvas_->CanvasReset();
-            timer_ = 0;
-            timeline_->UpdateMaxTime(0);
+            drawing_time_ = 0;
             InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
@@ -153,9 +152,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         timeline_->MouseUp();
         canvas_->MouseUp();
         file_manager_->MouseUp();
-
-        timeKillEvent(drawing_timer_);
-        drawing_timer_ = NULL;
     }
     break;
     case WM_LBUTTONDOWN:
@@ -204,23 +200,8 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         timeline_->MouseMove(mouse_position);
         file_manager_->MouseMove(mouse_position);
-        canvas_->MouseMove(mouse_position, color_picker_->GetPenSize(), timer_, color_picker_->GetRGB());
+        canvas_->MouseMove(mouse_position, color_picker_->GetPenSize(), drawing_time_, color_picker_->GetRGB());
         color_picker_->MouseMove(mouse_position);
-
-        if (canvas_->OnCanvasClick())
-        {
-            if (drawing_timer_ == NULL)
-            {
-                drawing_timer_ = timeSetEvent(1, timecaps.wPeriodMax, TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
-            }
-
-            timeline_->UpdateMaxTime(timer_);
-        }
-        else
-        {
-            timeKillEvent(drawing_timer_);
-            drawing_timer_ = NULL;
-        }
     }
     break;
     case WM_MOUSEWHEEL:
@@ -303,20 +284,15 @@ void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DW
 {
     Window* window = (Window*)dwUser;
 
-    HDC hdc;
-    hdc = GetDC(window->hWnd);
-
     if (m_nTimerID == window->drawing_timer_)
     {
-        window->timer_ += 0.001;
+        window->drawing_time_ += 0.001;
     }
 
     if (m_nTimerID == window->play_timer_)
     {
         window->timeline_->AddTime(0.001);
     }
-
-    ReleaseDC(window->hWnd, hdc);
 }
 
 void Window::OnPaint(HDC hdc)
@@ -338,11 +314,6 @@ Window* Window::GetInstance()
         });
 
     return instance_.get();
-}
-
-void Window::SetTime(double time)
-{
-    timer_ = time;
 }
 
 RECT Window::GetWindowArea()
@@ -375,6 +346,16 @@ ColorPicker* Window::GetColorPicker()
     return color_picker_.get();
 }
 
+void Window::SetDrawingTimer(UINT timer)
+{
+    drawing_timer_ = timer;
+}
+
+UINT Window::GetDrawingTimer()
+{
+    return drawing_timer_;
+}
+
 void Window::SetPlayTimer(UINT timer)
 {
     play_timer_ = timer;
@@ -383,4 +364,14 @@ void Window::SetPlayTimer(UINT timer)
 UINT Window::GetPlayTimer()
 {
     return play_timer_;
+}
+
+void Window::SetDrawingTime(double time)
+{
+    drawing_time_ = time;
+}
+
+double Window::GetDrawingTime()
+{
+    return drawing_time_;
 }
