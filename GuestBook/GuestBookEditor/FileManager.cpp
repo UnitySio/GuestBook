@@ -238,6 +238,8 @@ void FileManager::Draw(HDC hdc)
 
 	list_box_area_ = { list_box_x_, list_box_y_, list_box_x_ + list_box_width_, list_box_y_ + list_box_height_ };
 
+	WCHAR path_word[1024] = L"";
+
 	if ((items_.size() * list_item_height_) < list_box_height_ && scroll_bar_thumb_percent_ != 0)
 	{
 		list_item_select_ = 0;
@@ -254,6 +256,8 @@ void FileManager::Draw(HDC hdc)
 	if (!items_.empty())
 	{
 		graphics.FillRectangle(&background_brush, list_box_x_, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + (list_item_select_ * list_item_height_), list_box_width_, list_item_height_);
+
+		wsprintf(path_word, L"%s/%s", fs::path(items_[list_item_select_].file_path).parent_path().filename().c_str(), items_[list_item_select_].file_name.c_str());
 	}
 
 	WCHAR file_name_word[1024];
@@ -345,9 +349,6 @@ void FileManager::Draw(HDC hdc)
 
 	// 클리핑 마스크 시작
 	graphics.SetClip(&bottom_region, CombineModeReplace);
-
-	WCHAR path_word[1024];
-	wsprintf(path_word, L"%s/%s", fs::path(items_[list_item_select_].file_path).parent_path().filename().c_str(), items_[list_item_select_].file_name.c_str());
 
 	PointF path_font_position(x_ + 5, y_ + height_ - 15);
 	graphics.DrawString(path_word, -1, &font_style, path_font_position, &string_format_line_center, &black_brush);

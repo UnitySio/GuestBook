@@ -27,6 +27,8 @@ private:
 
 	bool is_interactable_;
 	bool is_shadow_;
+	bool is_background_;
+	bool is_contour_;
 
 	Image* image_;
 public:
@@ -38,6 +40,8 @@ public:
 
 	void SetInteractable(bool value);
 	void SetShadow(bool value);
+	void SetBackground(bool value);
+	void SetContour(bool value);
 	void SetBackgroundColor(Color color);
 	void SetContourColor(Color color);
 	void SetShadowColor(Color color);

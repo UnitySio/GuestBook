@@ -118,12 +118,14 @@ void Timeline::Draw(HDC hdc)
 	Pen contour_pen(Color(255, 185, 185, 185));
 
 	SolidBrush black_brush(Color(255, 0, 0, 0));
+	SolidBrush red_brush(Color(255, 255, 0, 0));
 	SolidBrush area_brush(Color(100, 255, 0, 0));
 	SolidBrush background_brush(Color(255, 219, 219, 219));
 	SolidBrush background_brush2(Color(255, 238, 238, 238));
 	SolidBrush background_brush3(Color(255, 224, 224, 224));
 	SolidBrush scroll_bar_brush(Color(255, 230, 230, 230));
 	SolidBrush scroll_bar_thumb_brush(Color(255, 192, 192, 192));
+	SolidBrush key_frame_brush(Color(255, 137, 147, 155));
 
 	StringFormat string_format;
 	string_format.SetLineAlignment(StringAlignmentCenter);
@@ -136,6 +138,9 @@ void Timeline::Draw(HDC hdc)
 	y_ = Window::GetInstance()->GetWindowArea().bottom - height_;
 
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
+
+	Image minimize_icon(L"Resources/MinimizeIcon.png");
+	graphics.DrawImage(&minimize_icon, x_ + width_ - 25, y_ + 5, 20, 20);
 
 	// 상단바
 	Point background_points[] = {
@@ -187,7 +192,7 @@ void Timeline::Draw(HDC hdc)
 	graphics.SetClip(&region, CombineModeReplace);
 
 	Color key_frame_color(255, 255, 255, 255);
-	SolidBrush key_frame_brush(key_frame_color);
+	SolidBrush key_frame_color_brush(key_frame_color);
 	WCHAR number_word[1024];
 
 	for (size_t i = 0; i < Window::GetInstance()->GetCanvas()->GetLines().size(); i++)
@@ -198,12 +203,16 @@ void Timeline::Draw(HDC hdc)
 		}
 		
 		key_frame_color.SetFromCOLORREF(Window::GetInstance()->GetCanvas()->GetLines()[i][0].color);
-		key_frame_brush.SetColor(key_frame_color);
+		key_frame_color_brush.SetColor(key_frame_color);
 
-		graphics.FillRectangle(&key_frame_brush, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 30) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), 30);
-		
-		wsprintf(number_word, L"%d", (i + 1));
+		graphics.FillRectangle(&background_brush2, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 30) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), 30);
+		graphics.FillRectangle(&key_frame_color_brush, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ + 25 - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 30) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), 5);
+		graphics.DrawRectangle(&contour_pen, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 31) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 31), 29);
 
+		graphics.FillRectangle(&background_brush2, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), 30, 30);
+		graphics.DrawRectangle(&contour_pen, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), 29, 29);
+
+		wsprintf(number_word, L"%d", ((int)i + 1));
 		PointF number_font_position(list_box_x_ + 15, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + 15 + (i * 30));
 		graphics.DrawString(number_word, -1, &font_style, number_font_position, &string_format_center, &black_brush);
 	}
@@ -222,6 +231,14 @@ void Timeline::Draw(HDC hdc)
 		_stprintf_s(word, L"%.1lfs", i);
 		graphics.DrawString(word, -1, &font_style, key_frame_font_position, &string_format_center, &black_brush);
 	}
+
+
+	Point header_points[] = {
+		Point(x_ + 25 + (time_ / max_time_) * (width_ - 50), y_ + 80),
+		Point(x_ + 30 + (time_ / max_time_) * (width_ - 50), y_ + 90),
+		Point(x_ + 35 + (time_ / max_time_) * (width_ - 50), y_ + 80) };
+
+	graphics.FillPolygon(&red_brush, header_points, 3);
 
 	// 스크롤바
 	scroll_bar_width_ = 20;

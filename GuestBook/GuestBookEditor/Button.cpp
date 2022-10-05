@@ -8,6 +8,8 @@ Button::Button(HWND hWnd, function<void()> callback)
 	callback_ = callback;
 
 	is_interactable_ = true;
+	is_background_ = true;
+	is_contour_ = true;
 
 	background_color_ = Color(255, 238, 238, 238);
 	contour_color_ = Color(255, 185, 185, 185);
@@ -58,14 +60,20 @@ void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 		shadow_color_,
 		Color(0, 255, 255, 255));
 
-	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
+	if (is_background_)
+	{
+		graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
+	}
 
 	if (is_shadow_)
 	{
 		graphics.FillRectangle(&inner_shadow_top, x_, y_, width_, 5);
 	}
 
-	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
+	if (is_contour_)
+	{
+		graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
+	}
 
 	Region region(Rect(x_, y_, width_, height_));
 
@@ -96,12 +104,21 @@ void Button::Draw(HDC hdc, LPCWSTR text, int x, int y, int width, int height)
 void Button::SetInteractable(bool value)
 {
 	is_interactable_ = value;
-	InvalidateRect(hWnd, &button_area_, FALSE);
 }
 
 void Button::SetShadow(bool value)
 {
 	is_shadow_ = value;
+}
+
+void Button::SetBackground(bool value)
+{
+	is_background_ = value;
+}
+
+void Button::SetContour(bool value)
+{
+	is_contour_ = value;
 }
 
 void Button::SetBackgroundColor(Color color)
