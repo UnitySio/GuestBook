@@ -21,7 +21,6 @@ void Timeline::MouseUp()
 {
 	if (is_list_box_click_ || is_scroll_bar_click_)
 	{
-		ReleaseCapture();
 		is_list_box_click_ = false;
 		is_scroll_bar_click_ = false;
 	}
@@ -31,7 +30,6 @@ void Timeline::MouseDown(POINT mouse_position)
 {
 	if (PtInRect(&list_box_area_, mouse_position))
 	{
-		SetCapture(hWnd);
 		KeyFrameControl(mouse_position);
 		is_list_box_click_ = true;
 	}
@@ -40,7 +38,6 @@ void Timeline::MouseDown(POINT mouse_position)
 	{
 		if (PtInRect(&scroll_bar_area_, mouse_position))
 		{
-			SetCapture(hWnd);
 			ScrollBarControl(mouse_position);
 			is_scroll_bar_click_ = true;
 		}
@@ -49,20 +46,26 @@ void Timeline::MouseDown(POINT mouse_position)
 
 void Timeline::MouseMove(POINT mouse_position)
 {
-	RECT window_area = Window::GetInstance()->GetWindowArea();
-	if (!PtInRect(&window_area, mouse_position))
-	{
-		MouseUp();
-		return;
-	}
-
 	if (is_list_box_click_)
 	{
+		RECT area = { list_box_area_.left + 30, list_box_area_.top, list_box_area_.right, list_box_area_.bottom };
+		if (!PtInRect(&area, mouse_position))
+		{
+			MouseUp();
+			return;
+		}
+
 		KeyFrameControl(mouse_position);
 	}
 
 	if (is_scroll_bar_click_)
 	{
+		if (!PtInRect(&scroll_bar_area_, mouse_position))
+		{
+			MouseUp();
+			return;
+		}
+
 		ScrollBarControl(mouse_position);
 	}
 }
@@ -201,7 +204,7 @@ void Timeline::Draw(HDC hdc)
 		{
 			graphics.FillRectangle(&background_brush3, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), list_box_width_, 30);
 		}
-		
+
 		key_frame_color.SetFromCOLORREF(Window::GetInstance()->GetCanvas()->GetLines()[i][0].color);
 		key_frame_color_brush.SetColor(key_frame_color);
 
@@ -209,7 +212,9 @@ void Timeline::Draw(HDC hdc)
 		graphics.FillRectangle(&key_frame_color_brush, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ + 25 - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 30) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), 5);
 		graphics.DrawRectangle(&contour_pen, list_box_x_ + 30 + (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 30), list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), (Window::GetInstance()->GetCanvas()->GetLines()[i][Window::GetInstance()->GetCanvas()->GetLines()[i].size() - 1].time / max_time_) * (list_box_width_ - 31) - (Window::GetInstance()->GetCanvas()->GetLines()[i][0].time / max_time_) * (list_box_width_ - 31), 29);
 
+
 		graphics.FillRectangle(&background_brush2, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), 30, 30);
+		graphics.FillRectangle(&key_frame_color_brush, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), 5, 30);
 		graphics.DrawRectangle(&contour_pen, list_box_x_, list_box_y_ - (((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) - list_box_height_) * scroll_bar_thumb_percent_) + (i * 30), 29, 29);
 
 		wsprintf(number_word, L"%d", ((int)i + 1));

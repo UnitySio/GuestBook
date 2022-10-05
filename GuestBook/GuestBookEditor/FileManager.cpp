@@ -49,7 +49,6 @@ void FileManager::MouseUp()
 {
 	if (is_scroll_bar_click_)
 	{
-		ReleaseCapture();
 		is_scroll_bar_click_ = false;
 	}
 }
@@ -99,7 +98,6 @@ void FileManager::MouseDown(POINT mouse_position)
 	{
 		if (PtInRect(&scroll_bar_area_, mouse_position))
 		{
-			SetCapture(hWnd);
 			ScrollBarControl(mouse_position);
 			is_scroll_bar_click_ = true;
 		}
@@ -144,10 +142,10 @@ void FileManager::MouseMove(POINT mouse_position)
 {
 	if (is_scroll_bar_click_)
 	{
-		RECT window_area = Window::GetInstance()->GetWindowArea();
-		if (!PtInRect(&window_area, mouse_position))
+		if (!PtInRect(&scroll_bar_area_, mouse_position))
 		{
 			MouseUp();
+			return;
 		}
 
 		ScrollBarControl(mouse_position);
@@ -310,11 +308,6 @@ void FileManager::Draw(HDC hdc)
 		}
 
 		graphics.DrawString(file_name_word, -1, &font_style, file_name_font_position, &string_format_line_center, &black_brush);
-
-		/*if (items_[i].file_path != root_path_ && items_[i].file_path != fs::path(current_path_).parent_path())
-		{
-			graphics.DrawImage(&trash_icon, list_box_x_ + list_box_width_ - 35, list_box_y_ - (((items_.size() * list_item_height_) - list_box_height_) * scroll_bar_thumb_percent_) + 10 + (i * list_item_height_), 30, 30);
-		}*/
 	}
 
 	// 클리핑 마스크 종료

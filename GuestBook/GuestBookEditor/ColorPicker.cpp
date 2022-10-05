@@ -39,7 +39,6 @@ void ColorPicker::MouseUp()
     {
         if (is_palette_click_ || is_hue_slider_click_ || is_pen_size_slider_click_)
         {
-            ReleaseCapture();
             is_palette_click_ = false;
             is_hue_slider_click_ = false;
             is_pen_size_slider_click_ = false;
@@ -51,7 +50,6 @@ void ColorPicker::MouseDown(POINT mouse_position)
 {
     if (is_color_picker_open_)
     {
-        SetCapture(hWnd);
         if (PtInRect(&palette_area_, mouse_position))
         {
             PaletteControl(mouse_position);
@@ -76,23 +74,36 @@ void ColorPicker::MouseMove(POINT mouse_position)
 {
     if (is_color_picker_open_)
     {
-        RECT window_area = Window::GetInstance()->GetWindowArea();
-        if (!PtInRect(&window_area, mouse_position))
-        {
-            MouseUp();
-            return;
-        }
-
         if (is_palette_click_)
         {
+            if (!PtInRect(&palette_area_, mouse_position))
+            {
+                MouseUp();
+                return;
+            }
+
             PaletteControl(mouse_position);
         }
-        else if (is_hue_slider_click_)
+        
+        if (is_hue_slider_click_)
         {
+            if (!PtInRect(&hue_slider_area_, mouse_position))
+            {
+                MouseUp();
+                return;
+            }
+
             HueSliderControl(mouse_position);
         }
-        else if (is_pen_size_slider_click_)
+        
+        if (is_pen_size_slider_click_)
         {
+            if (!PtInRect(&pen_size_slider_area_, mouse_position))
+            {
+                MouseUp();
+                return;
+            }
+
             PenSizeSliderControl(mouse_position);
         }
     }
@@ -298,10 +309,6 @@ void ColorPicker::Draw(HDC hdc)
 
         graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-        Color background_color(255, 255, 0, 0);
-        Color text_color(255, 255, 255, 255);
-        close_button_->SetBackgroundColor(background_color);
-        close_button_->SetTextColor(text_color);
         close_button_->Draw(hdc, L"✕", x_ + width_ - 30, y_, 30, 30);
     }
 }
