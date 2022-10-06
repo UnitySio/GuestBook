@@ -14,6 +14,8 @@ Canvas::Canvas(HWND hWnd)
 void Canvas::CanvasReset()
 {
 	lines_.clear();
+	Window::GetInstance()->SetDrawingTime(0);
+	InvalidateRect(hWnd, NULL, FALSE);
 }
 
 void Canvas::MouseUp()
@@ -42,17 +44,9 @@ void Canvas::MouseDown(POINT mouse_position)
 {
 	if (PtInRect(&canvas_area_, mouse_position))
 	{
-		TIMECAPS timecaps;
-		timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
-
 		is_canvas_click_ = true;
 		mouse_current_x_ = mouse_position.x;
 		mouse_current_y_ = mouse_position.y;
-
-		if (Window::GetInstance()->GetDrawingTimer() == NULL)
-		{
-			Window::GetInstance()->SetDrawingTimer(timeSetEvent(1, timecaps.wPeriodMax, Window::GetInstance()->TimerProc, (DWORD_PTR)Window::GetInstance(), TIME_PERIODIC));
-		}
 	}
 }
 
@@ -64,6 +58,14 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 		{
 			MouseUp();
 			return;
+		}
+
+		TIMECAPS timecaps;
+		timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
+
+		if (Window::GetInstance()->GetDrawingTimer() == NULL)
+		{
+			Window::GetInstance()->SetDrawingTimer(timeSetEvent(1, timecaps.wPeriodMax, Window::GetInstance()->TimerProc, (DWORD_PTR)Window::GetInstance(), TIME_PERIODIC));
 		}
 
 		HDC hdc;
@@ -248,6 +250,8 @@ void Canvas::OpenSaveFile()
 			save.close();
 		}
 	}
+
+	CanvasReset();
 }
 
 void Canvas::OpenLoadFile()
@@ -320,6 +324,8 @@ vector<vector<Canvas::PointInfo>> Canvas::GetLines()
 
 void Canvas::Undo()
 {
+	double previous_time = lines_[lines_.size() - 1][0].time;
+
 	if (lines_.size() > 0)
 	{
 		lines_.pop_back();
@@ -327,7 +333,7 @@ void Canvas::Undo()
 
 	if (lines_.size() != 0)
 	{
-		Window::GetInstance()->SetDrawingTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+		Window::GetInstance()->SetDrawingTime(previous_time);
 	}
 	else
 	{

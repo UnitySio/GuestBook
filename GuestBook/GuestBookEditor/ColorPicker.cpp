@@ -20,7 +20,7 @@ ColorPicker::ColorPicker(HWND hWnd)
     color_preview_height_ = 30;
     current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
 
-    close_button_ = make_unique<Button>(hWnd, [=]
+    button_close_ = make_unique<Button>([=]
         {
             is_color_picker_open_ = false;
             InvalidateRect(hWnd, &color_picker_area_, FALSE);
@@ -66,7 +66,7 @@ void ColorPicker::MouseDown(POINT mouse_position)
             is_pen_size_slider_click_ = true;
         }
 
-        close_button_->MouseDown(mouse_position);
+        button_close_->MouseDown(mouse_position);
     }
 }
 
@@ -309,7 +309,7 @@ void ColorPicker::Draw(HDC hdc)
 
         graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-        close_button_->Draw(hdc, L"✕", x_ + width_ - 30, y_, 30, 30);
+        button_close_->Draw(hdc, L"✕", x_ + width_ - 30, y_, 30, 30);
     }
 }
 

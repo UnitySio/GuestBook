@@ -1,5 +1,6 @@
 #pragma once
 #include "framework.h"
+#include "Button.h"
 
 class Timeline
 {
@@ -32,6 +33,7 @@ private:
     int scroll_bar_width_;
     int scroll_bar_height_;
 
+    bool is_active_;
     bool is_scroll_bar_click_;
 
     RECT list_box_area_;
@@ -40,6 +42,8 @@ private:
     double scroll_bar_thumb_ratio_;
     double scroll_bar_thumb_percent_;
     double scroll_bar_thumb_height_;
+
+    unique_ptr<Button> button_minimize_;
 
     void KeyFrameControl(POINT mouse_position);
     void ScrollBarControl(POINT mouse_position);
@@ -54,6 +58,8 @@ public:
     void AddTime(double time);
     void Draw(HDC hdc);
     void Play();
+    void Active();
+
     RECT GetTimelineArea();
 
     int GetWidth();

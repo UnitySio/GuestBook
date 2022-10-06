@@ -1,10 +1,8 @@
 #include "Button.h"
 #include "Window.h"
 
-Button::Button(HWND hWnd, function<void()> callback)
+Button::Button(function<void()> callback)
 {
-	this->hWnd = hWnd;
-
 	callback_ = callback;
 
 	is_interactable_ = true;

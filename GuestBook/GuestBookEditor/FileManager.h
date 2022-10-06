@@ -1,6 +1,7 @@
 #pragma once
 
 #include "framework.h"
+#include "Button.h"
 
 #include <vector>
 #include <filesystem>
@@ -46,6 +47,7 @@ private:
     WCHAR root_path_[256];
     WCHAR current_path_[256];
 
+    bool is_active_;
     bool is_scroll_bar_click_;
 
     RECT scroll_bar_area_;
@@ -54,6 +56,8 @@ private:
     double scroll_bar_thumb_ratio_;
     double scroll_bar_thumb_percent_;
     double scroll_bar_thumb_height_;
+
+    unique_ptr<Button> button_minimize_;
 
     void ScrollBarControl(POINT mouse_position);
 
@@ -68,6 +72,7 @@ public:
     void MouseMove(POINT mouse_position);
     void MouseWheel(POINT mouse_position, float direction);
     void Draw(HDC hdc);
+    void Active();
 
     void FileRefresh(fs::path path);
 

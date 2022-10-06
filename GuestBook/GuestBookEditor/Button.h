@@ -14,8 +14,6 @@ private:
 	int image_width_;
 	int image_height_;
 
-	HWND hWnd;
-
 	RECT button_area_;
 
 	function<void()> callback_;
@@ -32,7 +30,7 @@ private:
 
 	Image* image_;
 public:
-	Button(HWND hWnd, function<void()> callback);
+	Button(function<void()> callback);
 	~Button() = default;
 
 	void MouseDown(POINT mouse_position);

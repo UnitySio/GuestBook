@@ -81,8 +81,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
         case IDM_NEW_FILE:
             canvas_->CanvasReset();
-            drawing_time_ = 0;
-            InvalidateRect(hWnd, NULL, FALSE);
             break;
         case IDM_SAVE:
             canvas_->OpenSaveFile();
@@ -97,8 +95,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             canvas_->Redo();
             break;
         case IDM_FILE_MANAGER:
+            file_manager_->Active();
             break;
         case IDM_TIMELINE:
+            timeline_->Active();
             break;
         case IDM_ABOUT:
             DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -251,6 +251,16 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         DragFinish(hDrop);
     }
     break;
+    case WM_CLOSE:
+    {
+        if (canvas_->GetLines().size() != 0)
+        {
+            if (MessageBox(hWnd, L"Do you want to save?", L"", MB_YESNO) == IDYES)
+            {
+                canvas_->OpenSaveFile();
+            }
+        }
+    }
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

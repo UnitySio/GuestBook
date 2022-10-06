@@ -10,22 +10,22 @@ Control::Control(HWND hWnd)
 	width_ = Window::GetInstance()->GetWindowArea().right;
 	height_ = 60;
 
-	button_undo_ = make_unique<Button>(hWnd, []
+	button_undo_ = make_unique<Button>([]
 		{
 			Window::GetInstance()->GetCanvas()->Undo();
 		});
 
-	button_redo_ = make_unique<Button>(hWnd, []
+	button_redo_ = make_unique<Button>([]
 		{
 			Window::GetInstance()->GetCanvas()->Redo();
 		});
 
-	button_color_ = make_unique<Button>(hWnd, []
+	button_color_ = make_unique<Button>([]
 		{
 			Window::GetInstance()->GetColorPicker()->Open();
 		});
 
-	button_play_ = make_unique<Button>(hWnd, []
+	button_play_ = make_unique<Button>([]
 		{
 			TIMECAPS timecaps;
 			timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
