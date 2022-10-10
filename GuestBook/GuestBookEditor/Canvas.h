@@ -1,12 +1,6 @@
 #pragma once
 
-#include "framework.h"
-
-#include <vector>
-#include <filesystem>
-#include <fstream>
-
-namespace fs = filesystem;
+namespace fs = std::filesystem;
 
 class Canvas
 {
@@ -40,8 +34,8 @@ private:
 
 	bool is_canvas_click_;
 
-	vector<vector<PointInfo>> lines_;
-	vector<PointInfo> line_;
+	std::vector<std::vector<PointInfo>> lines_;
+	std::vector<PointInfo> line_;
 
 	int mouse_current_x_;
 	int mouse_current_y_;
@@ -63,7 +57,7 @@ public:
 	int GetWidth();
 	int GetHeight();
 
-	vector<vector<PointInfo>> GetLines();
+	std::vector<std::vector<PointInfo>> GetLines();
 
 	void Undo();
 	void Redo();

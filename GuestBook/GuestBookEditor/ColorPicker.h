@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "framework.h"
 #include "Button.h"
 
 class ColorPicker
@@ -49,14 +48,14 @@ private:
     int color_preview_width_;
     int color_preview_height_;
 
-    Color current_color_;
+    Gdiplus::Color current_color_;
 
     bool is_color_picker_open_;
     bool is_palette_click_;
     bool is_hue_slider_click_;
     bool is_pen_size_slider_click_;
 
-    unique_ptr<Button> button_close_;
+    std::unique_ptr<Button> button_close_;
 
     void PaletteControl(POINT mouse_position);
     void HueSliderControl(POINT mouse_position);
@@ -75,7 +74,7 @@ public:
 
     int GetPenSize();
 
-    Color HSVToRGB(double h, double s, double v);
+    Gdiplus::Color HSVToRGB(double h, double s, double v);
 
     BYTE GetR();
     BYTE GetG();

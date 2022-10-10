@@ -1,5 +1,5 @@
 #pragma once
-#include "framework.h"
+
 #include "Button.h"
 
 class Timeline
@@ -43,7 +43,7 @@ private:
     double scroll_bar_thumb_percent_;
     double scroll_bar_thumb_height_;
 
-    unique_ptr<Button> button_minimize_;
+    std::unique_ptr<Button> button_minimize_;
 
     void KeyFrameControl(POINT mouse_position);
     void ScrollBarControl(POINT mouse_position);

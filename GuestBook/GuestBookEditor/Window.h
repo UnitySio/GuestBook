@@ -27,17 +27,17 @@ private:
 	void OnPaint(HDC hdc);
 
 	// 싱글톤
-	static unique_ptr<Window> instance_;
-	static once_flag flag_;
+	static std::unique_ptr<Window> instance_;
+	static std::once_flag flag_;
 
 	double drawing_time_;
 
 	// 스마트 포인터(자동으로 메모리를 관리해 준다.)
-	unique_ptr<Control> control_;
-	unique_ptr<Timeline> timeline_;
-	unique_ptr<FileManager> file_manager_;
-	unique_ptr<Canvas> canvas_;
-	unique_ptr<ColorPicker> color_picker_;
+	std::unique_ptr<Control> control_;
+	std::unique_ptr<Timeline> timeline_;
+	std::unique_ptr<FileManager> file_manager_;
+	std::unique_ptr<Canvas> canvas_;
+	std::unique_ptr<ColorPicker> color_picker_;
 
 	UINT drawing_timer_;
 	UINT play_timer_;

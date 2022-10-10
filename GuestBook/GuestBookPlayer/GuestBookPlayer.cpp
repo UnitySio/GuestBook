@@ -41,5 +41,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     GdiplusShutdown(gdiplus_token);
+
     return (int)msg.wParam;
 }

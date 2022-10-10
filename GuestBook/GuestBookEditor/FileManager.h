@@ -1,13 +1,8 @@
 #pragma once
 
-#include "framework.h"
 #include "Button.h"
 
-#include <vector>
-#include <filesystem>
-#include <fstream>
-
-namespace fs = filesystem;
+namespace fs = std::filesystem;
 
 class FileManager
 {
@@ -34,7 +29,7 @@ private:
 
     RECT list_box_area_;
 
-    vector<Item> items_;
+    std::vector<Item> items_;
 
     int list_item_select_;
     int list_item_height_;
@@ -57,7 +52,7 @@ private:
     double scroll_bar_thumb_percent_;
     double scroll_bar_thumb_height_;
 
-    unique_ptr<Button> button_minimize_;
+    std::unique_ptr<Button> button_minimize_;
 
     void ScrollBarControl(POINT mouse_position);
 

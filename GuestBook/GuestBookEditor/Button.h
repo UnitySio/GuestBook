@@ -1,5 +1,4 @@
 #pragma once
-#include "framework.h"
 
 #include<functional>
 
@@ -16,21 +15,21 @@ private:
 
 	RECT button_area_;
 
-	function<void()> callback_;
+	std::function<void()> callback_;
 
-	Color background_color_;
-	Color contour_color_;
-	Color shadow_color_;
-	Color text_color_;
+	Gdiplus::Color background_color_;
+	Gdiplus::Color contour_color_;
+	Gdiplus::Color shadow_color_;
+	Gdiplus::Color text_color_;
 
 	bool is_interactable_;
 	bool is_shadow_;
 	bool is_background_;
 	bool is_contour_;
 
-	Image* image_;
+	Gdiplus::Image* image_;
 public:
-	Button(function<void()> callback);
+	Button(std::function<void()> callback);
 	~Button() = default;
 
 	void MouseDown(POINT mouse_position);
@@ -40,10 +39,10 @@ public:
 	void SetShadow(bool value);
 	void SetBackground(bool value);
 	void SetContour(bool value);
-	void SetBackgroundColor(Color color);
-	void SetContourColor(Color color);
-	void SetShadowColor(Color color);
-	void SetTextColor(Color color);
-	void SetImage(Image* image, int width, int height);
+	void SetBackgroundColor(Gdiplus::Color color);
+	void SetContourColor(Gdiplus::Color color);
+	void SetShadowColor(Gdiplus::Color color);
+	void SetTextColor(Gdiplus::Color color);
+	void SetImage(Gdiplus::Image* image, int width, int height);
 };
 

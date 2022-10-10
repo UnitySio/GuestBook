@@ -1,5 +1,9 @@
+#include "pch.h"
 #include "Control.h"
 #include "Window.h"
+
+using namespace std;
+using namespace Gdiplus;
 
 Control::Control(HWND hWnd)
 {

@@ -1,5 +1,9 @@
+#include "pch.h"
 #include "Timeline.h"
 #include "Window.h"
+
+using namespace std;
+using namespace Gdiplus;
 
 Timeline::Timeline(HWND hWnd)
 {

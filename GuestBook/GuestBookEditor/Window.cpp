@@ -1,4 +1,10 @@
+#include "pch.h"
 #include "Window.h"
+#include "mmsystem.h"
+#include "shellapi.h"
+
+using namespace std;
+using namespace Gdiplus;
 
 // 멤버 변수 초기화
 unique_ptr<Window> Window::instance_ = nullptr;
@@ -251,16 +257,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         DragFinish(hDrop);
     }
     break;
-    case WM_CLOSE:
-    {
-        if (canvas_->GetLines().size() != 0)
-        {
-            if (MessageBox(hWnd, L"Do you want to save?", L"", MB_YESNO) == IDYES)
-            {
-                canvas_->OpenSaveFile();
-            }
-        }
-    }
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

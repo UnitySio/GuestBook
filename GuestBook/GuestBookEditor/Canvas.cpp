@@ -1,5 +1,8 @@
+#include "pch.h"
 #include "Canvas.h"
 #include "Window.h"
+
+using namespace Gdiplus;
 
 Canvas::Canvas(HWND hWnd)
 {

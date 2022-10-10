@@ -1,5 +1,9 @@
+#include "pch.h"
 #include "FileManager.h"
 #include "Window.h"
+
+using namespace std;
+using namespace Gdiplus;
 
 FileManager::FileManager(HWND hWnd)
 {

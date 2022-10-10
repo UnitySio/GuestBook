@@ -1,5 +1,9 @@
+#include "pch.h"
 #include "Button.h"
 #include "Window.h"
+
+using namespace std;
+using namespace Gdiplus;
 
 Button::Button(function<void()> callback)
 {

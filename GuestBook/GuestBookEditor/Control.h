@@ -1,6 +1,5 @@
 #pragma once
 
-#include "framework.h"
 #include "Button.h"
 
 class Control
@@ -13,10 +12,10 @@ private:
 	int width_;
 	int height_;
 
-	unique_ptr<Button> button_undo_;
-	unique_ptr<Button> button_redo_;
-	unique_ptr<Button> button_color_;
-	unique_ptr<Button> button_play_;
+	std::unique_ptr<Button> button_undo_;
+	std::unique_ptr<Button> button_redo_;
+	std::unique_ptr<Button> button_color_;
+	std::unique_ptr<Button> button_play_;
 public:
 	Control(HWND hWnd);
 	~Control() = default;

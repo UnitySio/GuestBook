@@ -1,4 +1,7 @@
-﻿#include "GuestBookEditor.h"
+﻿#include "pch.h"
+#include "GuestBookEditor.h"
+
+using namespace Gdiplus;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,

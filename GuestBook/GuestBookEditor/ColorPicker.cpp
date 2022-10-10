@@ -1,5 +1,9 @@
-﻿#include "ColorPicker.h"
+﻿#include "pch.h"
+#include "ColorPicker.h"
 #include "Window.h"
+
+using namespace std;
+using namespace Gdiplus;
 
 ColorPicker::ColorPicker(HWND hWnd)
 {
