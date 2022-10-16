@@ -1,12 +1,11 @@
 #pragma once
-#include "framework.h"
+
+#include "Button.h"
 
 class Timeline
 {
 private:
     HWND hWnd;
-    RECT client_area_;
-    RECT window_area_;
 
     // 생성될 x, y 좌표
     int x_;
@@ -17,20 +16,37 @@ private:
     // 영역
     RECT timeline_area_;
 
-    // 프로그래스
-    int progress_x_;
-    int progress_y_;
-    int progress_width_;
-    int progress_height_;
+    double time_;
+    double max_time_;
 
-    double time_ = 0;
-    double max_time_ = 0;
-
-    bool is_progress_click_;
+    bool is_list_box_click_;
     bool is_playing_;
-    
-    void UpdateWindowArea();
-    void ProgressControl(POINT mouse_position);
+
+    // 키 프레임
+    int list_box_x_;
+    int list_box_y_;
+    int list_box_width_;
+    int list_box_height_;
+
+    int scroll_bar_x_;
+    int scroll_bar_y_;
+    int scroll_bar_width_;
+    int scroll_bar_height_;
+
+    bool is_active_;
+    bool is_scroll_bar_click_;
+
+    RECT list_box_area_;
+    RECT scroll_bar_area_;
+
+    double scroll_bar_thumb_ratio_;
+    double scroll_bar_thumb_percent_;
+    double scroll_bar_thumb_height_;
+
+    std::unique_ptr<Button> button_minimize_;
+
+    void KeyFrameControl(POINT mouse_position);
+    void ScrollBarControl(POINT mouse_position);
 public:
     Timeline(HWND hWnd);
     ~Timeline() = default;
@@ -38,19 +54,18 @@ public:
     void MouseUp();
     void MouseDown(POINT mouse_position);
     void MouseMove(POINT mouse_position);
+    void MouseWheel(POINT mouse_position, float direction);
     void AddTime(double time);
-    void UpdateMaxTime(double time);
     void Draw(HDC hdc);
     void Play();
+    void Active();
 
-    int GetTime();
-    int GetMaxTime();
+    RECT GetTimelineArea();
 
     int GetWidth();
     int GetHeight();
-    int GetX();
-    int GetY();
+    int GetDrawingTime();
+    int GetMaxTime();
 
-    bool IsPlaying();
+    bool OnPlay();
 };
-

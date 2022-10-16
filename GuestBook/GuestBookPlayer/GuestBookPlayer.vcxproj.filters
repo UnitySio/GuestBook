@@ -27,9 +27,15 @@
     <ClInclude Include="GuestBookPlayer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GuestBookPlayer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

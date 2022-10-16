@@ -27,7 +27,7 @@
     <ClInclude Include="GuestBookEditor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="QuickPanel.h">
+    <ClInclude Include="ColorPicker.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Timeline.h">
@@ -42,12 +42,21 @@
     <ClInclude Include="FileManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Button.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Control.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GuestBookEditor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="QuickPanel.cpp">
+    <ClCompile Include="ColorPicker.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Timeline.cpp">
@@ -60,6 +69,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="FileManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Button.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Control.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,0 +1,28 @@
+#pragma once
+
+#include "Button.h"
+
+class Control
+{
+private:
+	HWND hWnd;
+
+	int x_;
+	int y_;
+	int width_;
+	int height_;
+
+	std::unique_ptr<Button> button_undo_;
+	std::unique_ptr<Button> button_redo_;
+	std::unique_ptr<Button> button_color_;
+	std::unique_ptr<Button> button_play_;
+public:
+	Control(HWND hWnd);
+	~Control() = default;
+
+	void MouseDown(POINT mouse_position);
+	void Draw(HDC hdc);
+
+	int GetWidth();
+	int GetHeight();
+};
