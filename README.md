@@ -1,11 +1,11 @@
-# GuestBook
+# GuestBook(개발중)
 유한대학교 컴퓨터소프트웨어공학과 2022년 학술제에서 사용하기위해 제작한 방명록 프로젝트입니다.
 
-### 언어
-* VC++
+### Using Language
+* C++
 
-### 라이브러리
-* GDI+
+### Using Graphic Library
+* GDI, GDI+
 
-### 명명규칙
-* [구글 스타일 명명규칙](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
+### Naming Convention
+* [Google Naming Convention](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
