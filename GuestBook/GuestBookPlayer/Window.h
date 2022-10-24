@@ -21,8 +21,8 @@ private:
 	void OnPaint(HDC hdc);
 
 	// ΩÃ±€≈Ê
-	static unique_ptr<Window> instance_;
-	static once_flag flag_;
+	static std::unique_ptr<Window> instance_;
+	static std::once_flag flag_;
 
 	void UpdateWindowArea();
 public:

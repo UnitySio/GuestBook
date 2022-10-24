@@ -17,6 +17,8 @@ private:
 	HINSTANCE hInst; // 현재 인스턴스
 	HWND hWnd;
 
+	POINT resolution_; // 해상도
+
 	RECT client_area_;
 	RECT window_area_;
 

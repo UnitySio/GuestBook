@@ -127,9 +127,6 @@ void Timeline::Draw(HDC hdc)
 	{
 		Graphics graphics(hdc);
 
-		// 배경 제거
-		SetBkColor(hdc, TRANSPARENT);
-
 		Image clock_icon(L"Resources/ClockIcon.png");
 
 		Pen black_pen(Color(255, 0, 0, 0));

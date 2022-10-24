@@ -2,6 +2,7 @@
 #include "Canvas.h"
 #include "Window.h"
 
+using namespace std;
 using namespace Gdiplus;
 
 Canvas::Canvas(HWND hWnd)
@@ -89,9 +90,6 @@ void Canvas::MouseMove(POINT mouse_position, int width, double time, COLORREF co
 void Canvas::Draw(HDC hdc)
 {
 	Graphics graphics(hdc);
-
-	// 배경 제거
-	SetBkMode(hdc, TRANSPARENT);
 
 	Image edit_icon(L"Resources/EditIcon.png");
 
@@ -331,6 +329,7 @@ void Canvas::Undo()
 
 	if (lines_.size() > 0)
 	{
+		history_.push_back(lines_[lines_.size() - 1]);
 		lines_.pop_back();
 	}
 
@@ -348,5 +347,10 @@ void Canvas::Undo()
 
 void Canvas::Redo()
 {
+	lines_.push_back(history_[history_.size() - 1]);
+	history_.erase(history_.end() - 1);
 
+	Window::GetInstance()->SetDrawingTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
+
+	InvalidateRect(hWnd, NULL, FALSE);
 }

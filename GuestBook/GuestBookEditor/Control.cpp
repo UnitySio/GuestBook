@@ -87,7 +87,7 @@ void Control::Draw(HDC hdc)
 
 	Image* forward_image = Image::FromFile(L"Resources/ForwardIcon.png");
 	button_redo_->SetImage(forward_image, 30, 30);
-	button_redo_->SetInteractable(false);
+	button_redo_->SetInteractable(true);
 	button_redo_->Draw(hdc, L"", x_ + 55, y_ + 5, 50, 50);
 
 	button_color_->Draw(hdc, L"Color", x_ + 110, y_ + 5, 50, 50);
