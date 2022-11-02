@@ -4,8 +4,14 @@
 ### Using Language
 * C++
 
+### Using IDE
+* VC++
+
 ### Using Graphic Library
 * GDI, GDI+
 
-### Naming Convention
+### Using Naming Convention
 * [Google Naming Convention](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
+
+### Developer Comment
+* 
