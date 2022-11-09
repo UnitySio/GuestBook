@@ -60,11 +60,15 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     TIMECAPS timecaps;
     timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
 
+    POINT mouse_position;
+
     switch (message)
     {
     case WM_CREATE:
     {
         UpdateWindowArea();
+
+        file_manager_ = make_unique<FileManager>(hWnd);
     }
     break;
     case WM_COMMAND:
@@ -99,6 +103,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PatBlt(hdc, 0, 0, window_area_.right, window_area_.bottom, WHITENESS);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
+        file_manager_->Draw(hdc);
         OnPaint(hdc);
 
         BitBlt(memDC, 0, 0, window_area_.right, window_area_.bottom, hdc, 0, 0, SRCCOPY);
@@ -106,6 +111,49 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         DeleteDC(memDC);
         DeleteObject(new_bitmap);
         EndPaint(hWnd, &ps);
+    }
+    break;
+    case WM_LBUTTONUP:
+    {
+        mouse_position.x = LOWORD(lParam);
+        mouse_position.y = HIWORD(lParam);
+
+        file_manager_->MouseUp();
+    }
+    break;
+    case WM_LBUTTONDOWN:
+    {
+        mouse_position.x = LOWORD(lParam);
+        mouse_position.y = HIWORD(lParam);
+
+        file_manager_->MouseDown(mouse_position);
+    }
+
+    break;
+    case WM_LBUTTONDBLCLK:
+    {
+        mouse_position.x = LOWORD(lParam);
+        mouse_position.y = HIWORD(lParam);
+
+        file_manager_->MouseDoubleDown(mouse_position);
+    }
+    break;
+    case WM_MOUSEMOVE:
+    {
+        mouse_position.x = LOWORD(lParam);
+        mouse_position.y = HIWORD(lParam);
+
+        file_manager_->MouseMove(mouse_position);
+    }
+    break;
+    case WM_MOUSEWHEEL:
+    {
+        // WM_MOUSEWHEEL 내에서는 절대 위치를 반환
+        mouse_position.x = LOWORD(lParam);
+        mouse_position.y = HIWORD(lParam);
+        ScreenToClient(hWnd, &mouse_position); // 상대 위치를 구하기 위해 사용
+
+        file_manager_->MouseWheel(mouse_position, (float)((short)HIWORD(wParam)) / WHEEL_DELTA);
     }
     break;
     case WM_DESTROY:

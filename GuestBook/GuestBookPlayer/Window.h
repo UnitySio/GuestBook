@@ -2,6 +2,7 @@
 
 #include "resource.h"
 #include "framework.h"
+#include "FileManager.h"
 
 #define MAX_LOADSTRING 100
 
@@ -23,6 +24,8 @@ private:
 	// ΩÃ±€≈Ê
 	static std::unique_ptr<Window> instance_;
 	static std::once_flag flag_;
+
+	std::unique_ptr<FileManager> file_manager_;
 
 	void UpdateWindowArea();
 public:
