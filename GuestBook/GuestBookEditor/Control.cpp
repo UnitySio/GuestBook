@@ -14,16 +14,6 @@ Control::Control(HWND hWnd)
 	width_ = Window::GetInstance()->GetWindowArea().right;
 	height_ = 60;
 
-	button_undo_ = make_unique<Button>([]
-		{
-			Window::GetInstance()->GetCanvas()->Undo();
-		});
-
-	button_redo_ = make_unique<Button>([]
-		{
-			Window::GetInstance()->GetCanvas()->Redo();
-		});
-
 	button_color_ = make_unique<Button>([]
 		{
 			Window::GetInstance()->GetColorPicker()->Open();
@@ -50,8 +40,6 @@ Control::Control(HWND hWnd)
 
 void Control::MouseDown(POINT mouse_position)
 {
-	button_undo_->MouseDown(mouse_position);
-	button_redo_->MouseDown(mouse_position);
 	button_color_->MouseDown(mouse_position);
 	button_play_->MouseDown(mouse_position);
 }
@@ -72,25 +60,19 @@ void Control::Draw(HDC hdc)
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-	if (Window::GetInstance()->GetCanvas()->GetLines().size() == 0)
-	{
-		button_undo_->SetInteractable(false);
-	}
-	else
-	{
-		button_undo_->SetInteractable(true);
-	}
+	BYTE r = Window::GetInstance()->GetColorPicker()->GetR();
+	BYTE g = Window::GetInstance()->GetColorPicker()->GetG();
+	BYTE b = Window::GetInstance()->GetColorPicker()->GetB();
 
-	Image* back_image = Image::FromFile(L"Resources/BackIcon.png");
-	button_undo_->SetImage(back_image, 30, 30);
-	button_undo_->Draw(hdc, L"", x_ + 5, y_ + 5, 50, 50);
+	BYTE reversal_r = 255 -  Window::GetInstance()->GetColorPicker()->GetR();
+	BYTE reversal_g = 255 - Window::GetInstance()->GetColorPicker()->GetG();
+	BYTE reversal_b = 255 - Window::GetInstance()->GetColorPicker()->GetB();
 
-	Image* forward_image = Image::FromFile(L"Resources/ForwardIcon.png");
-	button_redo_->SetImage(forward_image, 30, 30);
-	button_redo_->SetInteractable(true);
-	button_redo_->Draw(hdc, L"", x_ + 55, y_ + 5, 50, 50);
-
-	button_color_->Draw(hdc, L"Color", x_ + 110, y_ + 5, 50, 50);
+	WCHAR pen_size_word[1024];
+	wsprintf(pen_size_word, L"%d", Window::GetInstance()->GetColorPicker()->GetPenSize());
+	button_color_->SetBackgroundColor(Color(255, r, g, b));
+	button_color_->SetTextColor(Color(255, reversal_r, reversal_g, reversal_b));
+	button_color_->Draw(hdc, pen_size_word, x_ + 5, y_ + 5, 50, 50);
 
 	Image* play_image;
 	if (Window::GetInstance()->GetTimeline()->OnPlay())

@@ -59,9 +59,6 @@ public:
 	int GetWidth();
 	int GetHeight();
 
-	std::vector<std::vector<PointInfo>> GetLines();
-
-	void Undo();
-	void Redo();
+	const std::vector<std::vector<PointInfo>>& GetLines();
 };
 

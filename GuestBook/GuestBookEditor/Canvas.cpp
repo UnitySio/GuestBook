@@ -318,39 +318,7 @@ int Canvas::GetHeight()
 	return height_;
 }
 
-vector<vector<Canvas::PointInfo>> Canvas::GetLines()
+const vector<vector<Canvas::PointInfo>>& Canvas::GetLines()
 {
 	return lines_;
-}
-
-void Canvas::Undo()
-{
-	double previous_time = lines_[lines_.size() - 1][0].time;
-
-	if (lines_.size() > 0)
-	{
-		history_.push_back(lines_[lines_.size() - 1]);
-		lines_.pop_back();
-	}
-
-	if (lines_.size() != 0)
-	{
-		Window::GetInstance()->SetDrawingTime(previous_time);
-	}
-	else
-	{
-		Window::GetInstance()->SetDrawingTime(0);
-	}
-
-	InvalidateRect(hWnd, NULL, FALSE);
-}
-
-void Canvas::Redo()
-{
-	lines_.push_back(history_[history_.size() - 1]);
-	history_.erase(history_.end() - 1);
-
-	Window::GetInstance()->SetDrawingTime(lines_[lines_.size() - 1][lines_[lines_.size() - 1].size() - 1].time);
-
-	InvalidateRect(hWnd, NULL, FALSE);
 }

@@ -99,12 +99,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_LOAD:
             canvas_->OpenLoadFile();
             break;
-        case IDM_UNDO:
-            canvas_->Undo();
-            break;
-        case IDM_REDO:
-            canvas_->Redo();
-            break;
         case IDM_FILE_MANAGER:
             file_manager_->Active();
             break;

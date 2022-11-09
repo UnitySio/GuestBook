@@ -12,8 +12,6 @@ private:
 	int width_;
 	int height_;
 
-	std::unique_ptr<Button> button_undo_;
-	std::unique_ptr<Button> button_redo_;
 	std::unique_ptr<Button> button_color_;
 	std::unique_ptr<Button> button_play_;
 public:
