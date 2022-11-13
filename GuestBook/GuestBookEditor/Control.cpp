@@ -14,14 +14,19 @@ Control::Control(HWND hWnd)
 	width_ = Window::GetInstance()->GetWindowArea().right;
 	height_ = 60;
 
-	button_undo_ = make_unique<Button>([]
+	button_new_file_ = make_unique<Button>([]
 		{
-			Window::GetInstance()->GetCanvas()->Undo();
+			Window::GetInstance()->GetCanvas()->CanvasReset();
 		});
 
-	button_redo_ = make_unique<Button>([]
+	button_load_ = make_unique<Button>([]
 		{
-			Window::GetInstance()->GetCanvas()->Redo();
+			Window::GetInstance()->GetCanvas()->OpenLoadFile();
+		});
+
+	button_save_ = make_unique<Button>([]
+		{
+			Window::GetInstance()->GetCanvas()->OpenSaveFile();
 		});
 
 	button_color_ = make_unique<Button>([]
@@ -50,8 +55,9 @@ Control::Control(HWND hWnd)
 
 void Control::MouseDown(POINT mouse_position)
 {
-	button_undo_->MouseDown(mouse_position);
-	button_redo_->MouseDown(mouse_position);
+	button_new_file_->MouseDown(mouse_position);
+	button_load_->MouseDown(mouse_position);
+	button_save_->MouseDown(mouse_position);
 	button_color_->MouseDown(mouse_position);
 	button_play_->MouseDown(mouse_position);
 }
@@ -72,25 +78,32 @@ void Control::Draw(HDC hdc)
 	graphics.FillRectangle(&background_brush, x_, y_, width_, height_);
 	graphics.DrawRectangle(&contour_pen, x_, y_, width_ - 1, height_ - 1);
 
-	if (Window::GetInstance()->GetCanvas()->GetLines().size() == 0)
-	{
-		button_undo_->SetInteractable(false);
-	}
-	else
-	{
-		button_undo_->SetInteractable(true);
-	}
+	BYTE r = Window::GetInstance()->GetColorPicker()->GetR();
+	BYTE g = Window::GetInstance()->GetColorPicker()->GetG();
+	BYTE b = Window::GetInstance()->GetColorPicker()->GetB();
 
-	Image* back_image = Image::FromFile(L"Resources/BackIcon.png");
-	button_undo_->SetImage(back_image, 30, 30);
-	button_undo_->Draw(hdc, L"", x_ + 5, y_ + 5, 50, 50);
+	BYTE reversal_r = 255 -  Window::GetInstance()->GetColorPicker()->GetR();
+	BYTE reversal_g = 255 - Window::GetInstance()->GetColorPicker()->GetG();
+	BYTE reversal_b = 255 - Window::GetInstance()->GetColorPicker()->GetB();
 
-	Image* forward_image = Image::FromFile(L"Resources/ForwardIcon.png");
-	button_redo_->SetImage(forward_image, 30, 30);
-	button_redo_->SetInteractable(false);
-	button_redo_->Draw(hdc, L"", x_ + 55, y_ + 5, 50, 50);
+	Image* new_file_image = Image::FromFile(L"Resources/FileIcon.png");
+	Image* load_image = Image::FromFile(L"Resources/OpenedFolderIcon.png");
+	Image* save_image = Image::FromFile(L"Resources/SaveIcon.png");
 
-	button_color_->Draw(hdc, L"Color", x_ + 110, y_ + 5, 50, 50);
+	button_new_file_->SetImage(new_file_image, 38, 38);
+	button_new_file_->Draw(hdc, L"", x_ + 5, y_ + 5, 50, 50);
+
+	button_load_->SetImage(load_image, 38, 38);
+	button_load_->Draw(hdc, L"", x_ + 60, y_ + 5, 50, 50);
+
+	button_save_->SetImage(save_image, 38, 38);
+	button_save_->Draw(hdc, L"", x_ + 115, y_ + 5, 50, 50);
+
+	WCHAR pen_size_word[1024];
+	wsprintf(pen_size_word, L"%d", Window::GetInstance()->GetColorPicker()->GetPenSize());
+	button_color_->SetBackgroundColor(Color(255, r, g, b));
+	button_color_->SetTextColor(Color(255, reversal_r, reversal_g, reversal_b));
+	button_color_->Draw(hdc, pen_size_word, x_ + 170, y_ + 5, 50, 50);
 
 	Image* play_image;
 	if (Window::GetInstance()->GetTimeline()->OnPlay())

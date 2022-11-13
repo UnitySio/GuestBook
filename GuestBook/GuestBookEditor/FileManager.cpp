@@ -192,8 +192,6 @@ void FileManager::Draw(HDC hdc)
 	{
 		Graphics graphics(hdc);
 
-		SetBkColor(hdc, TRANSPARENT);
-
 		Image file_icon(L"Resources/FileIcon.png");
 		Image gb_file_icon(L"Resources/ImageFileIcon.png");
 		Image folder_icon(L"Resources/FolderIcon.png");

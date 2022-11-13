@@ -37,6 +37,8 @@ private:
 	std::vector<std::vector<PointInfo>> lines_;
 	std::vector<PointInfo> line_;
 
+	std::vector<std::vector<PointInfo>> history_;
+
 	int mouse_current_x_;
 	int mouse_current_y_;
 public:
@@ -57,9 +59,6 @@ public:
 	int GetWidth();
 	int GetHeight();
 
-	std::vector<std::vector<PointInfo>> GetLines();
-
-	void Undo();
-	void Redo();
+	const std::vector<std::vector<PointInfo>>& GetLines();
 };
 

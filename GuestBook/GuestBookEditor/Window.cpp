@@ -37,8 +37,13 @@ BOOL Window::InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
+    resolution_ = { 1600, 900 }; // 기본 해상도
+
+    RECT area = { 0, 0, resolution_.x, resolution_.y };
+    AdjustWindowRect(&area, WS_OVERLAPPEDWINDOW, TRUE);
+
     hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        0, 0, 1600, 900, nullptr, nullptr, hInstance, nullptr);
+        0, 0, area.right - area.left, area.bottom - area.top, nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -94,12 +99,6 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_LOAD:
             canvas_->OpenLoadFile();
             break;
-        case IDM_UNDO:
-            canvas_->Undo();
-            break;
-        case IDM_REDO:
-            canvas_->Redo();
-            break;
         case IDM_FILE_MANAGER:
             file_manager_->Active();
             break;
@@ -119,20 +118,18 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_PAINT:
     {
+        UpdateWindowArea();
+
         PAINTSTRUCT ps;
         HDC hdc, memDC;
-        HBITMAP newBitmap, oldBitmap;
-        RECT buffer;
+        HBITMAP new_bitmap, old_bitmap;
         memDC = BeginPaint(hWnd, &ps);
-
-        GetClientRect(hWnd, &buffer);
+        new_bitmap = CreateCompatibleBitmap(memDC, window_area_.right, window_area_.bottom);
         hdc = CreateCompatibleDC(memDC);
-        newBitmap = CreateCompatibleBitmap(memDC, buffer.right, buffer.bottom);
-        oldBitmap = (HBITMAP)SelectObject(hdc, newBitmap);
-        PatBlt(hdc, 0, 0, buffer.right, buffer.bottom, WHITENESS);
+        old_bitmap = (HBITMAP)SelectObject(hdc, new_bitmap);
+        DeleteObject(old_bitmap);
+        PatBlt(hdc, 0, 0, window_area_.right, window_area_.bottom, WHITENESS);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-
-        UpdateWindowArea();
 
         canvas_->Draw(hdc);
         file_manager_->Draw(hdc);
@@ -141,11 +138,9 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         OnPaint(hdc);
         color_picker_->Draw(hdc);
 
-        GetClientRect(hWnd, &buffer);
-        BitBlt(memDC, 0, 0, buffer.right, buffer.bottom, hdc, 0, 0, SRCCOPY);
-        SelectObject(hdc, oldBitmap);
-        DeleteObject(newBitmap);
+        BitBlt(memDC, 0, 0, window_area_.right, window_area_.bottom, hdc, 0, 0, SRCCOPY);
         DeleteDC(hdc);
+        DeleteObject(new_bitmap);
         EndPaint(hWnd, &ps);
     }
     break;
@@ -212,8 +207,10 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_MOUSEWHEEL:
     {
+        // WM_MOUSEWHEEL 내에서는 절대 위치를 반환
         mouse_position.x = LOWORD(lParam);
         mouse_position.y = HIWORD(lParam);
+        ScreenToClient(hWnd, &mouse_position); // 상대 위치를 구하기 위해 사용
 
         file_manager_->MouseWheel(mouse_position, (float)((short)HIWORD(wParam)) / WHEEL_DELTA);
         timeline_->MouseWheel(mouse_position, (float)((short)HIWORD(wParam)) / WHEEL_DELTA);
@@ -258,6 +255,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
     case WM_DESTROY:
+        instance_.reset();
         PostQuitMessage(0);
         break;
     default:

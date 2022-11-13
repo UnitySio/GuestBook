@@ -2,6 +2,8 @@
 
 #include "resource.h"
 #include "framework.h"
+#include "FileManager.h"
+#include "Canvas.h"
 
 #define MAX_LOADSTRING 100
 
@@ -21,8 +23,16 @@ private:
 	void OnPaint(HDC hdc);
 
 	// ΩÃ±€≈Ê
-	static unique_ptr<Window> instance_;
-	static once_flag flag_;
+	static std::unique_ptr<Window> instance_;
+	static std::once_flag flag_;
+
+	std::unique_ptr<Canvas> canvas_;
+	std::unique_ptr<FileManager> file_manager_;
+
+	UINT play_timer_;
+
+	double time_;
+	double max_time_;
 
 	void UpdateWindowArea();
 public:
@@ -42,7 +52,13 @@ public:
 
 	static void CALLBACK TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2);
 
-
 	RECT GetWindowArea();
+	Canvas* GetCanvas();
+	FileManager* GetFileManager();
+
+	void SetMaxTime(double time);
+	void Play();
+
+	double GetTime();
 };
 

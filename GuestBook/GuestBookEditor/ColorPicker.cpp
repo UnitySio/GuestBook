@@ -150,9 +150,6 @@ void ColorPicker::Draw(HDC hdc)
     {
         Graphics graphics(hdc);
 
-        // 배경 제거
-        SetBkMode(hdc, TRANSPARENT);
-
         Pen black_pen(Color(255, 0, 0, 0));
         Pen white_pen(Color(255, 255, 255, 255));
         Pen contour_pen(Color(255, 185, 185, 185));

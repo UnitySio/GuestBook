@@ -41,12 +41,6 @@ void Timeline::MouseDown(POINT mouse_position)
 {
 	if (is_active_)
 	{
-		if (PtInRect(&list_box_area_, mouse_position))
-		{
-			KeyFrameControl(mouse_position);
-			is_list_box_click_ = true;
-		}
-
 		if ((Window::GetInstance()->GetCanvas()->GetLines().size() * 30) > list_box_height_)
 		{
 			if (PtInRect(&scroll_bar_area_, mouse_position))
@@ -62,18 +56,6 @@ void Timeline::MouseDown(POINT mouse_position)
 
 void Timeline::MouseMove(POINT mouse_position)
 {
-	if (is_list_box_click_)
-	{
-		RECT area = { list_box_area_.left + 30, list_box_area_.top, list_box_area_.right, list_box_area_.bottom };
-		if (!PtInRect(&area, mouse_position))
-		{
-			MouseUp();
-			return;
-		}
-
-		KeyFrameControl(mouse_position);
-	}
-
 	if (is_scroll_bar_click_)
 	{
 		if (!PtInRect(&scroll_bar_area_, mouse_position))
@@ -101,12 +83,6 @@ void Timeline::MouseWheel(POINT mouse_position, float direction)
 	}
 }
 
-void Timeline::KeyFrameControl(POINT mouse_position)
-{
-	time_ = min(max(((mouse_position.x - (list_box_x_ + 30)) * max_time_) / (list_box_width_ - 30), 0), max_time_);
-	InvalidateRect(hWnd, NULL, FALSE);
-}
-
 void Timeline::AddTime(double time)
 {
 	time_ += time;
@@ -126,9 +102,6 @@ void Timeline::Draw(HDC hdc)
 	if (is_active_)
 	{
 		Graphics graphics(hdc);
-
-		// 배경 제거
-		SetBkColor(hdc, TRANSPARENT);
 
 		Image clock_icon(L"Resources/ClockIcon.png");
 

@@ -15,8 +15,6 @@
 #define IDM_NEW_FILE                    32771
 #define IDM_SAVE                        32772
 #define IDM_LOAD                        32773
-#define IDM_UNDO                        32791
-#define IDM_REDO                        32792
 #define IDM_FILE_MANAGER                32795
 #define IDM_TIMELINE                    32796
 #define IDC_STATIC                      -1
