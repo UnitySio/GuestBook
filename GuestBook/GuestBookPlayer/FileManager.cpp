@@ -136,7 +136,8 @@ void FileManager::MouseDoubleDown(POINT mouse_position)
 						// 해당 파일의 확장자가 .gb인지 확인
 						if (fs::path(items_[i].file_path).extension() == ".gb")
 						{
-							//Window::GetInstance()->GetCanvas()->LoadFile(items_[i].file_path);
+							Window::GetInstance()->GetCanvas()->LoadFile(items_[i].file_path);
+							Window::GetInstance()->Play();
 						}
 						else
 						{

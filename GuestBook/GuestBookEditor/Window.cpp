@@ -139,8 +139,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         color_picker_->Draw(hdc);
 
         BitBlt(memDC, 0, 0, window_area_.right, window_area_.bottom, hdc, 0, 0, SRCCOPY);
-        ReleaseDC(hWnd, hdc);
-        DeleteDC(memDC);
+        DeleteDC(hdc);
         DeleteObject(new_bitmap);
         EndPaint(hWnd, &ps);
     }

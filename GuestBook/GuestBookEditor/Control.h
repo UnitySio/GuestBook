@@ -12,6 +12,9 @@ private:
 	int width_;
 	int height_;
 
+	std::unique_ptr<Button> button_new_file_;
+	std::unique_ptr<Button> button_load_;
+	std::unique_ptr<Button> button_save_;
 	std::unique_ptr<Button> button_color_;
 	std::unique_ptr<Button> button_play_;
 public:

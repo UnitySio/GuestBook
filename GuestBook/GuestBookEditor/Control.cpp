@@ -14,6 +14,21 @@ Control::Control(HWND hWnd)
 	width_ = Window::GetInstance()->GetWindowArea().right;
 	height_ = 60;
 
+	button_new_file_ = make_unique<Button>([]
+		{
+			Window::GetInstance()->GetCanvas()->CanvasReset();
+		});
+
+	button_load_ = make_unique<Button>([]
+		{
+			Window::GetInstance()->GetCanvas()->OpenLoadFile();
+		});
+
+	button_save_ = make_unique<Button>([]
+		{
+			Window::GetInstance()->GetCanvas()->OpenSaveFile();
+		});
+
 	button_color_ = make_unique<Button>([]
 		{
 			Window::GetInstance()->GetColorPicker()->Open();
@@ -40,6 +55,9 @@ Control::Control(HWND hWnd)
 
 void Control::MouseDown(POINT mouse_position)
 {
+	button_new_file_->MouseDown(mouse_position);
+	button_load_->MouseDown(mouse_position);
+	button_save_->MouseDown(mouse_position);
 	button_color_->MouseDown(mouse_position);
 	button_play_->MouseDown(mouse_position);
 }
@@ -68,11 +86,24 @@ void Control::Draw(HDC hdc)
 	BYTE reversal_g = 255 - Window::GetInstance()->GetColorPicker()->GetG();
 	BYTE reversal_b = 255 - Window::GetInstance()->GetColorPicker()->GetB();
 
+	Image* new_file_image = Image::FromFile(L"Resources/FileIcon.png");
+	Image* load_image = Image::FromFile(L"Resources/OpenedFolderIcon.png");
+	Image* save_image = Image::FromFile(L"Resources/SaveIcon.png");
+
+	button_new_file_->SetImage(new_file_image, 38, 38);
+	button_new_file_->Draw(hdc, L"", x_ + 5, y_ + 5, 50, 50);
+
+	button_load_->SetImage(load_image, 38, 38);
+	button_load_->Draw(hdc, L"", x_ + 60, y_ + 5, 50, 50);
+
+	button_save_->SetImage(save_image, 38, 38);
+	button_save_->Draw(hdc, L"", x_ + 115, y_ + 5, 50, 50);
+
 	WCHAR pen_size_word[1024];
 	wsprintf(pen_size_word, L"%d", Window::GetInstance()->GetColorPicker()->GetPenSize());
 	button_color_->SetBackgroundColor(Color(255, r, g, b));
 	button_color_->SetTextColor(Color(255, reversal_r, reversal_g, reversal_b));
-	button_color_->Draw(hdc, pen_size_word, x_ + 5, y_ + 5, 50, 50);
+	button_color_->Draw(hdc, pen_size_word, x_ + 170, y_ + 5, 50, 50);
 
 	Image* play_image;
 	if (Window::GetInstance()->GetTimeline()->OnPlay())

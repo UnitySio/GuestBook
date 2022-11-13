@@ -8,6 +8,8 @@ using namespace Gdiplus;
 unique_ptr<Window> Window::instance_ = nullptr;
 once_flag Window::flag_;
 
+TIMECAPS timecaps;
+
 // 창 클래스를 등록
 ATOM Window::MyRegisterClass(HINSTANCE hInstance)
 {
@@ -46,6 +48,8 @@ BOOL Window::InitInstance(HINSTANCE hInstance, int nCmdShow)
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
+    DragAcceptFiles(hWnd, TRUE);
+
     return TRUE;
 }
 
@@ -57,9 +61,6 @@ LRESULT Window::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    TIMECAPS timecaps;
-    timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
-
     POINT mouse_position;
 
     switch (message)
@@ -69,6 +70,7 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         UpdateWindowArea();
 
         file_manager_ = make_unique<FileManager>(hWnd);
+        canvas_ = make_unique<Canvas>(hWnd);
     }
     break;
     case WM_COMMAND:
@@ -103,12 +105,12 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PatBlt(hdc, 0, 0, window_area_.right, window_area_.bottom, WHITENESS);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
 
+        canvas_->Draw(hdc);
         file_manager_->Draw(hdc);
         OnPaint(hdc);
 
         BitBlt(memDC, 0, 0, window_area_.right, window_area_.bottom, hdc, 0, 0, SRCCOPY);
-        ReleaseDC(hWnd, hdc);
-        DeleteDC(memDC);
+        DeleteDC(hdc);
         DeleteObject(new_bitmap);
         EndPaint(hWnd, &ps);
     }
@@ -156,6 +158,44 @@ LRESULT Window::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         file_manager_->MouseWheel(mouse_position, (float)((short)HIWORD(wParam)) / WHEEL_DELTA);
     }
     break;
+    case WM_DROPFILES:
+    {
+        HDROP hDrop = (HDROP)wParam;
+
+        WCHAR drag_file_path[256] = L"";
+        WCHAR drag_file_name[256] = L"";
+        WCHAR file_path[256] = L"";
+
+        UINT count = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
+
+        for (UINT i = 0; i < count; i++)
+        {
+            DragQueryFile(hDrop, i, drag_file_path, 256);
+
+            if (fs::is_directory(drag_file_path))
+            {
+                for (int j = 0; j < wcslen(drag_file_path); j++)
+                {
+                    if (drag_file_path[j] == L'\\')
+                    {
+                        wsprintf(drag_file_name, L"%s", drag_file_path + j + 1);
+                    }
+                }
+
+                wsprintf(file_path, L"%s\\%s", file_manager_->GetCurrentPath(), drag_file_name);
+                fs::create_directory(file_path);
+            }
+            else if (fs::is_regular_file(drag_file_path))
+            {
+                wsprintf(file_path, L"%s", file_manager_->GetCurrentPath());
+            }
+
+            fs::copy(drag_file_path, file_path, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+        }
+
+        DragFinish(hDrop);
+    }
+    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -188,11 +228,42 @@ INT_PTR CALLBACK Window::About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 void CALLBACK Window::TimerProc(UINT m_nTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 {
     Window* window = (Window*)dwUser;
+
+    if (m_nTimerID == window->play_timer_)
+    {
+        window->time_ += 0.001;
+
+        if (window->time_ > window->max_time_)
+        {
+            window->time_ = 0;
+        }
+
+        InvalidateRect(window->hWnd, NULL, FALSE);
+    }
 }
 
 void Window::OnPaint(HDC hdc)
 {
     Graphics graphics(hdc);
+}
+
+void Window::SetMaxTime(double time)
+{
+    max_time_ = time;
+}
+
+void Window::Play()
+{
+    timeGetDevCaps(&timecaps, sizeof(TIMECAPS));
+
+    timeKillEvent(play_timer_);
+    time_ = 0;
+    play_timer_ = timeSetEvent(1, timecaps.wPeriodMax, Window::GetInstance()->TimerProc, (DWORD_PTR)this, TIME_PERIODIC);
+}
+
+double Window::GetTime()
+{
+    return time_ * 1000;
 }
 
 void Window::UpdateWindowArea()
@@ -214,4 +285,14 @@ Window* Window::GetInstance()
 RECT Window::GetWindowArea()
 {
     return window_area_;
+}
+
+Canvas* Window::GetCanvas()
+{
+    return canvas_.get();
+}
+
+FileManager* Window::GetFileManager()
+{
+    return file_manager_.get();
 }
