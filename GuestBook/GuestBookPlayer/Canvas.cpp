@@ -16,8 +16,8 @@ void Canvas::Draw(HDC hdc)
 	height_ = (Window::GetInstance()->GetWindowArea().bottom - y_);
 
 	// 윈도우 크기에 따른 위치 보정
-	canvas_width_ = 1000;
-	canvas_height_ = 500;
+	canvas_width_ = 1366;
+	canvas_height_ = 768;
 	canvas_x_ = ((x_ + width_) - canvas_width_) / 2;
 	canvas_y_ = (((y_ + height_) + 90) - canvas_height_) / 2;
 
