@@ -76,6 +76,7 @@ void FileManager::MouseDown(POINT mouse_position)
 				}
 			}
 
+			// 파일 관리자에서 파일 삭제
 			/*for (int i = 0; i < items_.size(); i++)
 			{
 				WCHAR file_name_word[1024];

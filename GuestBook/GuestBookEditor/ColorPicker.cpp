@@ -13,7 +13,8 @@ ColorPicker::ColorPicker(HWND hWnd)
     height_ = 300;
     x_ = (Window::GetInstance()->GetWindowArea().right - width_) / 2;
     y_ = (Window::GetInstance()->GetWindowArea().bottom - height_) / 2;
-    s_ = 1;
+    s_ = 0;
+    v_ = 1.0f;
     palette_width_ = 200;
     palette_height_ = 200;
     hue_slider_width_ = 30;
@@ -23,6 +24,7 @@ ColorPicker::ColorPicker(HWND hWnd)
     color_preview_width_ = 30;
     color_preview_height_ = 30;
     current_color_ = HSVToRGB(360.0f - h_, s_, 1.0f - v_);
+    pen_size_ = 10;
 
     button_close_ = make_unique<Button>([=]
         {

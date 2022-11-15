@@ -14,12 +14,10 @@ FileManager::FileManager(HWND hWnd)
 	// 멤버 변수 초기화
 	list_item_height_ = 50;
 
-	width_ = 300;
+	width_ = 0;
 	x_ = Window::GetInstance()->GetWindowArea().right - width_;
 	y_ = Window::GetInstance()->GetControl()->GetHeight();
 	height_ = (Window::GetInstance()->GetWindowArea().bottom - y_) - Window::GetInstance()->GetTimeline()->GetHeight();
-
-	is_active_ = true;
 
 	button_minimize_ = make_unique<Button>([=]
 		{
@@ -81,6 +79,7 @@ void FileManager::MouseDown(POINT mouse_position)
 				}
 			}
 
+			// 파일 관리자에서 파일 삭제
 			/*for (int i = 0; i < items_.size(); i++)
 			{
 				WCHAR file_name_word[1024];

@@ -10,11 +10,9 @@ Timeline::Timeline(HWND hWnd)
 	this->hWnd = hWnd;
 
 	x_ = 0;
-	height_ = 300;
+	height_ = 0;
 	width_ = Window::GetInstance()->GetWindowArea().right;
 	y_ = Window::GetInstance()->GetWindowArea().bottom - height_;
-
-	is_active_ = true;
 
 	button_minimize_ = make_unique<Button>([=]
 		{

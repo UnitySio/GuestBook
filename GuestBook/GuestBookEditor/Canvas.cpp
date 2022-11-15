@@ -117,8 +117,8 @@ void Canvas::Draw(HDC hdc)
 	graphics.SetClip(&region, CombineModeReplace);
 
 	// 윈도우 크기에 따른 위치 보정
-	canvas_width_ = 1366;
-	canvas_height_ = 768;
+	canvas_width_ = 1900;
+	canvas_height_ = 760;
 	canvas_x_ = ((x_ + width_) - canvas_width_) / 2;
 	canvas_y_ = (((y_ + height_) + 90) - canvas_height_) / 2;
 
