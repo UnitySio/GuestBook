@@ -7,7 +7,7 @@
 ### Using Language
 * C++
 
-### Using IDE
+### Using Compiler
 * VC++
 
 ### Using Graphic Library
